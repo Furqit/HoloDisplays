@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "holodisplays",
+  "version": "${version}",
+  "name": "HoloDisplays",
+  "description": "A powerful and flexible packet-based hologram mod.",
+  "authors": ["Furq"],
+  "contact": {},
+  "license": "GPL-3.0",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "dev.furq.holodisplays.HoloDisplays"
+    ]
+  },
+  "mixins": [
+    "holodisplays.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "*",
+    "fabric-language-kotlin": "*",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}

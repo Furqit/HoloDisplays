@@ -1,0 +1,26 @@
+# gradle
+
+.gradle/
+gradle/
+build/
+out/
+classes/
+.kotlin/
+
+# idea
+
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# fabric
+
+run/
+
+# java
+
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr
