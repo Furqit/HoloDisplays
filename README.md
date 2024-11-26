@@ -17,25 +17,32 @@ HoloDisplays is a performance-focused hologram mod that uses packets and Minecra
 
 ## Features
 
-| Core Features                                                              |
-|----------------------------------------------------------------------------|
-| 🚀 **Packet-Based System**<br>No real entities, just network packets       |
-| ✨ **Animations Support**<br>Create dynamic displays with text animations   |
-| 📦 **Multiple Display Types**<br>Text, items, and blocks at your disposal  |
-| 🎨 **Rich Customization**<br>Fine-tune every aspect of your displays       |
-| 🎮 **Placeholder Support**<br>Full support for Text Placeholder API        |
-| 🌈 **Text Formatting**<br>Support for gradients, colors, and hover effects |
-| ⌨️ **Simple Commands**<br>Easy-to-use `/holo`, `/hd`, and `/holodisplays`  |
+<div align="center">
+
+| Core Features                                                                                                                 |
+|-------------------------------------------------------------------------------------------------------------------------------|
+| 🚀 **Packet-Based System**<br>No real entities spawned, just efficient network packets for optimal server performance         |
+| ✨ **Animations Support**<br>Create dynamic displays with smooth text animations, transitions, and visual effects              |
+| 📦 **Multiple Display Types**<br>Create holograms using text, items, and blocks with customizable properties and behaviors    |
+| 🎨 **Rich Customization**<br>Fine-tune every aspect including size, rotation, visibility, interaction, and display properties |
+| 🎮 **Placeholder Support**<br>Full integration with Text Placeholder API for dynamic, real-time content updates               |
+| 🌈 **Text Formatting**<br>Comprehensive support for gradients, colors codes and advanced styling options                      |
+| ⌨️ **Command Chat Menu**<br>User-friendly chat-based menu system for easy creation, editing, and management of displays       |
+
+</div>
 
 ## Roadmap
 
-| Planned Features                                                          | Status  |
-|---------------------------------------------------------------------------|---------|
-| 🎭 **Entity Displays**<br>Support for displaying mob entities             | Planned |
-| 🔄 **Block Animations**<br>Animated block displays with rotation and more | Planned |
-| ✨ **Item Animations**<br>Dynamic item displays with custom animations     | Planned |
-| 🎨 **Particle Effects**<br>Particle effects and more visual enhancements  | Planned |
-| 🛠️ **API Support**<br>Public API for developers                          | Planned |
+<div align="center">
+
+| Planned Features                                                                                                          | Status  |
+|---------------------------------------------------------------------------------------------------------------------------|---------|
+| 🎭 **Entity Displays**<br>Support for displaying mob entities with customizable animations and behaviors                  | Planned |
+| 🔄 **Block & Item Animations**<br>Support for animated block and item displays with rotation, scaling, and transformation | Planned |
+| 🎨 **Particle Effects**<br>Support for particles and particle animations using snowstorm                                  | Maybe   |
+| 🛠️ **API Support**<br>Public API for developers to create custom displays, animations, and integrate features            | Maybe   |
+
+</div>
 
 ## Commands
 
