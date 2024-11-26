@@ -320,9 +320,9 @@ object DisplayEditCommand {
 
         val offset = HologramProperty.Offset(
             DisplayData.Offset(
-                FloatArgumentType.getFloat(context, "x").toDouble(),
-                FloatArgumentType.getFloat(context, "y").toDouble(),
-                FloatArgumentType.getFloat(context, "z").toDouble()
+                FloatArgumentType.getFloat(context, "x"),
+                FloatArgumentType.getFloat(context, "y"),
+                FloatArgumentType.getFloat(context, "z")
             )
         )
 

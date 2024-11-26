@@ -3,7 +3,7 @@
   "id": "holodisplays",
   "version": "${version}",
   "name": "HoloDisplays",
-  "description": "A powerful and flexible packet-based hologram mod.",
+  "description": "A powerful packet-based hologram system built with Minecraft's display entities for better performance and flexibility.",
   "authors": ["Furq"],
   "contact": {},
   "license": "GPL-3.0",

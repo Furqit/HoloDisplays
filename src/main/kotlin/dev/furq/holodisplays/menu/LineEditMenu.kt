@@ -161,13 +161,15 @@ sealed class LineEditMenu {
         }, false)
     }
 
-    protected fun showFooter(source: ServerCommandSource, backCommand: String) {
+    protected fun showFooter(source: ServerCommandSource, backCommand: String? = null) {
         source.sendFeedback({ Text.literal("") }, false)
         source.sendFeedback({
             Text.literal("╚════════════════════════════╝")
                 .formatted(Formatting.GREEN)
         }, false)
-        createBackButton(source, backCommand)
+        if (backCommand != null) {
+            createBackButton(source, backCommand)
+        }
     }
 
     protected fun showSectionHeader(source: ServerCommandSource, title: String) {

@@ -6,9 +6,9 @@ data class DisplayData(
     val displayType: DisplayType,
 ) {
     data class Offset(
-        val x: Double = 0.0,
-        val y: Double = -0.3,
-        val z: Double = 0.0,
+        val x: Float = 0.0f,
+        val y: Float = -0.3f,
+        val z: Float = 0.0f,
     )
 
     sealed class DisplayType {

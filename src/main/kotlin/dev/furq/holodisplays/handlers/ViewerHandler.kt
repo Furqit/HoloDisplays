@@ -107,9 +107,9 @@ object ViewerHandler {
                     entity,
                     processedDisplay,
                     Vec3d(
-                        hologram.position.x + display.displayType.offset.x,
-                        hologram.position.y + display.displayType.offset.y,
-                        hologram.position.z + display.displayType.offset.z
+                        hologram.position.x + display.displayType.offset.x.toDouble(),
+                        hologram.position.y + display.displayType.offset.y.toDouble(),
+                        hologram.position.z + display.displayType.offset.z.toDouble()
                     ),
                     index,
                     hologram

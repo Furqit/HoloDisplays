@@ -145,7 +145,6 @@ data object MainMenu : LineEditMenu() {
                 )
         }, false)
         showSectionFooter(source)
-
-        showFooter(source, "/holo")
+        showFooter(source)
     }
 }

@@ -248,15 +248,15 @@ object DisplayConfig : Config {
     }
 
     private fun JsonReader.parseOffset() = beginObject().run {
-        var x = 0.0
-        var y = 0.0
-        var z = 0.0
+        var x = 0.0f
+        var y = 0.0f
+        var z = 0.0f
 
         while (hasNext()) {
             when (nextName()) {
-                "x" -> x = nextDouble()
-                "y" -> y = nextDouble()
-                "z" -> z = nextDouble()
+                "x" -> x = nextDouble().toFloat()
+                "y" -> y = nextDouble().toFloat()
+                "z" -> z = nextDouble().toFloat()
                 else -> skipValue()
             }
         }
