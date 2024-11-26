@@ -175,7 +175,7 @@ data object TextEditMenu : LineEditMenu() {
                         .formatted(Formatting.WHITE)
                 )
                 .append(Text.literal(" "))
-                .append(createButton("Edit", "/holo edit display $name text shadow ", Formatting.GREEN))
+                .append(createRunButton("Toggle", "/holo edit display $name text shadow ${!display.shadow!!}", Formatting.GREEN))
         }, false)
 
         source.sendFeedback({
@@ -194,7 +194,7 @@ data object TextEditMenu : LineEditMenu() {
                         .formatted(Formatting.WHITE)
                 )
                 .append(Text.literal(" "))
-                .append(createButton("Edit", "/holo edit display $name text seeThrough ", Formatting.GREEN))
+                .append(createRunButton("Toggle", "/holo edit display $name text seeThrough ${!display.seeThrough!!}", Formatting.GREEN))
         }, false)
         showSectionFooter(source)
 

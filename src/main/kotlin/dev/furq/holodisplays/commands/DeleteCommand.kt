@@ -70,16 +70,18 @@ object DeleteCommand {
             return 1
         }
 
-        DisplayConfig.deleteDisplay(displayId)
-
-        HologramConfig.getHolograms()
+        val affectedHolograms = HologramConfig.getHolograms()
             .filter { (_, hologram) ->
                 hologram.displays.any { it.getReference() == displayId }
             }
-            .forEach { (name, _) ->
-                ViewerHandler.updateForAllObservers(name)
-            }
 
+        affectedHolograms.forEach { (name, hologram) ->
+            hologram.displays.removeAll { it.getReference() == displayId }
+            HologramConfig.saveHologram(name, hologram)
+            ViewerHandler.respawnForAllObservers(name)
+        }
+
+        DisplayConfig.deleteDisplay(displayId)
         playSuccessSound(context.source)
         return 1
     }
