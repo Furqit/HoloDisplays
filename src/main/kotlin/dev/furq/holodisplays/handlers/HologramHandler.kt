@@ -78,9 +78,9 @@ object HologramHandler {
         }
     }
 
-    fun addLine(name: String, line: HologramData.DisplayLine) {
+    fun addLine(name: String, displayId: String, offset: HologramData.Offset = HologramData.Offset()) {
         HologramConfig.getHologram(name)?.let { hologram ->
-            hologram.displays.add(line)
+            hologram.displays.add(HologramData.DisplayLine(displayId, offset))
             HologramConfig.saveHologram(name, hologram)
             ViewerHandler.respawnForAllObservers(name)
         }
@@ -110,5 +110,15 @@ object HologramHandler {
             position.y.toDouble(),
             position.z.toDouble()
         ) <= viewRange * viewRange
+    }
+
+    fun setLineOffset(name: String, index: Int, offset: HologramData.Offset) {
+        HologramConfig.getHologram(name)?.let { hologram ->
+            if (index < hologram.displays.size) {
+                hologram.displays[index] = hologram.displays[index].copy(offset = offset)
+                HologramConfig.saveHologram(name, hologram)
+                ViewerHandler.respawnForAllObservers(name)
+            }
+        }
     }
 }

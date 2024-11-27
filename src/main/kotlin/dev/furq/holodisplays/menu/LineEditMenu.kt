@@ -129,29 +129,6 @@ sealed class LineEditMenu {
                 .append(Text.literal(" "))
                 .append(createRunButton("Reset", "/holo edit display $name rotation reset", Formatting.YELLOW))
         }, false)
-
-        source.sendFeedback({
-            Text.literal("│ ")
-                .formatted(Formatting.GRAY)
-                .append(
-                    Text.literal("• ")
-                        .formatted(Formatting.GREEN)
-                )
-                .append(
-                    Text.literal("Offset: ")
-                        .formatted(Formatting.GRAY)
-                )
-                .append(
-                    if (abs(displayType.offset.x) > 16 || abs(displayType.offset.y) > 16 || abs(displayType.offset.z) > 16)
-                        Text.literal("${displayType.offset.x}, ${displayType.offset.y}, ${displayType.offset.z}")
-                            .formatted(Formatting.RED)
-                    else
-                        Text.literal("${displayType.offset.x}, ${displayType.offset.y}, ${displayType.offset.z}")
-                            .formatted(Formatting.WHITE)
-                )
-                .append(Text.literal(" "))
-                .append(createButton("Edit", "/holo edit display $name offset ", Formatting.GREEN))
-        }, false)
     }
 
     protected fun showHeader(source: ServerCommandSource) {

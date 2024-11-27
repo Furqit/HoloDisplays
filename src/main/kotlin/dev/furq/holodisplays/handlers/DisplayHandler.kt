@@ -16,11 +16,10 @@ object DisplayHandler {
 
         val affectedHolograms = HologramConfig.getHolograms()
             .filter { (_, hologram) ->
-                hologram.displays.any { it.getReference() == displayId }
+                hologram.displays.any { it.displayId == displayId }
             }
 
         val needsRespawn = when (property) {
-            is HologramProperty.Offset -> true
             is HologramProperty.Rotation -> true
             else -> false
         }
@@ -48,7 +47,6 @@ object DisplayHandler {
             is HologramProperty.Shadow -> updateShadow(display, property.value)
             is HologramProperty.SeeThrough -> updateSeeThrough(display, property.value)
             is HologramProperty.TextAlignment -> updateTextAlignment(display, property.value)
-            is HologramProperty.Offset -> updateOffset(display, property.offset)
             is HologramProperty.ItemDisplayType -> updateItemDisplayType(display, property.value)
             else -> null
         }
@@ -74,14 +72,6 @@ object DisplayHandler {
             is DisplayData.DisplayType.Text -> type.copy(rotation = rotation)
             is DisplayData.DisplayType.Item -> type.copy(rotation = rotation)
             is DisplayData.DisplayType.Block -> type.copy(rotation = rotation)
-        }
-    )
-
-    private fun updateOffset(display: DisplayData, offset: DisplayData.Offset) = display.copy(
-        displayType = when (val type = display.displayType) {
-            is DisplayData.DisplayType.Text -> type.copy(offset = offset)
-            is DisplayData.DisplayType.Item -> type.copy(offset = offset)
-            is DisplayData.DisplayType.Block -> type.copy(offset = offset)
         }
     )
 
@@ -111,8 +101,8 @@ object DisplayHandler {
         if (display.displayType !is DisplayData.DisplayType.Text) return null
         return display.copy(
             displayType = display.displayType.copy(
-                backgroundColor = background?.let { 
-                    if (it.matches(Regex("^[0-9A-Fa-f]{2}[0-9A-Fa-f]{6}$"))) it 
+                backgroundColor = background?.let {
+                    if (it.matches(Regex("^[0-9A-Fa-f]{2}[0-9A-Fa-f]{6}$"))) it
                     else null
                 }
             )

@@ -5,17 +5,10 @@ import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 data class DisplayData(
     val displayType: DisplayType,
 ) {
-    data class Offset(
-        val x: Float = 0.0f,
-        val y: Float = -0.3f,
-        val z: Float = 0.0f,
-    )
-
     sealed class DisplayType {
         abstract val scale: Float?
         abstract val billboardMode: BillboardMode?
         abstract val rotation: HologramData.Rotation?
-        abstract val offset: Offset
 
         data class Text(
             val lines: MutableList<String>,
@@ -28,7 +21,6 @@ data class DisplayData(
             val alignment: TextAlignment? = null,
             override val scale: Float? = null,
             override val billboardMode: BillboardMode? = null,
-            override val offset: Offset = Offset(),
         ) : DisplayType()
 
         data class Item(
@@ -37,7 +29,6 @@ data class DisplayData(
             override val rotation: HologramData.Rotation? = null,
             override val scale: Float? = null,
             override val billboardMode: BillboardMode? = null,
-            override val offset: Offset = Offset(),
         ) : DisplayType()
 
         data class Block(
@@ -45,7 +36,6 @@ data class DisplayData(
             override val rotation: HologramData.Rotation? = null,
             override val scale: Float? = null,
             override val billboardMode: BillboardMode? = null,
-            override val offset: Offset = Offset(),
         ) : DisplayType()
     }
 

@@ -14,21 +14,10 @@ data class HologramData(
 ) {
     data class Position(val world: String = "minecraft:world", val x: Float, val y: Float, val z: Float)
     data class Rotation(val pitch: Float = 0f, val yaw: Float = 0f)
+    data class Offset(val x: Float = 0.0f, val y: Float = -0.3f, val z: Float = 0.0f)
 
     data class DisplayLine(
-        val text: String? = null,
-        val item: String? = null,
-        val block: String? = null,
-    ) {
-        init {
-            require(text != null || item != null || block != null) {
-                "DisplayLine must have at least one of: text, item, or block"
-            }
-            require(listOf(text, item, block).count { it != null } == 1) {
-                "DisplayLine must have exactly one of: text, item, or block"
-            }
-        }
-
-        fun getReference(): String = text ?: item ?: block ?: throw IllegalStateException("Invalid display line state")
-    }
+        val displayId: String,
+        val offset: Offset = Offset()
+    )
 }

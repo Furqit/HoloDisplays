@@ -72,11 +72,11 @@ object DeleteCommand {
 
         val affectedHolograms = HologramConfig.getHolograms()
             .filter { (_, hologram) ->
-                hologram.displays.any { it.getReference() == displayId }
+                hologram.displays.any { it.displayId == displayId }
             }
 
         affectedHolograms.forEach { (name, hologram) ->
-            hologram.displays.removeAll { it.getReference() == displayId }
+            hologram.displays.removeAll { it.displayId == displayId }
             HologramConfig.saveHologram(name, hologram)
             ViewerHandler.respawnForAllObservers(name)
         }

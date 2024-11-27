@@ -66,8 +66,13 @@ object AnimationConfig : Config {
     }
 
     fun saveAnimation(name: String, animation: AnimationData) {
+        animations[name] = animation
+        
         runCatching {
-            animationsDir.resolve("$name.json").toFile().outputStream().writer().use { writer ->
+            val file = animationsDir.resolve("$name.json").toFile()
+            file.parentFile.mkdirs()
+            
+            file.outputStream().writer().use { writer ->
                 JsonWriter.json(writer).use { json -> writeAnimation(json, animation) }
             }
         }.onFailure { HoloDisplays.LOGGER.error("Failed to save animation $name", it) }
@@ -78,7 +83,7 @@ object AnimationConfig : Config {
         name("frames").beginArray()
         animation.frames.forEach { value(it.text) }
         endArray()
-        name("interval").value(animation.interval)
+        name("interval").value(animation.interval)  
         endObject()
     }
 

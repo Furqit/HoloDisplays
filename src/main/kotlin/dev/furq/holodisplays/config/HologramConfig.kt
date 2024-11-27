@@ -47,7 +47,7 @@ object HologramConfig : Config {
 
         while (hasNext()) {
             when (nextName()) {
-                "displays" -> displays = parseLines()
+                "displays" -> displays = parseDisplayLines()
                 "position" -> position = parsePosition()
                 "rotation" -> rotation = parseRotation()
                 "scale" -> scale = nextDouble().toFloat()
@@ -62,48 +62,48 @@ object HologramConfig : Config {
         HologramData(displays, position, scale, billboardMode, updateRate, viewRange, rotation)
     }
 
-    private fun JsonReader.parseLines(): MutableList<HologramData.DisplayLine> {
+    private fun JsonReader.parseDisplayLines(): MutableList<HologramData.DisplayLine> {
         val lines = mutableListOf<HologramData.DisplayLine>()
         beginArray()
         while (hasNext()) {
             beginObject()
-            var reference: String? = null
-            var type = "text"
+            var name = ""
+            var offset = HologramData.Offset()
 
             while (hasNext()) {
                 when (nextName()) {
-                    "text" -> {
-                        reference = nextString()
-                        type = "text"
-                    }
-
-                    "item" -> {
-                        reference = nextString()
-                        type = "item"
-                    }
-
-                    "block" -> {
-                        reference = nextString()
-                        type = "block"
-                    }
-
+                    "name" -> name = nextString()
+                    "offset" -> offset = parseOffset()
                     else -> skipValue()
                 }
             }
             endObject()
 
-            reference?.let {
-                val line = when (type) {
-                    "text" -> HologramData.DisplayLine(text = it)
-                    "item" -> HologramData.DisplayLine(item = it)
-                    "block" -> HologramData.DisplayLine(block = it)
-                    else -> null
-                }
-                line?.let { lines.add(line) }
+            if (name.isNotEmpty()) {
+                lines.add(HologramData.DisplayLine(name, offset))
             }
         }
         endArray()
         return lines
+    }
+
+    private fun JsonReader.parseOffset(): HologramData.Offset {
+        var x = 0.0f
+        var y = -0.3f
+        var z = 0.0f
+
+        beginObject()
+        while (hasNext()) {
+            when (nextName()) {
+                "x" -> x = nextDouble().toFloat()
+                "y" -> y = nextDouble().toFloat()
+                "z" -> z = nextDouble().toFloat()
+                else -> skipValue()
+            }
+        }
+        endObject()
+
+        return HologramData.Offset(x, y, z)
     }
 
     private fun JsonReader.parsePosition() = beginObject().run {
@@ -144,13 +144,10 @@ object HologramConfig : Config {
         beginObject()
 
         name("displays").beginArray()
-        hologram.displays.forEach { entity ->
+        hologram.displays.forEach { line ->
             beginObject()
-            when {
-                entity.text != null -> name("text").value(entity.text)
-                entity.item != null -> name("item").value(entity.item)
-                entity.block != null -> name("block").value(entity.block)
-            }
+            name("name").value(line.displayId)
+            name("offset").writeOffset(line.offset)
             endObject()
         }
         endArray()
@@ -174,6 +171,13 @@ object HologramConfig : Config {
         endObject()
     }
 
+    private fun JsonWriter.writeOffset(offset: HologramData.Offset) {
+        beginObject()
+        name("x").value(offset.x)
+        name("y").value(offset.y)
+        name("z").value(offset.z)
+        endObject()
+    }
 
     fun getHologram(name: String): HologramData? = holograms[name]
     fun getHolograms(): Map<String, HologramData> = holograms.toMap()
@@ -186,8 +190,10 @@ object HologramConfig : Config {
     fun saveHologram(name: String, hologram: HologramData) = runCatching {
         holograms[name] = hologram
 
-        hologramsDir.resolve("$name.json").toFile()
-            .outputStream()
+        val file = hologramsDir.resolve("$name.json").toFile()
+        file.parentFile.mkdirs()
+        
+        file.outputStream()
             .writer()
             .use { writer ->
                 JsonWriter.json(writer).use { json ->

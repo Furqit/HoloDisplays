@@ -90,14 +90,13 @@ object ViewerHandler {
 
     private fun showHologramToPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) {
         hologram.displays.forEachIndexed { index, entity ->
-            DisplayConfig.getDisplay(entity.getReference())?.let { display ->
+            DisplayConfig.getDisplay(entity.displayId)?.let { display ->
                 val processedDisplay = when (display.displayType) {
                     is DisplayData.DisplayType.Text -> display.copy(
                         displayType = display.displayType.copy(
                             lines = mutableListOf(display.displayType.lines.joinToString("\n"))
                         )
                     )
-
                     else -> display
                 }
 
@@ -107,9 +106,9 @@ object ViewerHandler {
                     entity,
                     processedDisplay,
                     Vec3d(
-                        hologram.position.x + display.displayType.offset.x.toDouble(),
-                        hologram.position.y + display.displayType.offset.y.toDouble(),
-                        hologram.position.z + display.displayType.offset.z.toDouble()
+                        hologram.position.x.toDouble(),
+                        hologram.position.y.toDouble(),
+                        hologram.position.z.toDouble()
                     ),
                     index,
                     hologram
@@ -120,20 +119,19 @@ object ViewerHandler {
 
     private fun updateHologramForPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) {
         hologram.displays.forEachIndexed { index, entity ->
-            DisplayConfig.getDisplay(entity.getReference())?.let { display ->
+            DisplayConfig.getDisplay(entity.displayId)?.let { display ->
                 val processedDisplay = when (display.displayType) {
                     is DisplayData.DisplayType.Text -> display.copy(
                         displayType = display.displayType.copy(
                             lines = mutableListOf(display.displayType.lines.joinToString("\n"))
                         )
                     )
-
                     else -> display
                 }
                 PacketHandler.updateDisplayMetadata(
                     player,
                     name,
-                    entity.getReference(),
+                    entity.displayId,
                     index,
                     processedDisplay,
                     hologram

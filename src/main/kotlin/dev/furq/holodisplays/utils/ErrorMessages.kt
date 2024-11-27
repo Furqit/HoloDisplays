@@ -17,7 +17,11 @@ object ErrorMessages {
         INVALID_ARGUMENT,
         INVALID_COLOR,
         INVALID_ALIGNMENT,
-        INVALID_DISPLAY_TYPE;
+        INVALID_DISPLAY_TYPE,
+        INVALID_ITEM,
+        INVALID_BLOCK,
+        INVALID_LINE_INDEX,
+        INVALID_OFFSET;
 
         fun getMessage(): String = when (this) {
             HOLOGRAM_EXISTS -> "A hologram with this name already exists"
@@ -32,6 +36,10 @@ object ErrorMessages {
             INVALID_COLOR -> "Invalid color format. Use hex format (e.g., FFFFFF)"
             INVALID_ALIGNMENT -> "Invalid alignment. Must be 'left', 'center', or 'right'"
             INVALID_DISPLAY_TYPE -> "Invalid display type. Must be 'none', 'thirdperson_lefthand', 'thirdperson_righthand', 'firstperson_lefthand', 'firstperson_righthand', 'head', 'gui', 'ground', or 'fixed'"
+            INVALID_ITEM -> "Invalid item ID provided"
+            INVALID_BLOCK -> "Invalid block ID provided"
+            INVALID_LINE_INDEX -> "Invalid line index!"
+            INVALID_OFFSET -> "Invalid offset values!"
         }
     }
 

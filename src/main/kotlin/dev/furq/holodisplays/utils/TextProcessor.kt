@@ -10,7 +10,8 @@ import dev.furq.holodisplays.handlers.PacketHandler
 import dev.furq.holodisplays.handlers.ViewerHandler
 import eu.pb4.placeholders.api.PlaceholderContext
 import eu.pb4.placeholders.api.Placeholders
-import eu.pb4.placeholders.api.TextParserUtils
+import eu.pb4.placeholders.api.parsers.NodeParser
+import eu.pb4.placeholders.api.parsers.TagParser
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
 
@@ -62,14 +63,14 @@ object TextProcessor {
     }
 
     private fun updateHologramAnimations(name: String, hologram: HologramData) {
-        hologram.displays.forEachIndexed { index, entity ->
-            val display = DisplayConfig.getDisplay(entity.getReference()) ?: return@forEachIndexed
+        hologram.displays.forEachIndexed { index, displayId ->
+            val display = DisplayConfig.getDisplay(displayId.displayId) ?: return@forEachIndexed
             if (display.displayType !is DisplayData.DisplayType.Text) return@forEachIndexed
 
             val text = display.displayType.lines.joinToString("\n")
             if (!shouldUpdate(text, hologram.updateRate)) return@forEachIndexed
 
-            updateDisplayForObservers(name, entity.getReference(), index, text)
+            updateDisplayForObservers(name, displayId.displayId, index, text)
         }
     }
 
@@ -107,10 +108,8 @@ object TextProcessor {
 
     fun processText(text: String, player: ServerPlayerEntity): Text {
         val processedAnimations = processAnimations(text)
-        val formattedText = Placeholders.parseText(
-            Text.literal(processedAnimations),
-            PlaceholderContext.of(player)
-        )
-        return TextParserUtils.formatText(formattedText.string)
+        val parser = NodeParser.merge(TagParser.DEFAULT, Placeholders.DEFAULT_PLACEHOLDER_PARSER)
+        val formattedText = parser.parseNode(processedAnimations)
+        return formattedText.toText(PlaceholderContext.of(player))
     }
 }

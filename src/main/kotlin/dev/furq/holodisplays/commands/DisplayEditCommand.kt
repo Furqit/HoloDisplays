@@ -56,17 +56,6 @@ object DisplayEditCommand {
                 .then(CommandManager.literal("reset")
                     .executes { context -> executeResetCommonProperty(context, "rotation") })
         )
-        .then(
-            CommandManager.literal("offset")
-                .then(
-                    CommandManager.argument("x", FloatArgumentType.floatArg())
-                        .then(
-                            CommandManager.argument("y", FloatArgumentType.floatArg())
-                                .then(CommandManager.argument("z", FloatArgumentType.floatArg())
-                                    .executes { context -> executeOffset(context) })
-                        )
-                )
-        )
         .then(CommandManager.literal("text")
             .then(
                 CommandManager.literal("line")
@@ -310,28 +299,6 @@ object DisplayEditCommand {
         return 1
     }
 
-    private fun executeOffset(context: CommandContext<ServerCommandSource>): Int {
-        val name = StringArgumentType.getString(context, "name")
-        if (!DisplayConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        val offset = HologramProperty.Offset(
-            DisplayData.Offset(
-                FloatArgumentType.getFloat(context, "x"),
-                FloatArgumentType.getFloat(context, "y"),
-                FloatArgumentType.getFloat(context, "z")
-            )
-        )
-
-        DisplayHandler.updateDisplayProperty(name, offset)
-        playSuccessSound(context.source)
-        EditMenu.showDisplay(context.source, name)
-        return 1
-    }
-
     private fun executeResetCommonProperty(context: CommandContext<ServerCommandSource>, property: String): Int {
         val name = StringArgumentType.getString(context, "name")
         if (!DisplayConfig.exists(name)) {
@@ -470,7 +437,7 @@ object DisplayEditCommand {
             "firstperson_lefthand", "firstperson_righthand", "head",
             "gui", "ground", "fixed"
         )
-        
+
         if (!validTypes.contains(displayType)) {
             ErrorMessages.sendError(context.source, ErrorType.INVALID_DISPLAY_TYPE)
             playErrorSound(context.source)

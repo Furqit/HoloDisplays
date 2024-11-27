@@ -59,7 +59,6 @@ object DisplayConfig : Config {
         var alignment: DisplayData.TextAlignment? = null
         var scale: Float? = null
         var billboardMode: BillboardMode? = null
-        var offset = DisplayData.Offset()
 
         while (hasNext()) {
             when (nextName()) {
@@ -73,7 +72,6 @@ object DisplayConfig : Config {
                 "alignment" -> alignment = DisplayData.TextAlignment.valueOf(nextString().uppercase())
                 "scale" -> scale = nextDouble().toFloat()
                 "billboardMode" -> billboardMode = BillboardMode.valueOf(nextString().uppercase())
-                "offset" -> offset = parseOffset()
                 else -> skipValue()
             }
         }
@@ -88,8 +86,7 @@ object DisplayConfig : Config {
             seeThrough = seeThrough,
             alignment = alignment,
             scale = scale,
-            billboardMode = billboardMode,
-            offset = offset
+            billboardMode = billboardMode
         )
     }
 
@@ -99,7 +96,6 @@ object DisplayConfig : Config {
         var scale: Float? = null
         var billboardMode: BillboardMode? = null
         var displayType = "ground"
-        var offset = DisplayData.Offset()
 
         while (hasNext()) {
             when (nextName()) {
@@ -108,7 +104,6 @@ object DisplayConfig : Config {
                 "rotation" -> rotation = parseRotation()
                 "scale" -> scale = nextDouble().toFloat()
                 "billboardMode" -> billboardMode = BillboardMode.valueOf(nextString().uppercase())
-                "offset" -> offset = parseOffset()
                 else -> skipValue()
             }
         }
@@ -118,8 +113,7 @@ object DisplayConfig : Config {
             itemDisplayType = displayType,
             rotation = rotation,
             scale = scale,
-            billboardMode = billboardMode,
-            offset = offset
+            billboardMode = billboardMode
         )
     }
 
@@ -128,7 +122,6 @@ object DisplayConfig : Config {
         var rotation: HologramData.Rotation? = null
         var scale: Float? = null
         var billboardMode: BillboardMode? = null
-        var offset = DisplayData.Offset()
 
         while (hasNext()) {
             when (nextName()) {
@@ -136,7 +129,6 @@ object DisplayConfig : Config {
                 "rotation" -> rotation = parseRotation()
                 "scale" -> scale = nextDouble().toFloat()
                 "billboardMode" -> billboardMode = BillboardMode.valueOf(nextString().uppercase())
-                "offset" -> offset = parseOffset()
                 else -> skipValue()
             }
         }
@@ -145,8 +137,7 @@ object DisplayConfig : Config {
             id = id,
             rotation = rotation,
             scale = scale,
-            billboardMode = billboardMode,
-            offset = offset
+            billboardMode = billboardMode
         )
     }
 
@@ -199,11 +190,6 @@ object DisplayConfig : Config {
                 type.shadow?.let { name("shadow").value(it) }
                 type.seeThrough?.let { name("seeThrough").value(it) }
                 type.alignment?.let { name("alignment").value(it.name) }
-                name("offset").beginObject()
-                name("x").value(type.offset.x)
-                name("y").value(type.offset.y)
-                name("z").value(type.offset.z)
-                endObject()
             }
 
             is DisplayData.DisplayType.Item -> {
@@ -218,11 +204,6 @@ object DisplayConfig : Config {
                 }
                 type.scale?.let { name("scale").value(it) }
                 type.billboardMode?.let { name("billboardMode").value(it.name) }
-                name("offset").beginObject()
-                name("x").value(type.offset.x)
-                name("y").value(type.offset.y)
-                name("z").value(type.offset.z)
-                endObject()
             }
 
             is DisplayData.DisplayType.Block -> {
@@ -236,32 +217,10 @@ object DisplayConfig : Config {
                 }
                 type.scale?.let { name("scale").value(it) }
                 type.billboardMode?.let { name("billboardMode").value(it.name) }
-                name("offset").beginObject()
-                name("x").value(type.offset.x)
-                name("y").value(type.offset.y)
-                name("z").value(type.offset.z)
-                endObject()
             }
         }
 
         endObject()
-    }
-
-    private fun JsonReader.parseOffset() = beginObject().run {
-        var x = 0.0f
-        var y = 0.0f
-        var z = 0.0f
-
-        while (hasNext()) {
-            when (nextName()) {
-                "x" -> x = nextDouble().toFloat()
-                "y" -> y = nextDouble().toFloat()
-                "z" -> z = nextDouble().toFloat()
-                else -> skipValue()
-            }
-        }
-        endObject()
-        DisplayData.Offset(x, y, z)
     }
 
     private fun loadDisplays() {
@@ -287,7 +246,10 @@ object DisplayConfig : Config {
         displays[name] = display
 
         runCatching {
-            displaysDir.resolve("$name.json").toFile().outputStream().writer().use { writer ->
+            val file = displaysDir.resolve("$name.json").toFile()
+            file.parentFile.mkdirs()
+            
+            file.outputStream().writer().use { writer ->
                 JsonWriter.json(writer).use { json -> json.writeDisplay(display) }
             }
         }.onFailure { HoloDisplays.LOGGER.error("Failed to save display $name", it) }

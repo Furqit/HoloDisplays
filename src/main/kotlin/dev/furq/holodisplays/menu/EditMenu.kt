@@ -73,19 +73,14 @@ data object EditMenu : LineEditMenu() {
         source.sendFeedback({ Text.literal("") }, false)
         showSectionHeader(source, "Displays")
 
-        hologram.displays.forEachIndexed { index, entity ->
-            val (icon, displayName) = when {
-                entity.text != null -> "✎" to "Text: ${entity.text}"
-                entity.item != null -> "✦" to "Item: ${entity.item}"
-                entity.block != null -> "■" to "Block: ${entity.block}"
-                else -> "?" to "Unknown"
-            }
-
-            val editCommand = when {
-                entity.text != null -> "/holo edit display ${entity.text}"
-                entity.item != null -> "/holo edit display ${entity.item}"
-                entity.block != null -> "/holo edit display ${entity.block}"
-                else -> ""
+        hologram.displays.forEachIndexed { index, line ->
+            val display = DisplayConfig.getDisplay(line.displayId)
+            
+            val (icon, displayName) = when (display?.displayType) {
+                is DisplayData.DisplayType.Text -> "✎" to "Text: ${line.displayId}"
+                is DisplayData.DisplayType.Item -> "✦" to "Item: ${line.displayId}"
+                is DisplayData.DisplayType.Block -> "■" to "Block: ${line.displayId}"
+                null -> "?" to "Unknown"
             }
 
             source.sendFeedback({
@@ -100,26 +95,54 @@ data object EditMenu : LineEditMenu() {
                             .formatted(Formatting.WHITE)
                     )
                     .append(Text.literal(" "))
-                    .append(createRunButton("Edit", editCommand, Formatting.GREEN))
+                    .append(createRunButton("Edit", "/holo edit display ${line.displayId}", Formatting.GREEN))
                     .append(Text.literal(" "))
                     .append(createRunButton("Remove", "/holo line $name remove $index", Formatting.RED))
+            }, false)
+
+            source.sendFeedback({
+                Text.literal("│   ")
+                    .formatted(Formatting.GRAY)
+                    .append(
+                        Text.literal("• ")
+                            .formatted(Formatting.GREEN)
+                    )
+                    .append(
+                        Text.literal("Offset: ")
+                            .formatted(Formatting.GRAY)
+                    )
+                    .append(
+                        Text.literal("${line.offset.x}, ${line.offset.y}, ${line.offset.z}")
+                            .formatted(Formatting.WHITE)
+                    )
+                    .append(Text.literal(" "))
+                    .append(createButton("Edit", "/holo line $name offset $index ", Formatting.GREEN))
             }, false)
         }
 
         source.sendFeedback({
             Text.literal("│ ")
                 .formatted(Formatting.GRAY)
-                .append(createButton("Add Existing", "/holo line $name add ", Formatting.GREEN))
-                .append(Text.literal(" "))
                 .append(
-                    Text.literal("or Create New: ")
+                    Text.literal("Add Existing: ")
                         .formatted(Formatting.GRAY)
                 )
-                .append(createButton("Text", "/holo create display text ", Formatting.YELLOW))
+                .append(createButton("Add", "/holo line $name add ", Formatting.GREEN))
                 .append(Text.literal(" "))
-                .append(createButton("Item", "/holo create display item ", Formatting.YELLOW))
+        }, false)
+
+        source.sendFeedback({
+            Text.literal("│ ")
+                .formatted(Formatting.GRAY)
+                .append(
+                    Text.literal("Create New: ")
+                        .formatted(Formatting.GRAY)
+                )
+                .append(createButton("Text", "/holo create display $name text ", Formatting.YELLOW))
                 .append(Text.literal(" "))
-                .append(createButton("Block", "/holo create display block ", Formatting.YELLOW))
+                .append(createButton("Item", "/holo create display $name item ", Formatting.YELLOW))
+                .append(Text.literal(" "))
+                .append(createButton("Block", "/holo create display $name block ", Formatting.YELLOW))
         }, false)
 
         showSectionFooter(source)

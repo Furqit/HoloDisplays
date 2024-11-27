@@ -29,7 +29,6 @@ object HandlerUtils {
         data class Shadow(val value: Boolean?) : HologramProperty()
         data class SeeThrough(val value: Boolean?) : HologramProperty()
         data class TextAlignment(val value: DisplayData.TextAlignment?) : HologramProperty()
-        data class Offset(val offset: DisplayData.Offset) : HologramProperty()
         data class ItemDisplayType(val value: String) : HologramProperty()
     }
 

@@ -18,8 +18,10 @@ import dev.furq.holodisplays.utils.CommandUtils.playSuccessSound
 import dev.furq.holodisplays.utils.ErrorMessages
 import dev.furq.holodisplays.utils.ErrorMessages.ErrorType
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
+import net.minecraft.registry.Registries
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.util.Identifier
 
 object CreateCommand {
     fun register(): LiteralArgumentBuilder<ServerCommandSource> = CommandManager.literal("create")
@@ -29,69 +31,66 @@ object CreateCommand {
                     .executes { context -> executeHologram(context) })
         )
         .then(CommandManager.literal("display")
-            .then(
-                CommandManager.literal("text")
-                    .then(
-                        CommandManager.argument("name", StringArgumentType.word())
-                            .then(
-                                CommandManager.argument("content", StringArgumentType.greedyString())
-                                    .executes { context -> executeText(context, null) }
-                            )
-                            .then(
-                                CommandManager.argument("hologramName", StringArgumentType.word())
-                                    .then(
-                                        CommandManager.argument("content", StringArgumentType.greedyString())
-                                            .executes { context ->
-                                                executeText(
-                                                    context,
-                                                    StringArgumentType.getString(context, "hologramName")
-                                                )
-                                            }
-                                    )
-                            )
+            .then(CommandManager.literal("text")
+                .then(CommandManager.argument("name", StringArgumentType.word())
+                    .then(CommandManager.argument("content", StringArgumentType.greedyString())
+                        .executes { context -> executeText(context, null) }
                     )
+                )
             )
             .then(CommandManager.literal("item")
                 .then(CommandManager.argument("name", StringArgumentType.word())
-                    .then(
-                        CommandManager.argument("itemId", StringArgumentType.greedyString())
-                            .suggests { _, builder -> CommandUtils.suggestItemIds(builder) }
-                            .executes { context -> executeItem(context, null) }
-                    )
-                    .then(
-                        CommandManager.argument("hologramName", StringArgumentType.word())
-                            .then(
-                                CommandManager.argument("itemId", StringArgumentType.greedyString())
-                                    .suggests { _, builder -> CommandUtils.suggestItemIds(builder) }
-                                    .executes { context ->
-                                        executeItem(
-                                            context,
-                                            StringArgumentType.getString(context, "hologramName")
-                                        )
-                                    }
-                            )
+                    .then(CommandManager.argument("itemId", StringArgumentType.greedyString())
+                        .suggests { _, builder -> CommandUtils.suggestItemIds(builder) }
+                        .executes { context -> executeItem(context, null) }
                     )
                 )
             )
             .then(CommandManager.literal("block")
                 .then(CommandManager.argument("name", StringArgumentType.word())
-                    .then(
-                        CommandManager.argument("blockId", StringArgumentType.greedyString())
-                            .suggests { _, builder -> CommandUtils.suggestBlockIds(builder) }
-                            .executes { context -> executeBlock(context, null) }
+                    .then(CommandManager.argument("blockId", StringArgumentType.greedyString())
+                        .suggests { _, builder -> CommandUtils.suggestBlockIds(builder) }
+                        .executes { context -> executeBlock(context, null) }
                     )
-                    .then(
-                        CommandManager.argument("hologramName", StringArgumentType.word())
-                            .then(
-                                CommandManager.argument("blockId", StringArgumentType.greedyString())
-                                    .suggests { _, builder -> CommandUtils.suggestBlockIds(builder) }
-                                    .executes { context ->
-                                        executeBlock(
-                                            context,
-                                            StringArgumentType.getString(context, "hologramName")
-                                        )
-                                    }
-                            )
+                )
+            )
+            .then(CommandManager.argument("hologramName", StringArgumentType.word())
+                .then(CommandManager.literal("text")
+                    .then(CommandManager.argument("name", StringArgumentType.word())
+                        .then(CommandManager.argument("content", StringArgumentType.greedyString())
+                            .executes { context ->
+                                executeText(
+                                    context,
+                                    StringArgumentType.getString(context, "hologramName")
+                                )
+                            }
+                        )
+                    )
+                )
+                .then(CommandManager.literal("item")
+                    .then(CommandManager.argument("name", StringArgumentType.word())
+                        .then(CommandManager.argument("itemId", StringArgumentType.greedyString())
+                            .suggests { _, builder -> CommandUtils.suggestItemIds(builder) }
+                            .executes { context ->
+                                executeItem(
+                                    context,
+                                    StringArgumentType.getString(context, "hologramName")
+                                )
+                            }
+                        )
+                    )
+                )
+                .then(CommandManager.literal("block")
+                    .then(CommandManager.argument("name", StringArgumentType.word())
+                        .then(CommandManager.argument("blockId", StringArgumentType.greedyString())
+                            .suggests { _, builder -> CommandUtils.suggestBlockIds(builder) }
+                            .executes { context ->
+                                executeBlock(
+                                    context,
+                                    StringArgumentType.getString(context, "hologramName")
+                                )
+                            }
+                        )
                     )
                 )
             )
@@ -109,7 +108,7 @@ object CreateCommand {
         val defaultDisplayName = "${name}_text"
         val defaultDisplay = DisplayData(
             displayType = DisplayData.DisplayType.Text(
-                lines = mutableListOf("<gradient:#ffffff:#008000>Hello, %player:name%")
+                lines = mutableListOf("<gr #ffffff #008000>Hello, %player:name%</gr>")
             )
         )
 
@@ -148,6 +147,12 @@ object CreateCommand {
             return 0
         }
 
+        if (hologramName != null && !HologramConfig.exists(hologramName)) {
+            ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
         val display = DisplayData(
             displayType = DisplayData.DisplayType.Text(
                 lines = mutableListOf(content)
@@ -155,13 +160,15 @@ object CreateCommand {
         )
 
         DisplayConfig.saveDisplay(name, display)
-
-        hologramName?.let { hName ->
-            HologramHandler.addLine(hName, HologramData.DisplayLine(name))
+        
+        if (hologramName != null) {
+            HologramHandler.addLine(hologramName, name)
+            EditMenu.showHologram(context.source, hologramName)
+        } else {
+            TextEditMenu.show(context.source, name)
         }
 
         playSuccessSound(context.source)
-        TextEditMenu.show(context.source, name)
         return 1
     }
 
@@ -175,7 +182,21 @@ object CreateCommand {
             return 0
         }
 
+        if (hologramName != null && !HologramConfig.exists(hologramName)) {
+            ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
         val fullItemId = if (!itemId.contains(":")) "minecraft:$itemId" else itemId
+        val itemIdentifier = Identifier.tryParse(fullItemId)
+
+        if (itemIdentifier == null || !Registries.ITEM.containsId(itemIdentifier)) {
+            ErrorMessages.sendError(context.source, ErrorType.INVALID_ITEM)
+            playErrorSound(context.source)
+            return 0
+        }
+
         val display = DisplayData(
             displayType = DisplayData.DisplayType.Item(
                 id = fullItemId
@@ -184,12 +205,14 @@ object CreateCommand {
 
         DisplayConfig.saveDisplay(name, display)
 
-        hologramName?.let { hName ->
-            HologramHandler.addLine(hName, HologramData.DisplayLine(name))
+        if (hologramName != null) {
+            HologramHandler.addLine(hologramName, name)
+            EditMenu.showHologram(context.source, hologramName)
+        } else {
+            ItemEditMenu.show(context.source, name)
         }
 
         playSuccessSound(context.source)
-        ItemEditMenu.show(context.source, name)
         return 1
     }
 
@@ -203,7 +226,21 @@ object CreateCommand {
             return 0
         }
 
+        if (hologramName != null && !HologramConfig.exists(hologramName)) {
+            ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
         val fullBlockId = if (!blockId.contains(":")) "minecraft:$blockId" else blockId
+        val blockIdentifier = Identifier.tryParse(fullBlockId)
+
+        if (blockIdentifier == null || !Registries.BLOCK.containsId(blockIdentifier)) {
+            ErrorMessages.sendError(context.source, ErrorType.INVALID_BLOCK)
+            playErrorSound(context.source)
+            return 0
+        }
+
         val display = DisplayData(
             displayType = DisplayData.DisplayType.Block(
                 id = fullBlockId
@@ -212,12 +249,14 @@ object CreateCommand {
 
         DisplayConfig.saveDisplay(name, display)
 
-        hologramName?.let { hName ->
-            HologramHandler.addLine(hName, HologramData.DisplayLine(name))
+        if (hologramName != null) {
+            HologramHandler.addLine(hologramName, name)
+            EditMenu.showHologram(context.source, hologramName)
+        } else {
+            BlockEditMenu.show(context.source, name)
         }
 
         playSuccessSound(context.source)
-        BlockEditMenu.show(context.source, name)
         return 1
     }
 }

@@ -46,12 +46,12 @@ object PacketHandler {
         hologram: HologramData,
     ) {
         val entityId = getNextEntityId()
-        val displayRef = "${line.getReference()}:$lineIndex"
+        val displayRef = "${line.displayId}:$lineIndex"
 
         entityIds.getOrPut(player.uuid) { mutableMapOf() }
             .getOrPut(name) { mutableMapOf() }[displayRef] = entityId
 
-        val offsetPosition = position.add(display.displayType.offset.run { Vec3d(x.toDouble(), y.toDouble(), z.toDouble()) })
+        val offsetPosition = position.add(line.offset.run { Vec3d(x.toDouble(), y.toDouble(), z.toDouble()) })
 
         player.networkHandler.run {
             sendPacket(createSpawnPacket(entityId, offsetPosition, display.displayType, hologram))
