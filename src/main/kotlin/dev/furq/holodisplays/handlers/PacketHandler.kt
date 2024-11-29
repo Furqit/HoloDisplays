@@ -20,6 +20,7 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.Vec3d
+import org.joml.Quaternionf
 import org.joml.Vector3f
 import java.util.*
 import kotlin.experimental.or
@@ -51,11 +52,9 @@ object PacketHandler {
         entityIds.getOrPut(player.uuid) { mutableMapOf() }
             .getOrPut(name) { mutableMapOf() }[displayRef] = entityId
 
-        val offsetPosition = position.add(line.offset.run { Vec3d(x.toDouble(), y.toDouble(), z.toDouble()) })
-
         player.networkHandler.run {
-            sendPacket(createSpawnPacket(entityId, offsetPosition, display.displayType, hologram))
-            sendDisplayMetadata(player, entityId, display, hologram)
+            sendPacket(createSpawnPacket(entityId, position, display.displayType))
+            sendDisplayMetadata(player, entityId, display, hologram, line)
         }
     }
 
@@ -116,7 +115,6 @@ object PacketHandler {
         entityId: Int,
         position: Vec3d,
         displayType: DisplayData.DisplayType,
-        hologram: HologramData,
     ): EntitySpawnS2CPacket {
         val entityType = when (displayType) {
             is DisplayData.DisplayType.Text -> EntityType.TEXT_DISPLAY
@@ -124,14 +122,11 @@ object PacketHandler {
             is DisplayData.DisplayType.Block -> EntityType.BLOCK_DISPLAY
         }
 
-        val pitch = displayType.rotation?.pitch ?: hologram.rotation.pitch
-        val yaw = displayType.rotation?.yaw ?: hologram.rotation.yaw
-
         return EntitySpawnS2CPacket(
             entityId,
             UUID.randomUUID(),
             position.x, position.y, position.z,
-            pitch, yaw,
+            0f, 0f,
             entityType,
             0,
             Vec3d.ZERO,
@@ -144,14 +139,15 @@ object PacketHandler {
         entityId: Int,
         display: DisplayData,
         hologram: HologramData,
+        line: HologramData.DisplayLine,
     ) {
         val entries = mutableListOf<DataTracker.SerializedEntry<*>>().apply {
-            addCommonProperties(display, hologram)
+            addCommonProperties(display, hologram, line)
 
             when (val type = display.displayType) {
                 is DisplayData.DisplayType.Text -> addTextProperties(type, player)
                 is DisplayData.DisplayType.Item -> addItemProperties(type)
-                is DisplayData.DisplayType.Block -> addBlockProperties(type, hologram)
+                is DisplayData.DisplayType.Block -> addBlockProperties(type)
             }
         }
 
@@ -161,15 +157,46 @@ object PacketHandler {
     private fun MutableList<DataTracker.SerializedEntry<*>>.addCommonProperties(
         display: DisplayData,
         hologram: HologramData,
+        line: HologramData.DisplayLine,
     ) {
-        val scale = (display.displayType.scale ?: hologram.scale).let { s -> Vector3f(s, s, s) }
-        add(createEntry(DisplayEntityAccessor.getScale(), scale))
+        val scale = display.displayType.scale ?: hologram.scale
+        add(createEntry(DisplayEntityAccessor.getScale(), Vector3f(scale.x, scale.y, scale.z)))
+
         add(
             createEntry(
                 DisplayEntityAccessor.getBillboard(),
                 (display.displayType.billboardMode ?: hologram.billboardMode).ordinal.toByte()
             )
         )
+
+        val rotation = display.displayType.rotation ?: hologram.rotation
+        add(
+            createEntry(
+                DisplayEntityAccessor.getLeftRotation(),
+                Quaternionf()
+                    .rotateX(Math.toRadians(rotation.pitch.toDouble()).toFloat())
+                    .rotateY(Math.toRadians(rotation.yaw.toDouble()).toFloat())
+                    .rotateZ(Math.toRadians(rotation.roll.toDouble()).toFloat())
+            )
+        )
+
+        val translation = calculateTranslation(display.displayType, line.offset, scale)
+        add(createEntry(DisplayEntityAccessor.getTranslation(), translation))
+    }
+
+    private fun calculateTranslation(
+        displayType: DisplayData.DisplayType,
+        offset: HologramData.Offset,
+        scale: HologramData.Scale,
+    ): Vector3f {
+        val baseOffset = Vector3f(offset.x, offset.y, offset.z)
+        return if (displayType is DisplayData.DisplayType.Block) {
+            baseOffset.add(
+                -0.5f * scale.x,
+                -0.5f * scale.y,
+                -0.5f * scale.z
+            )
+        } else baseOffset
     }
 
     private fun MutableList<DataTracker.SerializedEntry<*>>.addTextProperties(
@@ -235,19 +262,9 @@ object PacketHandler {
 
     private fun MutableList<DataTracker.SerializedEntry<*>>.addBlockProperties(
         display: DisplayData.DisplayType.Block,
-        hologram: HologramData,
     ) {
         val block = Registries.BLOCK.get(Identifier.tryParse(display.id) ?: return)
         add(createEntry(BlockDisplayEntityAccessor.getBlockState(), block.defaultState))
-
-        val scale = display.scale ?: hologram.scale
-        val translation = -0.5f * scale
-        add(
-            createEntry(
-                DisplayEntityAccessor.getTranslation(),
-                Vector3f(translation, translation, translation)
-            )
-        )
     }
 
     private fun <T> createEntry(
@@ -264,13 +281,15 @@ object PacketHandler {
         display: DisplayData,
         hologram: HologramData,
     ) {
+        val line = hologram.displays.getOrNull(lineIndex) ?: return
+
         val entries = mutableListOf<DataTracker.SerializedEntry<*>>().apply {
-            addCommonProperties(display, hologram)
+            addCommonProperties(display, hologram, line)
 
             when (val type = display.displayType) {
                 is DisplayData.DisplayType.Text -> addTextProperties(type, player)
                 is DisplayData.DisplayType.Item -> addItemProperties(type)
-                is DisplayData.DisplayType.Block -> addBlockProperties(type, hologram)
+                is DisplayData.DisplayType.Block -> addBlockProperties(type)
             }
         }
         updateEntityMetadata(player, name, displayRef, lineIndex, entries)

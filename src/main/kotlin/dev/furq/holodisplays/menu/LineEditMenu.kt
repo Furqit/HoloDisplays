@@ -99,7 +99,10 @@ sealed class LineEditMenu {
         source.sendFeedback({
             Text.literal("  • Scale: ")
                 .formatted(Formatting.GRAY)
-                .append(Text.literal("${displayType.scale}").formatted(Formatting.WHITE))
+                .append(
+                    Text.literal("${displayType.scale?.x}, ${displayType.scale?.y}, ${displayType.scale?.z}")
+                        .formatted(Formatting.WHITE)
+                )
                 .append(Text.literal(" "))
                 .append(createButton("Edit", "/holo edit display $name scale ", Formatting.GREEN))
                 .append(Text.literal(" "))
@@ -120,7 +123,7 @@ sealed class LineEditMenu {
             Text.literal("  • Rotation: ")
                 .formatted(Formatting.GRAY)
                 .append(
-                    Text.literal("${displayType.rotation?.pitch}, ${displayType.rotation?.yaw}")
+                    Text.literal("${displayType.rotation?.pitch}, ${displayType.rotation?.yaw}, ${displayType.rotation?.roll}")
                         .formatted(Formatting.WHITE)
                 )
                 .append(Text.literal(" "))

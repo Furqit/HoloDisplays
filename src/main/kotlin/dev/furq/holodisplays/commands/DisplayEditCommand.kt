@@ -33,8 +33,14 @@ object DisplayEditCommand {
         .executes { context -> executeOpenMenu(context) }
         .then(
             CommandManager.literal("scale")
-                .then(CommandManager.argument("value", FloatArgumentType.floatArg(0.1f, 10f))
-                    .executes { context -> executeCommonProperty(context, "scale") })
+                .then(
+                    CommandManager.argument("x", FloatArgumentType.floatArg(0.1f))
+                        .then(CommandManager.argument("y", FloatArgumentType.floatArg(0.1f))
+                            .then(CommandManager.argument("z", FloatArgumentType.floatArg(0.1f))
+                                .executes { context -> executeCommonProperty(context, "scale") }
+                            )
+                        )
+                )
                 .then(CommandManager.literal("reset")
                     .executes { context -> executeResetCommonProperty(context, "scale") })
         )
@@ -53,7 +59,10 @@ object DisplayEditCommand {
                 .then(
                     CommandManager.argument("pitch", FloatArgumentType.floatArg(-180f, 180f))
                         .then(CommandManager.argument("yaw", FloatArgumentType.floatArg(-180f, 180f))
-                            .executes { context -> executeRotation(context) })
+                            .then(CommandManager.argument("roll", FloatArgumentType.floatArg(-180f, 180f))
+                                .executes { context -> executeRotation(context) }
+                            )
+                        )
                 )
                 .then(CommandManager.literal("reset")
                     .executes { context -> executeResetCommonProperty(context, "rotation") })
@@ -161,13 +170,15 @@ object DisplayEditCommand {
         val display = DisplayConfig.getDisplay(name) ?: return 0
         val property = when (propertyName) {
             "scale" -> {
-                val value = FloatArgumentType.getFloat(context, "value")
-                if (value !in 0.1f..10f) {
+                val x = FloatArgumentType.getFloat(context, "x")
+                val y = FloatArgumentType.getFloat(context, "y")
+                val z = FloatArgumentType.getFloat(context, "z")
+                if (x < 0.1f || y < 0.1f || z < 0.1f) {
                     ErrorMessages.sendError(context.source, ErrorType.INVALID_SCALE)
                     playErrorSound(context.source)
                     return 0
                 }
-                HologramProperty.Scale(value)
+                HologramProperty.Scale(HologramData.Scale(x, y, z))
             }
 
             "billboard" -> {
@@ -306,7 +317,8 @@ object DisplayEditCommand {
         val rotation = HologramProperty.Rotation(
             HologramData.Rotation(
                 FloatArgumentType.getFloat(context, "pitch"),
-                FloatArgumentType.getFloat(context, "yaw")
+                FloatArgumentType.getFloat(context, "yaw"),
+                FloatArgumentType.getFloat(context, "roll")
             )
         )
 

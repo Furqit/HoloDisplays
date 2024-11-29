@@ -124,8 +124,8 @@ object CreateCommand {
                 String.format("%.3f", pos.y).toFloat(),
                 String.format("%.3f", pos.z).toFloat()
             ),
-            rotation = HologramData.Rotation(0f, 0f),
-            scale = 1f,
+            rotation = HologramData.Rotation(),
+            scale = HologramData.Scale(),
             billboardMode = BillboardMode.CENTER,
             updateRate = 20,
             viewRange = 16.0,

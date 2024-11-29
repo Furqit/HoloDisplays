@@ -51,7 +51,7 @@ object DisplayHandler {
             else -> null
         }
 
-    private fun updateScale(display: DisplayData, scale: Float?) = display.copy(
+    private fun updateScale(display: DisplayData, scale: HologramData.Scale?) = display.copy(
         displayType = when (val type = display.displayType) {
             is DisplayData.DisplayType.Text -> type.copy(scale = scale)
             is DisplayData.DisplayType.Item -> type.copy(scale = scale)

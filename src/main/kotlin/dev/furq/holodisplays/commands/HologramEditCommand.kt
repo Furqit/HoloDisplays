@@ -26,8 +26,14 @@ object HologramEditCommand {
         .executes { context -> executeOpenMenu(context) }
         .then(
             CommandManager.literal("scale")
-                .then(CommandManager.argument("value", FloatArgumentType.floatArg(0.1f))
-                    .executes { context -> executeScale(context) })
+                .then(
+                    CommandManager.argument("x", FloatArgumentType.floatArg(0.1f))
+                        .then(CommandManager.argument("y", FloatArgumentType.floatArg(0.1f))
+                            .then(CommandManager.argument("z", FloatArgumentType.floatArg(0.1f))
+                                .executes { context -> executeScale(context) }
+                            )
+                        )
+                )
         )
         .then(CommandManager.literal("billboard")
             .then(CommandManager.argument("mode", StringArgumentType.word())
@@ -52,7 +58,10 @@ object HologramEditCommand {
                 .then(
                     CommandManager.argument("pitch", FloatArgumentType.floatArg(-180f, 180f))
                         .then(CommandManager.argument("yaw", FloatArgumentType.floatArg(-180f, 180f))
-                            .executes { context -> executeRotation(context) })
+                            .then(CommandManager.argument("roll", FloatArgumentType.floatArg(-180f, 180f))
+                                .executes { context -> executeRotation(context) }
+                            )
+                        )
                 )
         )
 
@@ -79,14 +88,17 @@ object HologramEditCommand {
             return 0
         }
 
-        val value = FloatArgumentType.getFloat(context, "value")
-        if (value < 0.1f) {
+        val x = FloatArgumentType.getFloat(context, "x")
+        val y = FloatArgumentType.getFloat(context, "y")
+        val z = FloatArgumentType.getFloat(context, "z")
+
+        if (x < 0.1f || y < 0.1f || z < 0.1f) {
             ErrorMessages.sendError(context.source, ErrorType.INVALID_SCALE)
             playErrorSound(context.source)
             return 0
         }
 
-        HologramHandler.updateHologramProperty(name, HologramProperty.Scale(value))
+        HologramHandler.updateHologramProperty(name, HologramProperty.Scale(HologramData.Scale(x, y, z)))
         playSuccessSound(context.source)
         EditMenu.showHologram(context.source, name)
         return 1
@@ -164,10 +176,11 @@ object HologramEditCommand {
 
         val pitch = FloatArgumentType.getFloat(context, "pitch")
         val yaw = FloatArgumentType.getFloat(context, "yaw")
+        val roll = FloatArgumentType.getFloat(context, "roll")
 
         HologramHandler.updateHologramProperty(
             name,
-            HologramProperty.Rotation(HologramData.Rotation(pitch, yaw))
+            HologramProperty.Rotation(HologramData.Rotation(pitch, yaw, roll))
         )
         playSuccessSound(context.source)
         EditMenu.showHologram(context.source, name)

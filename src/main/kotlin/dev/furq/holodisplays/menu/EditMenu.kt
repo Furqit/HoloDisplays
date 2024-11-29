@@ -58,14 +58,19 @@ data object EditMenu : LineEditMenu() {
                 .append(createRunButton("Here", "/holo move $name", Formatting.YELLOW))
         }, false)
 
-        showProperty(source, "Scale", hologram.scale.toString(), "/holo edit hologram $name scale ", "default")
+        showProperty(
+            source,
+            "Scale",
+            "${hologram.scale.x}, ${hologram.scale.y}, ${hologram.scale.z}",
+            "/holo edit hologram $name scale "
+        )
         showProperty(source, "Billboard", hologram.billboardMode.toString(), "/holo edit hologram $name billboard ")
         showProperty(source, "Update Rate", "${hologram.updateRate} ticks", "/holo edit hologram $name updateRate ")
         showProperty(source, "View Range", "${hologram.viewRange} blocks", "/holo edit hologram $name viewRange ")
         showProperty(
             source,
             "Rotation",
-            "${hologram.rotation.pitch}, ${hologram.rotation.yaw}",
+            "${hologram.rotation.pitch}, ${hologram.rotation.yaw}, ${hologram.rotation.roll}",
             "/holo edit hologram $name rotation "
         )
 

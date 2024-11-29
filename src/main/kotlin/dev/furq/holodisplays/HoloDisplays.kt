@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory
 class HoloDisplays : ModInitializer {
     companion object {
         const val MOD_ID = "HoloDisplays"
-        const val VERSION = "0.1.3"
+        const val VERSION = "0.1.5"
         val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
 
         var SERVER: MinecraftServer? = null

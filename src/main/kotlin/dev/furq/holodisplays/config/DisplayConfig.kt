@@ -57,20 +57,20 @@ object DisplayConfig : Config {
         var shadow: Boolean? = null
         var seeThrough: Boolean? = null
         var alignment: DisplayData.TextAlignment? = null
-        var scale: Float? = null
+        var scale: HologramData.Scale? = null
         var billboardMode: BillboardMode? = null
 
         while (hasNext()) {
             when (nextName()) {
                 "lines" -> lines = parseStringArray().toMutableList()
-                "rotation" -> rotation = parseRotation()
+                "rotation" -> rotation = parseRotationArray()
+                "scale" -> scale = parseScaleArray()
                 "lineWidth" -> lineWidth = nextInt()
                 "backgroundColor" -> backgroundColor = nextString()
                 "textOpacity" -> textOpacity = nextInt()
                 "shadow" -> shadow = nextBoolean()
                 "seeThrough" -> seeThrough = nextBoolean()
                 "alignment" -> alignment = DisplayData.TextAlignment.valueOf(nextString().uppercase())
-                "scale" -> scale = nextDouble().toFloat()
                 "billboardMode" -> billboardMode = BillboardMode.valueOf(nextString().uppercase())
                 else -> skipValue()
             }
@@ -90,10 +90,28 @@ object DisplayConfig : Config {
         )
     }
 
+    private fun JsonReader.parseRotationArray(): HologramData.Rotation {
+        beginArray()
+        val pitch = nextDouble().toFloat()
+        val yaw = nextDouble().toFloat()
+        val roll = nextDouble().toFloat()
+        endArray()
+        return HologramData.Rotation(pitch, yaw, roll)
+    }
+
+    private fun JsonReader.parseScaleArray(): HologramData.Scale {
+        beginArray()
+        val x = nextDouble().toFloat()
+        val y = nextDouble().toFloat()
+        val z = nextDouble().toFloat()
+        endArray()
+        return HologramData.Scale(x, y, z)
+    }
+
     private fun JsonReader.parseItemDisplay(): DisplayData.DisplayType.Item {
         var id = ""
         var rotation: HologramData.Rotation? = null
-        var scale: Float? = null
+        var scale: HologramData.Scale? = null
         var billboardMode: BillboardMode? = null
         var displayType = "ground"
 
@@ -101,8 +119,8 @@ object DisplayConfig : Config {
             when (nextName()) {
                 "id" -> id = nextString()
                 "displayType" -> displayType = nextString().lowercase()
-                "rotation" -> rotation = parseRotation()
-                "scale" -> scale = nextDouble().toFloat()
+                "rotation" -> rotation = parseRotationArray()
+                "scale" -> scale = parseScaleArray()
                 "billboardMode" -> billboardMode = BillboardMode.valueOf(nextString().uppercase())
                 else -> skipValue()
             }
@@ -120,14 +138,14 @@ object DisplayConfig : Config {
     private fun JsonReader.parseBlockDisplay(): DisplayData.DisplayType.Block {
         var id = ""
         var rotation: HologramData.Rotation? = null
-        var scale: Float? = null
+        var scale: HologramData.Scale? = null
         var billboardMode: BillboardMode? = null
 
         while (hasNext()) {
             when (nextName()) {
                 "id" -> id = nextString()
-                "rotation" -> rotation = parseRotation()
-                "scale" -> scale = nextDouble().toFloat()
+                "rotation" -> rotation = parseRotationArray()
+                "scale" -> scale = parseScaleArray()
                 "billboardMode" -> billboardMode = BillboardMode.valueOf(nextString().uppercase())
                 else -> skipValue()
             }
@@ -151,22 +169,6 @@ object DisplayConfig : Config {
         return result.toList()
     }
 
-
-    private fun JsonReader.parseRotation() = beginObject().run {
-        var pitch = 0.0f
-        var yaw = 0.0f
-
-        while (hasNext()) {
-            when (nextName()) {
-                "pitch" -> pitch = nextDouble().toFloat()
-                "yaw" -> yaw = nextDouble().toFloat()
-                else -> skipValue()
-            }
-        }
-        endObject()
-        HologramData.Rotation(pitch, yaw)
-    }
-
     private fun JsonWriter.writeDisplay(display: DisplayData) {
         beginObject()
 
@@ -176,13 +178,23 @@ object DisplayConfig : Config {
                 name("lines").beginArray()
                 type.lines.forEach { value(it) }
                 endArray()
+
                 type.rotation?.let { rotation ->
-                    name("rotation").beginObject()
-                    name("pitch").value(rotation.pitch)
-                    name("yaw").value(rotation.yaw)
-                    endObject()
+                    name("rotation").beginArray()
+                    value(rotation.pitch)
+                    value(rotation.yaw)
+                    value(rotation.roll)
+                    endArray()
                 }
-                type.scale?.let { name("scale").value(it) }
+
+                type.scale?.let { scale ->
+                    name("scale").beginArray()
+                    value(scale.x)
+                    value(scale.y)
+                    value(scale.z)
+                    endArray()
+                }
+
                 type.billboardMode?.let { name("billboardMode").value(it.name) }
                 type.lineWidth?.let { name("lineWidth").value(it) }
                 type.backgroundColor?.let { name("backgroundColor").value(it) }
@@ -196,26 +208,46 @@ object DisplayConfig : Config {
                 name("type").value("item")
                 name("id").value(type.id)
                 name("displayType").value(type.itemDisplayType)
+
                 type.rotation?.let { rotation ->
-                    name("rotation").beginObject()
-                    name("pitch").value(rotation.pitch)
-                    name("yaw").value(rotation.yaw)
-                    endObject()
+                    name("rotation").beginArray()
+                    value(rotation.pitch)
+                    value(rotation.yaw)
+                    value(rotation.roll)
+                    endArray()
                 }
-                type.scale?.let { name("scale").value(it) }
+
+                type.scale?.let { scale ->
+                    name("scale").beginArray()
+                    value(scale.x)
+                    value(scale.y)
+                    value(scale.z)
+                    endArray()
+                }
+
                 type.billboardMode?.let { name("billboardMode").value(it.name) }
             }
 
             is DisplayData.DisplayType.Block -> {
                 name("type").value("block")
                 name("id").value(type.id)
+
                 type.rotation?.let { rotation ->
-                    name("rotation").beginObject()
-                    name("pitch").value(rotation.pitch)
-                    name("yaw").value(rotation.yaw)
-                    endObject()
+                    name("rotation").beginArray()
+                    value(rotation.pitch)
+                    value(rotation.yaw)
+                    value(rotation.roll)
+                    endArray()
                 }
-                type.scale?.let { name("scale").value(it) }
+
+                type.scale?.let { scale ->
+                    name("scale").beginArray()
+                    value(scale.x)
+                    value(scale.y)
+                    value(scale.z)
+                    endArray()
+                }
+
                 type.billboardMode?.let { name("billboardMode").value(it.name) }
             }
         }

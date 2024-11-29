@@ -38,9 +38,9 @@ object HologramConfig : Config {
     private fun parseHologramData(json: JsonReader): HologramData = json.run {
         beginObject()
         var displays = mutableListOf<HologramData.DisplayLine>()
-        var position = HologramData.Position(x = 0.0f, y = 0.0f, z = 0.0f)
-        var rotation = HologramData.Rotation(0.0f, 0.0f)
-        var scale = 1f
+        var position = HologramData.Position()
+        var rotation = HologramData.Rotation()
+        var scale = HologramData.Scale()
         var billboardMode = BillboardMode.CENTER
         var updateRate = 20
         var viewRange = 16.0
@@ -49,8 +49,8 @@ object HologramConfig : Config {
             when (nextName()) {
                 "displays" -> displays = parseDisplayLines()
                 "position" -> position = parsePosition()
-                "rotation" -> rotation = parseRotation()
-                "scale" -> scale = nextDouble().toFloat()
+                "rotation" -> rotation = parseRotationArray()
+                "scale" -> scale = parseScaleArray()
                 "billboardMode" -> billboardMode = BillboardMode.valueOf(nextString().uppercase())
                 "updateRate" -> updateRate = nextInt()
                 "viewRange" -> viewRange = nextDouble()
@@ -73,7 +73,7 @@ object HologramConfig : Config {
             while (hasNext()) {
                 when (nextName()) {
                     "name" -> name = nextString()
-                    "offset" -> offset = parseOffset()
+                    "offset" -> offset = parseOffsetArray()
                     else -> skipValue()
                 }
             }
@@ -87,22 +87,12 @@ object HologramConfig : Config {
         return lines
     }
 
-    private fun JsonReader.parseOffset(): HologramData.Offset {
-        var x = 0.0f
-        var y = -0.3f
-        var z = 0.0f
-
-        beginObject()
-        while (hasNext()) {
-            when (nextName()) {
-                "x" -> x = nextDouble().toFloat()
-                "y" -> y = nextDouble().toFloat()
-                "z" -> z = nextDouble().toFloat()
-                else -> skipValue()
-            }
-        }
-        endObject()
-
+    private fun JsonReader.parseOffsetArray(): HologramData.Offset {
+        beginArray()
+        val x = nextDouble().toFloat()
+        val y = nextDouble().toFloat()
+        val z = nextDouble().toFloat()
+        endArray()
         return HologramData.Offset(x, y, z)
     }
 
@@ -125,19 +115,22 @@ object HologramConfig : Config {
         HologramData.Position(world, x, y, z)
     }
 
-    private fun JsonReader.parseRotation() = beginObject().run {
-        var pitch = 0.0f
-        var yaw = 0.0f
+    private fun JsonReader.parseRotationArray(): HologramData.Rotation {
+        beginArray()
+        val pitch = nextDouble().toFloat()
+        val yaw = nextDouble().toFloat()
+        val roll = nextDouble().toFloat()
+        endArray()
+        return HologramData.Rotation(pitch, yaw, roll)
+    }
 
-        while (hasNext()) {
-            when (nextName()) {
-                "pitch" -> pitch = nextDouble().toFloat()
-                "yaw" -> yaw = nextDouble().toFloat()
-                else -> skipValue()
-            }
-        }
-        endObject()
-        HologramData.Rotation(pitch, yaw)
+    private fun JsonReader.parseScaleArray(): HologramData.Scale {
+        beginArray()
+        val x = nextDouble().toFloat()
+        val y = nextDouble().toFloat()
+        val z = nextDouble().toFloat()
+        endArray()
+        return HologramData.Scale(x, y, z)
     }
 
     private fun writeHologram(json: JsonWriter, hologram: HologramData) = json.run {
@@ -147,7 +140,11 @@ object HologramConfig : Config {
         hologram.displays.forEach { line ->
             beginObject()
             name("name").value(line.displayId)
-            name("offset").writeOffset(line.offset)
+            name("offset").beginArray()
+            value(line.offset.x)
+            value(line.offset.y)
+            value(line.offset.z)
+            endArray()
             endObject()
         }
         endArray()
@@ -159,23 +156,21 @@ object HologramConfig : Config {
         name("z").value(hologram.position.z)
         endObject()
 
-        name("rotation").beginObject()
-        name("pitch").value(hologram.rotation.pitch)
-        name("yaw").value(hologram.rotation.yaw)
-        endObject()
+        name("rotation").beginArray()
+        value(hologram.rotation.pitch)
+        value(hologram.rotation.yaw)
+        value(hologram.rotation.roll)
+        endArray()
 
-        name("scale").value(hologram.scale)
+        name("scale").beginArray()
+        value(hologram.scale.x)
+        value(hologram.scale.y)
+        value(hologram.scale.z)
+        endArray()
+
         name("billboardMode").value(hologram.billboardMode.name)
         name("updateRate").value(hologram.updateRate)
         name("viewRange").value(hologram.viewRange)
-        endObject()
-    }
-
-    private fun JsonWriter.writeOffset(offset: HologramData.Offset) {
-        beginObject()
-        name("x").value(offset.x)
-        name("y").value(offset.y)
-        name("z").value(offset.z)
         endObject()
     }
 

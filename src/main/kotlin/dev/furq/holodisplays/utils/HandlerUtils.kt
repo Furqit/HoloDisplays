@@ -13,7 +13,7 @@ object HandlerUtils {
     private val worldCache = mutableMapOf<String, World?>()
 
     sealed class HologramProperty {
-        data class Scale(val value: Float?) : HologramProperty()
+        data class Scale(val value: HologramData.Scale?) : HologramProperty()
         data class BillboardMode(val mode: DisplayEntity.BillboardMode?) : HologramProperty()
         data class ViewRange(val value: Double?) : HologramProperty()
         data class UpdateRate(val value: Int?) : HologramProperty()
