@@ -67,11 +67,11 @@ object AnimationConfig : Config {
 
     fun saveAnimation(name: String, animation: AnimationData) {
         animations[name] = animation
-        
+
         runCatching {
             val file = animationsDir.resolve("$name.json").toFile()
             file.parentFile.mkdirs()
-            
+
             file.outputStream().writer().use { writer ->
                 JsonWriter.json(writer).use { json -> writeAnimation(json, animation) }
             }
@@ -83,7 +83,7 @@ object AnimationConfig : Config {
         name("frames").beginArray()
         animation.frames.forEach { value(it.text) }
         endArray()
-        name("interval").value(animation.interval)  
+        name("interval").value(animation.interval)
         endObject()
     }
 

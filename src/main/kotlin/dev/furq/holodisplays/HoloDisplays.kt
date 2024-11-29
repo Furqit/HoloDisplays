@@ -21,7 +21,7 @@ class HoloDisplays : ModInitializer {
         const val MOD_ID = "HoloDisplays"
         const val VERSION = "0.1.3"
         val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
-        
+
         var SERVER: MinecraftServer? = null
             private set
     }

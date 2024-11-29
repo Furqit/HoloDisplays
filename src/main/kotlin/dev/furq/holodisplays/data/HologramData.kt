@@ -1,6 +1,5 @@
 package dev.furq.holodisplays.data
 
-import dev.furq.holodisplays.config.DisplayConfig
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 
 data class HologramData(
@@ -18,6 +17,6 @@ data class HologramData(
 
     data class DisplayLine(
         val displayId: String,
-        val offset: Offset = Offset()
+        val offset: Offset = Offset(),
     )
 }

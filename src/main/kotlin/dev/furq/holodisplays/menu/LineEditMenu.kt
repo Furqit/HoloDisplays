@@ -7,7 +7,6 @@ import net.minecraft.text.HoverEvent
 import net.minecraft.text.Style
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
-import kotlin.math.abs
 
 sealed class LineEditMenu {
     protected fun addEmptyLines(source: ServerCommandSource, count: Int = 3) {

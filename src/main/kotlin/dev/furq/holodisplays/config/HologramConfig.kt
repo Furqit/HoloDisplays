@@ -192,7 +192,7 @@ object HologramConfig : Config {
 
         val file = hologramsDir.resolve("$name.json").toFile()
         file.parentFile.mkdirs()
-        
+
         file.outputStream()
             .writer()
             .use { writer ->

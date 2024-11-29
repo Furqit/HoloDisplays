@@ -12,6 +12,7 @@ public interface ItemDisplayEntityAccessor {
     static TrackedData<ItemStack> getItem() {
         throw new AssertionError();
     }
+
     @Accessor("ITEM_DISPLAY")
     static TrackedData<Byte> getItemDisplay() {
         throw new AssertionError();

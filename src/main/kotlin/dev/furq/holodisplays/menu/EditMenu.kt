@@ -75,7 +75,7 @@ data object EditMenu : LineEditMenu() {
 
         hologram.displays.forEachIndexed { index, line ->
             val display = DisplayConfig.getDisplay(line.displayId)
-            
+
             val (icon, displayName) = when (display?.displayType) {
                 is DisplayData.DisplayType.Text -> "✎" to "Text: ${line.displayId}"
                 is DisplayData.DisplayType.Item -> "✦" to "Item: ${line.displayId}"

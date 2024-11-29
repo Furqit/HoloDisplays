@@ -248,7 +248,7 @@ object DisplayConfig : Config {
         runCatching {
             val file = displaysDir.resolve("$name.json").toFile()
             file.parentFile.mkdirs()
-            
+
             file.outputStream().writer().use { writer ->
                 JsonWriter.json(writer).use { json -> json.writeDisplay(display) }
             }

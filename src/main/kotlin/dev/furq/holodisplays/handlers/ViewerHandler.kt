@@ -97,6 +97,7 @@ object ViewerHandler {
                             lines = mutableListOf(display.displayType.lines.joinToString("\n"))
                         )
                     )
+
                     else -> display
                 }
 
@@ -126,6 +127,7 @@ object ViewerHandler {
                             lines = mutableListOf(display.displayType.lines.joinToString("\n"))
                         )
                     )
+
                     else -> display
                 }
                 PacketHandler.updateDisplayMetadata(

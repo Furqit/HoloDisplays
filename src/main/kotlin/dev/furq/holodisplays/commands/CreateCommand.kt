@@ -160,7 +160,7 @@ object CreateCommand {
         )
 
         DisplayConfig.saveDisplay(name, display)
-        
+
         if (hologramName != null) {
             HologramHandler.addLine(hologramName, name)
             EditMenu.showHologram(context.source, hologramName)
