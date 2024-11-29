@@ -21,8 +21,10 @@ import dev.furq.holodisplays.utils.ErrorMessages
 import dev.furq.holodisplays.utils.ErrorMessages.ErrorType
 import dev.furq.holodisplays.utils.HandlerUtils.HologramProperty
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
+import net.minecraft.registry.Registries
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.util.Identifier
 
 object DisplayEditCommand {
     fun register(): ArgumentBuilder<ServerCommandSource, *> = CommandManager
@@ -252,6 +254,13 @@ object DisplayEditCommand {
 
         val itemId = StringArgumentType.getString(context, "itemId")
         val fullItemId = if (!itemId.contains(":")) "minecraft:$itemId" else itemId
+        val itemIdentifier = Identifier.tryParse(fullItemId)
+
+        if (itemIdentifier == null || !Registries.ITEM.containsId(itemIdentifier)) {
+            ErrorMessages.sendError(context.source, ErrorType.INVALID_ITEM)
+            playErrorSound(context.source)
+            return 0
+        }
         val property = HologramProperty.ItemId(fullItemId)
 
         DisplayHandler.updateDisplayProperty(name, property)
@@ -270,6 +279,14 @@ object DisplayEditCommand {
 
         val blockId = StringArgumentType.getString(context, "blockId")
         val fullBlockId = if (!blockId.contains(":")) "minecraft:$blockId" else blockId
+        val blockIdentifier = Identifier.tryParse(fullBlockId)
+
+        if (blockIdentifier == null || !Registries.BLOCK.containsId(blockIdentifier)) {
+            ErrorMessages.sendError(context.source, ErrorType.INVALID_BLOCK)
+            playErrorSound(context.source)
+            return 0
+        }
+
         val property = HologramProperty.BlockId(fullBlockId)
 
         DisplayHandler.updateDisplayProperty(name, property)
