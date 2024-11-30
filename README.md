@@ -4,7 +4,7 @@
 
 A powerful packet-based hologram system built with Minecraft's display entities for better performance and flexibility.
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.20--1.21.3-green.svg)](https://minecraft.net)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.20.6--1.21.4-green.svg)](https://minecraft.net)
 [![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue.svg)](https://fabricmc.net)
 [![License](https://img.shields.io/badge/License-GPL%203.0-red.svg)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Furq's%20Den-7289DA?logo=discord&logoColor=white)](https://discord.gg/XhZzmvzPDV)
