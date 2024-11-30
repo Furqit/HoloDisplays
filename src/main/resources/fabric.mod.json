@@ -1,13 +1,16 @@
 {
   "schemaVersion": 1,
-  "id": "holodisplays",
+  "id": "${id}",
   "version": "${version}",
-  "name": "HoloDisplays",
+  "name": "${name}",
   "description": "A powerful packet-based hologram system built with Minecraft's display entities for better performance and flexibility.",
   "authors": [
     "Furq"
   ],
-  "contact": {},
+  "contact": {
+    "homepage": "https://modrinth.com/mod/holodisplays",
+    "sources": "https://github.com/Furq07/HoloDisplays"
+  },
   "license": "GPL-3.0",
   "environment": "server",
   "entrypoints": {
@@ -19,9 +22,10 @@
     "holodisplays.mixins.json"
   ],
   "depends": {
-    "fabricloader": "*",
+    "fabricloader": ">=0.15",
+    "minecraft": "${mcdep}",
+    "fabric-api": "*",
     "fabric-language-kotlin": "*",
-    "fabric": "*",
-    "minecraft": ">=1.20 <=1.21.3"
+    "placeholder-api": "*"
   }
 }
