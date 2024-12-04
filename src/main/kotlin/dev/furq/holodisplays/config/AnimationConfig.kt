@@ -6,25 +6,21 @@ import org.quiltmc.parsers.json.JsonReader
 import org.quiltmc.parsers.json.JsonWriter
 import java.io.FileFilter
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
 
 object AnimationConfig : Config {
-    private lateinit var animationsDir: Path
+    override lateinit var configDir: Path
     private val animations = mutableMapOf<String, AnimationData>()
     private val jsonFilter = FileFilter { it.extension == "json" }
 
-    override fun init(configDir: Path) {
-        animationsDir = configDir.resolve("animations").also {
-            if (!it.exists()) it.createDirectories()
-        }
-        loadAnimations()
+    override fun init(baseDir: Path) {
+        configDir = baseDir.resolve("animations")
+        super.init(baseDir)
     }
 
-    private fun loadAnimations() {
+    override fun reload() {
         animations.clear()
         runCatching {
-            animationsDir.toFile().listFiles(jsonFilter)?.forEach { file ->
+            configDir.toFile().listFiles(jsonFilter)?.forEach { file ->
                 JsonReader.json5(file.inputStream().reader()).use { json ->
                     animations[file.nameWithoutExtension] = parseAnimationData(json)
                 }
@@ -32,44 +28,37 @@ object AnimationConfig : Config {
         }.onFailure { HoloDisplays.LOGGER.error("Failed to load animations", it) }
     }
 
-    private fun parseAnimationData(json: JsonReader) = json.run {
+    private fun parseAnimationData(json: JsonReader): AnimationData = json.run {
+        val builder = AnimationData.Builder()
         beginObject()
-        var frames = emptyList<AnimationData.Frame>()
-        var interval = 20
 
         while (hasNext()) {
             when (nextName()) {
-                "frames" -> frames = parseFrames()
-                "interval" -> interval = nextInt()
+                "frames" -> {
+                    beginArray()
+                    while (hasNext()) {
+                        builder.addFrame(nextString())
+                    }
+                    endArray()
+                }
+
+                "interval" -> builder.interval = nextInt()
                 else -> skipValue()
             }
         }
         endObject()
-        AnimationData(frames, interval)
-    }
 
-    private fun JsonReader.parseFrames(): List<AnimationData.Frame> {
-        val frames = mutableListOf<AnimationData.Frame>()
-        beginArray()
-        while (hasNext()) {
-            frames += AnimationData.Frame(nextString())
-        }
-        endArray()
-        return frames
+        builder.build()
     }
 
     fun getAnimation(name: String) = animations[name]
     fun getAnimations() = animations.toMap()
 
-    override fun reload() {
-        loadAnimations()
-    }
-
-    fun saveAnimation(name: String, animation: AnimationData) {
+    private fun saveAnimation(name: String, animation: AnimationData) {
         animations[name] = animation
 
         runCatching {
-            val file = animationsDir.resolve("$name.json").toFile()
+            val file = configDir.resolve("$name.json").toFile()
             file.parentFile.mkdirs()
 
             file.outputStream().writer().use { writer ->
@@ -89,7 +78,7 @@ object AnimationConfig : Config {
 
     fun deleteAnimation(name: String) {
         runCatching {
-            animationsDir.resolve("$name.json").toFile().let {
+            configDir.resolve("$name.json").toFile().let {
                 if (it.exists()) it.delete()
             }
             animations.remove(name)

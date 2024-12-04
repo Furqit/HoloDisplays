@@ -5,7 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import dev.furq.holodisplays.config.HologramConfig
-import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.data.common.Position
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.menu.EditMenu
 import dev.furq.holodisplays.utils.CommandUtils
@@ -13,7 +13,6 @@ import dev.furq.holodisplays.utils.CommandUtils.playErrorSound
 import dev.furq.holodisplays.utils.CommandUtils.playSuccessSound
 import dev.furq.holodisplays.utils.ErrorMessages
 import dev.furq.holodisplays.utils.ErrorMessages.ErrorType
-import dev.furq.holodisplays.utils.HandlerUtils.HologramProperty
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.util.math.Vec3d
@@ -53,16 +52,14 @@ object MoveCommand {
             context.source.position
         }
 
-        val property = HologramProperty.Position(
-            HologramData.Position(
-                worldId,
-                String.format("%.3f", pos.x).toFloat(),
-                String.format("%.3f", pos.y).toFloat(),
-                String.format("%.3f", pos.z).toFloat()
-            ),
+        val position = Position(
+            worldId,
+            String.format("%.3f", pos.x).toFloat(),
+            String.format("%.3f", pos.y).toFloat(),
+            String.format("%.3f", pos.z).toFloat()
         )
 
-        HologramHandler.updateHologramProperty(name, property)
+        HologramHandler.updateHologramProperty(name, HologramHandler.HologramProperty.Position(position))
         playSuccessSound(context.source)
         EditMenu.showHologram(context.source, name)
         return 1

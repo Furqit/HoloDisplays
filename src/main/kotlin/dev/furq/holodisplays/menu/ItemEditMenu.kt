@@ -1,17 +1,15 @@
 package dev.furq.holodisplays.menu
 
 import dev.furq.holodisplays.config.DisplayConfig
-import dev.furq.holodisplays.data.DisplayData
+import dev.furq.holodisplays.data.display.ItemDisplay
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 data object ItemEditMenu : LineEditMenu() {
     fun show(source: ServerCommandSource, name: String) {
-        val display = DisplayConfig.getDisplay(name)?.displayType as? DisplayData.DisplayType.Item ?: run {
-            source.sendError(Text.literal("⚠ Display not found").formatted(Formatting.RED))
-            return
-        }
+        val display = DisplayConfig.getDisplay(name)!!
+        val itemDisplay = display.display as ItemDisplay
 
         addEmptyLines(source)
         showHeader(source)
@@ -48,7 +46,7 @@ data object ItemEditMenu : LineEditMenu() {
                         .formatted(Formatting.GRAY)
                 )
                 .append(
-                    Text.literal(display.id)
+                    Text.literal(itemDisplay.id)
                         .formatted(Formatting.WHITE)
                 )
                 .append(Text.literal(" "))
@@ -66,7 +64,7 @@ data object ItemEditMenu : LineEditMenu() {
                         .formatted(Formatting.GRAY)
                 )
                 .append(
-                    Text.literal(display.itemDisplayType)
+                    Text.literal(itemDisplay.itemDisplayType)
                         .formatted(Formatting.WHITE)
                 )
                 .append(Text.literal(" "))
@@ -76,7 +74,7 @@ data object ItemEditMenu : LineEditMenu() {
         showSectionFooter(source)
         source.sendFeedback({ Text.literal("") }, false)
         showSectionHeader(source, "Common Properties")
-        showCommonProperties(source, name, display)
+        showCommonProperties(source, name, itemDisplay)
         showSectionFooter(source)
 
         showFooter(source, "/holo list display")

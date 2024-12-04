@@ -1,17 +1,15 @@
 package dev.furq.holodisplays.menu
 
 import dev.furq.holodisplays.config.DisplayConfig
-import dev.furq.holodisplays.data.DisplayData
+import dev.furq.holodisplays.data.display.BlockDisplay
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 data object BlockEditMenu : LineEditMenu() {
     fun show(source: ServerCommandSource, name: String) {
-        val display = DisplayConfig.getDisplay(name)?.displayType as? DisplayData.DisplayType.Block ?: run {
-            source.sendError(Text.literal("⚠ Display not found").formatted(Formatting.RED))
-            return
-        }
+        val display = DisplayConfig.getDisplay(name)!!
+        val blockDisplay = display.display as BlockDisplay
 
         addEmptyLines(source)
         showHeader(source)
@@ -48,7 +46,7 @@ data object BlockEditMenu : LineEditMenu() {
                         .formatted(Formatting.GRAY)
                 )
                 .append(
-                    Text.literal(display.id)
+                    Text.literal(blockDisplay.id)
                         .formatted(Formatting.WHITE)
                 )
                 .append(Text.literal(" "))
@@ -58,7 +56,7 @@ data object BlockEditMenu : LineEditMenu() {
 
         source.sendFeedback({ Text.literal("") }, false)
         showSectionHeader(source, "Common Properties")
-        showCommonProperties(source, name, display)
+        showCommonProperties(source, name, blockDisplay)
         showSectionFooter(source)
         showFooter(source, "/holo list display")
     }

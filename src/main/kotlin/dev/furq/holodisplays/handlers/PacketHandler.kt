@@ -2,6 +2,12 @@ package dev.furq.holodisplays.handlers
 
 import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.data.common.Offset
+import dev.furq.holodisplays.data.common.Scale
+import dev.furq.holodisplays.data.display.BaseDisplay
+import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.data.display.ItemDisplay
+import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.mixin.BlockDisplayEntityAccessor
 import dev.furq.holodisplays.mixin.DisplayEntityAccessor
 import dev.furq.holodisplays.mixin.ItemDisplayEntityAccessor
@@ -41,7 +47,7 @@ object PacketHandler {
         player: ServerPlayerEntity,
         name: String,
         line: HologramData.DisplayLine,
-        display: DisplayData,
+        displayData: DisplayData,
         position: Vec3d,
         lineIndex: Int,
         hologram: HologramData,
@@ -53,8 +59,8 @@ object PacketHandler {
             .getOrPut(name) { mutableMapOf() }[displayRef] = entityId
 
         player.networkHandler.run {
-            sendPacket(createSpawnPacket(entityId, position, display.displayType))
-            sendDisplayMetadata(player, entityId, display, hologram, line)
+            sendPacket(createSpawnPacket(entityId, position, displayData.display))
+            sendDisplayMetadata(player, entityId, displayData, hologram, line)
         }
     }
 
@@ -89,15 +95,6 @@ object PacketHandler {
     private fun getNextEntityId(): Int =
         recycledIds.firstOrNull()?.also { recycledIds.remove(it) } ?: --nextEntityId
 
-    fun getEntityId(
-        player: ServerPlayerEntity,
-        name: String,
-        displayRef: String,
-        lineIndex: Int,
-    ): Int? {
-        return entityIds[player.uuid]?.get(name)?.get("$displayRef:$lineIndex")
-    }
-
     fun updateTextMetadata(
         player: ServerPlayerEntity,
         name: String,
@@ -114,12 +111,13 @@ object PacketHandler {
     private fun createSpawnPacket(
         entityId: Int,
         position: Vec3d,
-        displayType: DisplayData.DisplayType,
+        display: BaseDisplay,
     ): EntitySpawnS2CPacket {
-        val entityType = when (displayType) {
-            is DisplayData.DisplayType.Text -> EntityType.TEXT_DISPLAY
-            is DisplayData.DisplayType.Item -> EntityType.ITEM_DISPLAY
-            is DisplayData.DisplayType.Block -> EntityType.BLOCK_DISPLAY
+        val entityType = when (display) {
+            is TextDisplay -> EntityType.TEXT_DISPLAY
+            is ItemDisplay -> EntityType.ITEM_DISPLAY
+            is BlockDisplay -> EntityType.BLOCK_DISPLAY
+            else -> throw IllegalArgumentException("Unknown display type")
         }
 
         return EntitySpawnS2CPacket(
@@ -137,17 +135,17 @@ object PacketHandler {
     private fun sendDisplayMetadata(
         player: ServerPlayerEntity,
         entityId: Int,
-        display: DisplayData,
+        displayData: DisplayData,
         hologram: HologramData,
         line: HologramData.DisplayLine,
     ) {
         val entries = mutableListOf<DataTracker.SerializedEntry<*>>().apply {
-            addCommonProperties(display, hologram, line)
+            addCommonProperties(displayData.display, hologram, line)
 
-            when (val type = display.displayType) {
-                is DisplayData.DisplayType.Text -> addTextProperties(type, player)
-                is DisplayData.DisplayType.Item -> addItemProperties(type)
-                is DisplayData.DisplayType.Block -> addBlockProperties(type)
+            when (val display = displayData.display) {
+                is TextDisplay -> addTextProperties(display, player)
+                is ItemDisplay -> addItemProperties(display)
+                is BlockDisplay -> addBlockProperties(display)
             }
         }
 
@@ -155,21 +153,21 @@ object PacketHandler {
     }
 
     private fun MutableList<DataTracker.SerializedEntry<*>>.addCommonProperties(
-        display: DisplayData,
+        display: BaseDisplay,
         hologram: HologramData,
         line: HologramData.DisplayLine,
     ) {
-        val scale = display.displayType.scale ?: hologram.scale
+        val scale = display.scale ?: hologram.scale
         add(createEntry(DisplayEntityAccessor.getScale(), Vector3f(scale.x, scale.y, scale.z)))
 
         add(
             createEntry(
                 DisplayEntityAccessor.getBillboard(),
-                (display.displayType.billboardMode ?: hologram.billboardMode).ordinal.toByte()
+                (display.billboardMode ?: hologram.billboardMode).ordinal.toByte()
             )
         )
 
-        val rotation = display.displayType.rotation ?: hologram.rotation
+        val rotation = display.rotation ?: hologram.rotation
         add(
             createEntry(
                 DisplayEntityAccessor.getLeftRotation(),
@@ -180,17 +178,17 @@ object PacketHandler {
             )
         )
 
-        val translation = calculateTranslation(display.displayType, line.offset, scale)
+        val translation = calculateTranslation(display, line.offset, scale)
         add(createEntry(DisplayEntityAccessor.getTranslation(), translation))
     }
 
     private fun calculateTranslation(
-        displayType: DisplayData.DisplayType,
-        offset: HologramData.Offset,
-        scale: HologramData.Scale,
+        display: BaseDisplay,
+        offset: Offset,
+        scale: Scale,
     ): Vector3f {
         val baseOffset = Vector3f(offset.x, offset.y, offset.z)
-        return if (displayType is DisplayData.DisplayType.Block) {
+        return if (display is BlockDisplay) {
             baseOffset.add(
                 -0.5f * scale.x,
                 -0.5f * scale.y,
@@ -200,7 +198,7 @@ object PacketHandler {
     }
 
     private fun MutableList<DataTracker.SerializedEntry<*>>.addTextProperties(
-        display: DisplayData.DisplayType.Text,
+        display: TextDisplay,
         player: ServerPlayerEntity,
     ) {
         val processedText = Text.literal(display.lines.joinToString("\n")).let { text ->
@@ -232,14 +230,14 @@ object PacketHandler {
         if (display.seeThrough == true) flags = flags or TextDisplayEntityAccessor.getSeeThroughFlag()
         if (display.backgroundColor == null) flags = flags or TextDisplayEntityAccessor.getDefaultBackgroundFlag()
         when (display.alignment) {
-            DisplayData.TextAlignment.LEFT -> flags = flags or TextDisplayEntityAccessor.getLeftAlignmentFlag()
-            DisplayData.TextAlignment.RIGHT -> flags = flags or TextDisplayEntityAccessor.getRightAlignmentFlag()
+            TextDisplay.TextAlignment.LEFT -> flags = flags or TextDisplayEntityAccessor.getLeftAlignmentFlag()
+            TextDisplay.TextAlignment.RIGHT -> flags = flags or TextDisplayEntityAccessor.getRightAlignmentFlag()
             else -> {}
         }
         add(createEntry(TextDisplayEntityAccessor.getTextDisplayFlags(), flags))
     }
 
-    private fun MutableList<DataTracker.SerializedEntry<*>>.addItemProperties(display: DisplayData.DisplayType.Item) {
+    private fun MutableList<DataTracker.SerializedEntry<*>>.addItemProperties(display: ItemDisplay) {
         val itemStack = ItemStack(
             Registries.ITEM.get(Identifier.tryParse(display.id) ?: return),
         )
@@ -260,9 +258,7 @@ object PacketHandler {
         add(createEntry(ItemDisplayEntityAccessor.getItemDisplay(), displayType.toByte()))
     }
 
-    private fun MutableList<DataTracker.SerializedEntry<*>>.addBlockProperties(
-        display: DisplayData.DisplayType.Block,
-    ) {
+    private fun MutableList<DataTracker.SerializedEntry<*>>.addBlockProperties(display: BlockDisplay) {
         val block = Registries.BLOCK.get(Identifier.tryParse(display.id) ?: return)
         add(createEntry(BlockDisplayEntityAccessor.getBlockState(), block.defaultState))
     }
@@ -278,18 +274,18 @@ object PacketHandler {
         name: String,
         displayRef: String,
         lineIndex: Int,
-        display: DisplayData,
+        displayData: DisplayData,
         hologram: HologramData,
     ) {
         val line = hologram.displays.getOrNull(lineIndex) ?: return
 
         val entries = mutableListOf<DataTracker.SerializedEntry<*>>().apply {
-            addCommonProperties(display, hologram, line)
+            addCommonProperties(displayData.display, hologram, line)
 
-            when (val type = display.displayType) {
-                is DisplayData.DisplayType.Text -> addTextProperties(type, player)
-                is DisplayData.DisplayType.Item -> addItemProperties(type)
-                is DisplayData.DisplayType.Block -> addBlockProperties(type)
+            when (val display = displayData.display) {
+                is TextDisplay -> addTextProperties(display, player)
+                is ItemDisplay -> addItemProperties(display)
+                is BlockDisplay -> addBlockProperties(display)
             }
         }
         updateEntityMetadata(player, name, displayRef, lineIndex, entries)

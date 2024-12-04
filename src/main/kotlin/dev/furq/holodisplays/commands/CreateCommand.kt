@@ -7,6 +7,12 @@ import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.data.common.Position
+import dev.furq.holodisplays.data.common.Rotation
+import dev.furq.holodisplays.data.common.Scale
+import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.data.display.ItemDisplay
+import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.menu.BlockEditMenu
 import dev.furq.holodisplays.menu.EditMenu
@@ -107,7 +113,7 @@ object CreateCommand {
 
         val defaultDisplayName = "${name}_text"
         val defaultDisplay = DisplayData(
-            displayType = DisplayData.DisplayType.Text(
+            display = TextDisplay(
                 lines = mutableListOf("<gr #ffffff #008000>Hello, %player:name%</gr>")
             )
         )
@@ -118,14 +124,14 @@ object CreateCommand {
         val worldId = context.source.world.registryKey.value.toString()
         val hologram = HologramData(
             displays = mutableListOf(HologramData.DisplayLine(defaultDisplayName)),
-            position = HologramData.Position(
+            position = Position(
                 worldId,
                 String.format("%.3f", pos.x).toFloat(),
                 String.format("%.3f", pos.y).toFloat(),
                 String.format("%.3f", pos.z).toFloat()
             ),
-            rotation = HologramData.Rotation(),
-            scale = HologramData.Scale(),
+            rotation = Rotation(),
+            scale = Scale(),
             billboardMode = BillboardMode.CENTER,
             updateRate = 20,
             viewRange = 16.0,
@@ -154,7 +160,7 @@ object CreateCommand {
         }
 
         val display = DisplayData(
-            displayType = DisplayData.DisplayType.Text(
+            display = TextDisplay(
                 lines = mutableListOf(content)
             )
         )
@@ -162,7 +168,7 @@ object CreateCommand {
         DisplayConfig.saveDisplay(name, display)
 
         if (hologramName != null) {
-            HologramHandler.addLine(hologramName, name)
+            HologramHandler.updateHologramProperty(hologramName, HologramHandler.HologramProperty.AddLine(name))
             EditMenu.showHologram(context.source, hologramName)
         } else {
             TextEditMenu.show(context.source, name)
@@ -198,7 +204,7 @@ object CreateCommand {
         }
 
         val display = DisplayData(
-            displayType = DisplayData.DisplayType.Item(
+            display = ItemDisplay(
                 id = fullItemId
             )
         )
@@ -206,7 +212,7 @@ object CreateCommand {
         DisplayConfig.saveDisplay(name, display)
 
         if (hologramName != null) {
-            HologramHandler.addLine(hologramName, name)
+            HologramHandler.updateHologramProperty(hologramName, HologramHandler.HologramProperty.AddLine(name))
             EditMenu.showHologram(context.source, hologramName)
         } else {
             ItemEditMenu.show(context.source, name)
@@ -242,7 +248,7 @@ object CreateCommand {
         }
 
         val display = DisplayData(
-            displayType = DisplayData.DisplayType.Block(
+            display = BlockDisplay(
                 id = fullBlockId
             )
         )
@@ -250,7 +256,7 @@ object CreateCommand {
         DisplayConfig.saveDisplay(name, display)
 
         if (hologramName != null) {
-            HologramHandler.addLine(hologramName, name)
+            HologramHandler.updateHologramProperty(hologramName, HologramHandler.HologramProperty.AddLine(name))
             EditMenu.showHologram(context.source, hologramName)
         } else {
             BlockEditMenu.show(context.source, name)

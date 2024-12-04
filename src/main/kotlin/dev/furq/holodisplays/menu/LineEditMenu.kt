@@ -1,6 +1,6 @@
 package dev.furq.holodisplays.menu
 
-import dev.furq.holodisplays.data.DisplayData
+import dev.furq.holodisplays.data.display.BaseDisplay
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.text.ClickEvent
 import net.minecraft.text.HoverEvent
@@ -94,7 +94,7 @@ sealed class LineEditMenu {
     protected fun showCommonProperties(
         source: ServerCommandSource,
         name: String,
-        displayType: DisplayData.DisplayType,
+        displayType: BaseDisplay,
     ) {
         source.sendFeedback({
             Text.literal("  • Scale: ")

@@ -2,64 +2,60 @@ package dev.furq.holodisplays.config
 
 import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.data.common.Offset
+import dev.furq.holodisplays.data.common.Position
+import dev.furq.holodisplays.data.common.Rotation
+import dev.furq.holodisplays.data.common.Scale
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import org.quiltmc.parsers.json.JsonReader
 import org.quiltmc.parsers.json.JsonWriter
 import java.io.FileFilter
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
 
 object HologramConfig : Config {
-    private lateinit var hologramsDir: Path
+    override lateinit var configDir: Path
     private val holograms = mutableMapOf<String, HologramData>()
     private val jsonFilter = FileFilter { it.extension == "json" }
 
-    override fun init(configDir: Path) {
-        hologramsDir = configDir.resolve("holograms").also { dir ->
-            if (!dir.exists()) dir.createDirectories()
-        }
-        loadHolograms()
+    override fun init(baseDir: Path) {
+        configDir = baseDir.resolve("holograms")
+        super.init(baseDir)
     }
 
-    private fun loadHolograms() = runCatching {
+    override fun reload() {
         holograms.clear()
-        hologramsDir.toFile()
-            .listFiles(jsonFilter)
-            ?.forEach { file ->
-                JsonReader.json5(file.inputStream().reader()).use { json ->
-                    holograms[file.nameWithoutExtension] = parseHologramData(json)
+        runCatching {
+            configDir.toFile()
+                .listFiles(jsonFilter)
+                ?.forEach { file ->
+                    JsonReader.json5(file.inputStream().reader()).use { json ->
+                        holograms[file.nameWithoutExtension] = parseHologramData(json)
+                    }
                 }
-            }
-    }.onFailure {
-        HoloDisplays.LOGGER.error("Failed to load holograms", it)
+        }.onFailure {
+            HoloDisplays.LOGGER.error("Failed to load holograms", it)
+        }
     }
 
     private fun parseHologramData(json: JsonReader): HologramData = json.run {
+        val builder = HologramData.Builder()
         beginObject()
-        var displays = mutableListOf<HologramData.DisplayLine>()
-        var position = HologramData.Position()
-        var rotation = HologramData.Rotation()
-        var scale = HologramData.Scale()
-        var billboardMode = BillboardMode.CENTER
-        var updateRate = 20
-        var viewRange = 16.0
 
         while (hasNext()) {
             when (nextName()) {
-                "displays" -> displays = parseDisplayLines()
-                "position" -> position = parsePosition()
-                "rotation" -> rotation = parseRotationArray()
-                "scale" -> scale = parseScaleArray()
-                "billboardMode" -> billboardMode = BillboardMode.valueOf(nextString().uppercase())
-                "updateRate" -> updateRate = nextInt()
-                "viewRange" -> viewRange = nextDouble()
+                "displays" -> builder.displays = parseDisplayLines()
+                "position" -> builder.position = parsePosition()
+                "rotation" -> builder.rotation = parseRotationArray()
+                "scale" -> builder.scale = parseScaleArray()
+                "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
+                "updateRate" -> builder.updateRate = nextInt()
+                "viewRange" -> builder.viewRange = nextDouble()
                 else -> skipValue()
             }
         }
         endObject()
 
-        HologramData(displays, position, scale, billboardMode, updateRate, viewRange, rotation)
+        builder.build()
     }
 
     private fun JsonReader.parseDisplayLines(): MutableList<HologramData.DisplayLine> {
@@ -68,7 +64,7 @@ object HologramConfig : Config {
         while (hasNext()) {
             beginObject()
             var name = ""
-            var offset = HologramData.Offset()
+            var offset = Offset()
 
             while (hasNext()) {
                 when (nextName()) {
@@ -87,17 +83,17 @@ object HologramConfig : Config {
         return lines
     }
 
-    private fun JsonReader.parseOffsetArray(): HologramData.Offset {
+    private fun JsonReader.parseOffsetArray(): Offset {
         beginArray()
         val x = nextDouble().toFloat()
         val y = nextDouble().toFloat()
         val z = nextDouble().toFloat()
         endArray()
-        return HologramData.Offset(x, y, z)
+        return Offset(x, y, z)
     }
 
-    private fun JsonReader.parsePosition() = beginObject().run {
-        var world = "minecraft:world"
+    private fun JsonReader.parsePosition(): Position = beginObject().run {
+        var world = "minecraft:overworld"
         var x = 0.0f
         var y = 0.0f
         var z = 0.0f
@@ -112,25 +108,42 @@ object HologramConfig : Config {
             }
         }
         endObject()
-        HologramData.Position(world, x, y, z)
+        Position(world, x, y, z)
     }
 
-    private fun JsonReader.parseRotationArray(): HologramData.Rotation {
+    private fun JsonReader.parseRotationArray(): Rotation {
         beginArray()
         val pitch = nextDouble().toFloat()
         val yaw = nextDouble().toFloat()
         val roll = nextDouble().toFloat()
         endArray()
-        return HologramData.Rotation(pitch, yaw, roll)
+        return Rotation(pitch, yaw, roll)
     }
 
-    private fun JsonReader.parseScaleArray(): HologramData.Scale {
+    private fun JsonReader.parseScaleArray(): Scale {
         beginArray()
         val x = nextDouble().toFloat()
         val y = nextDouble().toFloat()
         val z = nextDouble().toFloat()
         endArray()
-        return HologramData.Scale(x, y, z)
+        return Scale(x, y, z)
+    }
+
+    fun getHologram(name: String): HologramData? = holograms[name]
+    fun getHolograms(): Map<String, HologramData> = holograms.toMap()
+    fun exists(name: String): Boolean = holograms.containsKey(name)
+
+    fun saveHologram(name: String, hologram: HologramData) = runCatching {
+        holograms[name] = hologram
+
+        val file = configDir.resolve("$name.json").toFile()
+        file.parentFile.mkdirs()
+
+        file.outputStream().writer().use { writer ->
+            JsonWriter.json(writer).use { json -> writeHologram(json, hologram) }
+        }
+    }.onFailure {
+        HoloDisplays.LOGGER.error("Failed to save hologram $name", it)
     }
 
     private fun writeHologram(json: JsonWriter, hologram: HologramData) = json.run {
@@ -174,33 +187,8 @@ object HologramConfig : Config {
         endObject()
     }
 
-    fun getHologram(name: String): HologramData? = holograms[name]
-    fun getHolograms(): Map<String, HologramData> = holograms.toMap()
-    fun exists(name: String): Boolean = holograms.containsKey(name)
-
-    override fun reload() {
-        loadHolograms()
-    }
-
-    fun saveHologram(name: String, hologram: HologramData) = runCatching {
-        holograms[name] = hologram
-
-        val file = hologramsDir.resolve("$name.json").toFile()
-        file.parentFile.mkdirs()
-
-        file.outputStream()
-            .writer()
-            .use { writer ->
-                JsonWriter.json(writer).use { json ->
-                    writeHologram(json, hologram)
-                }
-            }
-    }.onFailure {
-        HoloDisplays.LOGGER.error("Failed to save hologram $name", it)
-    }
-
     fun deleteHologram(name: String) = runCatching {
-        hologramsDir.resolve("$name.json").toFile().let {
+        configDir.resolve("$name.json").toFile().let {
             if (it.exists()) it.delete()
         }
         holograms.remove(name)

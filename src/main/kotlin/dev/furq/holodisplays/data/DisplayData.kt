@@ -1,45 +1,30 @@
 package dev.furq.holodisplays.data
 
-import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
+import dev.furq.holodisplays.data.display.BaseDisplay
+import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.data.display.ItemDisplay
+import dev.furq.holodisplays.data.display.TextDisplay
 
 data class DisplayData(
-    val displayType: DisplayType,
+    val display: BaseDisplay,
 ) {
-    sealed class DisplayType {
-        abstract val scale: HologramData.Scale?
-        abstract val billboardMode: BillboardMode?
-        abstract val rotation: HologramData.Rotation?
+    companion object {
+        fun text(builder: TextDisplay.Builder.() -> Unit): DisplayData {
+            val textBuilder = TextDisplay.Builder()
+            textBuilder.builder()
+            return DisplayData(textBuilder.build())
+        }
 
-        data class Text(
-            val lines: MutableList<String>,
-            val lineWidth: Int? = null,
-            val backgroundColor: String? = null,
-            val textOpacity: Int? = null,
-            val shadow: Boolean? = null,
-            val seeThrough: Boolean? = null,
-            val alignment: TextAlignment? = null,
-            override val rotation: HologramData.Rotation? = null,
-            override val scale: HologramData.Scale? = null,
-            override val billboardMode: BillboardMode? = null,
-        ) : DisplayType()
+        fun item(builder: ItemDisplay.Builder.() -> Unit): DisplayData {
+            val itemBuilder = ItemDisplay.Builder()
+            itemBuilder.builder()
+            return DisplayData(itemBuilder.build())
+        }
 
-        data class Item(
-            val id: String,
-            val itemDisplayType: String = "ground",
-            override val rotation: HologramData.Rotation? = null,
-            override val scale: HologramData.Scale? = null,
-            override val billboardMode: BillboardMode? = null,
-        ) : DisplayType()
-
-        data class Block(
-            val id: String,
-            override val rotation: HologramData.Rotation? = null,
-            override val scale: HologramData.Scale? = null,
-            override val billboardMode: BillboardMode? = null,
-        ) : DisplayType()
-    }
-
-    enum class TextAlignment {
-        LEFT, CENTER, RIGHT
+        fun block(builder: BlockDisplay.Builder.() -> Unit): DisplayData {
+            val blockBuilder = BlockDisplay.Builder()
+            blockBuilder.builder()
+            return DisplayData(blockBuilder.build())
+        }
     }
 }

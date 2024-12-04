@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory
 class HoloDisplays : ModInitializer {
     companion object {
         const val MOD_ID = "HoloDisplays"
-        const val VERSION = "0.1.5"
+        const val VERSION = "0.1.6"
         val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
 
         var SERVER: MinecraftServer? = null
@@ -37,17 +37,19 @@ class HoloDisplays : ModInitializer {
         }
     }
 
+    private fun handleServerTick(server: MinecraftServer) {
+        TextProcessor.tick()
+        if (server.playerManager.playerList.isNotEmpty() && HologramConfig.getHolograms().isNotEmpty()) {
+            server.playerManager.playerList.forEach { player ->
+                ViewerHandler.updatePlayerVisibility(player)
+            }
+            TextProcessor.updateAnimations()
+        }
+    }
+
     private fun registerServerEvents() {
         ServerLifecycleEvents.SERVER_STARTING.register { SERVER = it }
-        ServerTickEvents.END_SERVER_TICK.register { server ->
-            if (server.playerManager.playerList.isNotEmpty() && HologramConfig.getHolograms().isNotEmpty()) {
-                server.playerManager.playerList.forEach { player ->
-                    ViewerHandler.updatePlayerVisibility(player)
-                }
-                TextProcessor.updateAnimations()
-            }
-            TextProcessor.tick()
-        }
+        ServerTickEvents.END_SERVER_TICK.register(::handleServerTick)
 
         ServerPlayConnectionEvents.JOIN.register { handler, _, _ ->
             ViewerHandler.updatePlayerVisibility(handler.player)

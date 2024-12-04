@@ -1,13 +1,32 @@
 package dev.furq.holodisplays.handlers
 
+import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.data.HologramData
-import dev.furq.holodisplays.utils.HandlerUtils
-import dev.furq.holodisplays.utils.HandlerUtils.HologramProperty
+import dev.furq.holodisplays.data.common.Offset
 import dev.furq.holodisplays.utils.TextProcessor
+import net.minecraft.registry.RegistryKey
+import net.minecraft.registry.RegistryKeys
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.util.Identifier
+import net.minecraft.world.World
+import dev.furq.holodisplays.data.common.Position as CommonPosition
+import dev.furq.holodisplays.data.common.Rotation as CommonRotation
+import dev.furq.holodisplays.data.common.Scale as CommonScale
+import net.minecraft.entity.decoration.DisplayEntity.BillboardMode as CommonBillboardMode
 
 object HologramHandler {
+    sealed class HologramProperty {
+        data class Scale(val value: CommonScale?) : HologramProperty()
+        data class BillboardMode(val mode: CommonBillboardMode?) : HologramProperty()
+        data class ViewRange(val value: Double?) : HologramProperty()
+        data class UpdateRate(val value: Int?) : HologramProperty()
+        data class Position(val value: CommonPosition) : HologramProperty()
+        data class Rotation(val value: CommonRotation?) : HologramProperty()
+        data class LineOffset(val index: Int, val offset: Offset) : HologramProperty()
+        data class AddLine(val displayId: String, val offset: Offset = Offset()) : HologramProperty()
+        data class RemoveLine(val index: Int) : HologramProperty()
+    }
 
     fun init() {
         HologramConfig.getHolograms().forEach { (name, data) ->
@@ -17,8 +36,7 @@ object HologramHandler {
 
     fun clearAll() {
         PacketHandler.clearAllHolograms()
-        HandlerUtils.clearWorldCache()
-        TextProcessor.clearCache()
+        TextProcessor.init()
         ViewerHandler.clearAllTrackers()
     }
 
@@ -36,10 +54,9 @@ object HologramHandler {
     }
 
     private fun showHologramToPlayers(name: String, data: HologramData) {
-        HandlerUtils.getHologramWorld(data)?.players
-            ?.filterIsInstance<ServerPlayerEntity>()
-            ?.filter { isPlayerInRange(it, data.position, data.viewRange) }
-            ?.forEach { player -> ViewerHandler.addViewer(player, name) }
+        getPlayersInRange(data).forEach { player ->
+            ViewerHandler.addViewer(player, name)
+        }
     }
 
     fun updateHologramProperty(name: String, property: HologramProperty) {
@@ -48,8 +65,13 @@ object HologramHandler {
         HologramConfig.saveHologram(name, hologram)
 
         val needsRespawn = when (property) {
-            is HologramProperty.Position -> true
-            is HologramProperty.Rotation -> true
+            is HologramProperty.Position,
+            is HologramProperty.Rotation,
+            is HologramProperty.LineOffset,
+            is HologramProperty.AddLine,
+            is HologramProperty.RemoveLine,
+            -> true
+
             else -> false
         }
 
@@ -60,12 +82,6 @@ object HologramHandler {
         }
     }
 
-    fun deleteHologram(name: String) {
-        ViewerHandler.removeHologramFromAllViewers(name)
-        HologramConfig.deleteHologram(name)
-        ViewerHandler.removeTracker(name)
-    }
-
     private fun updateHologramData(hologram: HologramData, property: HologramProperty) {
         when (property) {
             is HologramProperty.Scale -> hologram.scale = property.value ?: hologram.scale
@@ -74,51 +90,60 @@ object HologramHandler {
             is HologramProperty.UpdateRate -> hologram.updateRate = property.value ?: hologram.updateRate
             is HologramProperty.Position -> hologram.position = property.value
             is HologramProperty.Rotation -> hologram.rotation = property.value ?: hologram.rotation
-            else -> {}
-        }
-    }
+            is HologramProperty.LineOffset -> updateLineOffset(hologram, property)
+            is HologramProperty.AddLine -> hologram.displays.add(
+                HologramData.DisplayLine(
+                    property.displayId,
+                    property.offset
+                )
+            )
 
-    fun addLine(name: String, displayId: String, offset: HologramData.Offset = HologramData.Offset()) {
-        HologramConfig.getHologram(name)?.let { hologram ->
-            hologram.displays.add(HologramData.DisplayLine(displayId, offset))
-            HologramConfig.saveHologram(name, hologram)
-            ViewerHandler.respawnForAllObservers(name)
-        }
-    }
-
-    fun removeLine(name: String, index: Int) {
-        HologramConfig.getHologram(name)?.let { hologram ->
-            if (index in hologram.displays.indices) {
-                hologram.displays.removeAt(index)
-                HologramConfig.saveHologram(name, hologram)
-                ViewerHandler.respawnForAllObservers(name)
+            is HologramProperty.RemoveLine -> {
+                if (property.index in hologram.displays.indices) {
+                    hologram.displays.removeAt(property.index)
+                }
             }
         }
+    }
+
+    private fun updateLineOffset(hologram: HologramData, property: HologramProperty.LineOffset) {
+        if (property.index in hologram.displays.indices) {
+            hologram.displays[property.index] = hologram.displays[property.index].copy(
+                offset = property.offset
+            )
+        }
+    }
+
+    fun deleteHologram(name: String) {
+        ViewerHandler.removeHologramFromAllViewers(name)
+        HologramConfig.deleteHologram(name)
+        ViewerHandler.removeTracker(name)
+    }
+
+    private fun getPlayersInRange(data: HologramData): List<ServerPlayerEntity> {
+        return getWorld(data.position).players
+            ?.filterIsInstance<ServerPlayerEntity>()
+            ?.filter { isPlayerInRange(it, data.position, data.viewRange) }
+            ?: emptyList()
     }
 
     fun isPlayerInRange(
         player: ServerPlayerEntity,
-        position: HologramData.Position,
+        position: CommonPosition,
         viewRange: Double,
     ): Boolean {
-        if (player.world.registryKey.value.toString() != position.world) {
-            return false
+        if (player.world == getWorld(position)) {
+            return player.pos.squaredDistanceTo(
+                position.x.toDouble(),
+                position.y.toDouble(),
+                position.z.toDouble()
+            ) <= viewRange * viewRange
         }
-
-        return player.pos.squaredDistanceTo(
-            position.x.toDouble(),
-            position.y.toDouble(),
-            position.z.toDouble()
-        ) <= viewRange * viewRange
+        return false
     }
 
-    fun setLineOffset(name: String, index: Int, offset: HologramData.Offset) {
-        HologramConfig.getHologram(name)?.let { hologram ->
-            if (index < hologram.displays.size) {
-                hologram.displays[index] = hologram.displays[index].copy(offset = offset)
-                HologramConfig.saveHologram(name, hologram)
-                ViewerHandler.respawnForAllObservers(name)
-            }
-        }
+    private fun getWorld(position: CommonPosition): World {
+        val worldId = Identifier.tryParse(position.world)!!
+        return HoloDisplays.SERVER!!.getWorld(RegistryKey.of(RegistryKeys.WORLD, worldId))!!
     }
 }

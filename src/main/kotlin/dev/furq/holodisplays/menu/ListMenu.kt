@@ -1,7 +1,9 @@
 package dev.furq.holodisplays.menu
 
 import dev.furq.holodisplays.config.DisplayConfig
-import dev.furq.holodisplays.data.DisplayData
+import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.data.display.ItemDisplay
+import dev.furq.holodisplays.data.display.TextDisplay
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
@@ -103,12 +105,12 @@ data object ListMenu : LineEditMenu() {
     }
 
     fun showDisplayEntry(source: ServerCommandSource, name: String) {
-        val display = DisplayConfig.getDisplay(name)
-        val (icon, displayType) = when (display?.displayType) {
-            is DisplayData.DisplayType.Text -> "✎" to "Text"
-            is DisplayData.DisplayType.Item -> "✦" to "Item"
-            is DisplayData.DisplayType.Block -> "■" to "Block"
-            null -> "?" to "Unknown"
+        val display = DisplayConfig.getDisplay(name)!!
+        val (icon, displayType) = when (display.display) {
+            is TextDisplay -> "✎" to "Text"
+            is ItemDisplay -> "✦" to "Item"
+            is BlockDisplay -> "■" to "Block"
+            else -> return
         }
 
         source.sendFeedback({

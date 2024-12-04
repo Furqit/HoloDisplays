@@ -2,17 +2,16 @@ package dev.furq.holodisplays.menu
 
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
-import dev.furq.holodisplays.data.DisplayData
+import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.data.display.ItemDisplay
+import dev.furq.holodisplays.data.display.TextDisplay
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 data object EditMenu : LineEditMenu() {
     fun showHologram(source: ServerCommandSource, name: String) {
-        val hologram = HologramConfig.getHologram(name) ?: run {
-            source.sendError(Text.literal("⚠ Hologram not found").formatted(Formatting.RED))
-            return
-        }
+        val hologram = HologramConfig.getHologram(name)!!
 
         addEmptyLines(source)
         showHeader(source)
@@ -79,13 +78,12 @@ data object EditMenu : LineEditMenu() {
         showSectionHeader(source, "Displays")
 
         hologram.displays.forEachIndexed { index, line ->
-            val display = DisplayConfig.getDisplay(line.displayId)
-
-            val (icon, displayName) = when (display?.displayType) {
-                is DisplayData.DisplayType.Text -> "✎" to "Text: ${line.displayId}"
-                is DisplayData.DisplayType.Item -> "✦" to "Item: ${line.displayId}"
-                is DisplayData.DisplayType.Block -> "■" to "Block: ${line.displayId}"
-                null -> "?" to "Unknown"
+            val display = DisplayConfig.getDisplay(line.displayId)!!
+            val (icon, displayName) = when (display.display) {
+                is TextDisplay -> "✎" to "Text"
+                is ItemDisplay -> "✦" to "Item"
+                is BlockDisplay -> "■" to "Block"
+                else -> return
             }
 
             source.sendFeedback({
@@ -185,18 +183,5 @@ data object EditMenu : LineEditMenu() {
                     }
                 }
         }, false)
-    }
-
-    fun showDisplay(source: ServerCommandSource, name: String) {
-        val display = DisplayConfig.getDisplay(name) ?: run {
-            source.sendError(Text.literal("⚠ Display not found").formatted(Formatting.RED))
-            return
-        }
-
-        when (display.displayType) {
-            is DisplayData.DisplayType.Text -> TextEditMenu.show(source, name)
-            is DisplayData.DisplayType.Item -> ItemEditMenu.show(source, name)
-            is DisplayData.DisplayType.Block -> BlockEditMenu.show(source, name)
-        }
     }
 }

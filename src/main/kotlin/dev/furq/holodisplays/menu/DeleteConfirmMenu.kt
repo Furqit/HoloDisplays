@@ -7,7 +7,7 @@ import net.minecraft.text.Style
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
-object DeleteConfirmMenu {
+data object DeleteConfirmMenu {
     fun showHologram(source: ServerCommandSource, name: String) {
         showConfirmation(
             source,

@@ -1,5 +1,9 @@
 package dev.furq.holodisplays.data
 
+import dev.furq.holodisplays.data.common.Offset
+import dev.furq.holodisplays.data.common.Position
+import dev.furq.holodisplays.data.common.Rotation
+import dev.furq.holodisplays.data.common.Scale
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 
 data class HologramData(
@@ -8,16 +12,23 @@ data class HologramData(
     var scale: Scale = Scale(),
     var billboardMode: BillboardMode = BillboardMode.CENTER,
     var updateRate: Int = 20,
-    var viewRange: Double = 16.0,
+    var viewRange: Double = 48.0,
     var rotation: Rotation = Rotation(),
 ) {
-    data class Position(val world: String = "minecraft:world", val x: Float = 0f, val y: Float = 0f, val z: Float = 0f)
-    data class Rotation(val pitch: Float = 0f, val yaw: Float = 0f, val roll: Float = 0f)
-    data class Offset(val x: Float = 0.0f, val y: Float = 0.0f, val z: Float = 0.0f)
-    data class Scale(val x: Float = 1.0f, val y: Float = 1.0f, val z: Float = 1.0f)
-
     data class DisplayLine(
         val displayId: String,
         val offset: Offset = Offset(),
     )
+
+    class Builder {
+        var displays = mutableListOf<DisplayLine>()
+        var position: Position = Position()
+        var scale: Scale = Scale()
+        var billboardMode: BillboardMode = BillboardMode.CENTER
+        var updateRate: Int = 20
+        var viewRange: Double = 16.0
+        var rotation: Rotation = Rotation()
+
+        fun build() = HologramData(displays, position, scale, billboardMode, updateRate, viewRange, rotation)
+    }
 }

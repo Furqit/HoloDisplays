@@ -7,7 +7,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
-import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.data.common.Offset
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.menu.EditMenu
 import dev.furq.holodisplays.utils.CommandUtils
@@ -65,7 +65,7 @@ object LineCommand {
             return 0
         }
 
-        HologramHandler.addLine(hologramName, displayId)
+        HologramHandler.updateHologramProperty(hologramName, HologramHandler.HologramProperty.AddLine(displayId))
         playSuccessSound(context.source)
         EditMenu.showHologram(context.source, hologramName)
         return 1
@@ -88,7 +88,7 @@ object LineCommand {
             return 0
         }
 
-        HologramHandler.removeLine(hologramName, index)
+        HologramHandler.updateHologramProperty(hologramName, HologramHandler.HologramProperty.RemoveLine(index))
         playSuccessSound(context.source)
         EditMenu.showHologram(context.source, hologramName)
         return 1
@@ -114,7 +114,10 @@ object LineCommand {
             return 0
         }
 
-        HologramHandler.setLineOffset(hologramName, index, HologramData.Offset(x, y, z))
+        HologramHandler.updateHologramProperty(
+            hologramName,
+            HologramHandler.HologramProperty.LineOffset(index, Offset(x, y, z))
+        )
         playSuccessSound(context.source)
         EditMenu.showHologram(context.source, hologramName)
         return 1

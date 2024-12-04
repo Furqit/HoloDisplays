@@ -4,8 +4,8 @@ import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.config.AnimationConfig
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
-import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.PacketHandler
 import dev.furq.holodisplays.handlers.ViewerHandler
 import eu.pb4.placeholders.api.PlaceholderContext
@@ -21,11 +21,7 @@ object TextProcessor {
     private var ticks = 0
     private val processedAnimationCache = mutableMapOf<Pair<String, Int>, String>()
 
-    fun init() = clearCache()
-
-    fun clearCache() {
-        processedAnimationCache.clear()
-    }
+    fun init() = processedAnimationCache.clear()
 
     fun tick() {
         ticks++
@@ -57,20 +53,18 @@ object TextProcessor {
 
         holograms.forEach { (name, hologram) ->
             if (ViewerHandler.getObserverCount(name) == 0) return@forEach
-
             updateHologramAnimations(name, hologram)
         }
     }
 
     private fun updateHologramAnimations(name: String, hologram: HologramData) {
-        hologram.displays.forEachIndexed { index, displayId ->
-            val display = DisplayConfig.getDisplay(displayId.displayId) ?: return@forEachIndexed
-            if (display.displayType !is DisplayData.DisplayType.Text) return@forEachIndexed
+        hologram.displays.forEachIndexed { index, displayLine ->
+            val display = DisplayConfig.getDisplay(displayLine.displayId)?.display as? TextDisplay ?: return@forEachIndexed
 
-            val text = display.displayType.lines.joinToString("\n")
+            val text = display.lines.joinToString("\n")
             if (!shouldUpdate(text, hologram.updateRate)) return@forEachIndexed
 
-            updateDisplayForObservers(name, displayId.displayId, index, text)
+            updateDisplayForObservers(name, displayLine.displayId, index, text)
         }
     }
 

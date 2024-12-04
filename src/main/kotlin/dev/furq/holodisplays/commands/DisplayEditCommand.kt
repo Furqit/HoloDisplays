@@ -7,11 +7,14 @@ import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import dev.furq.holodisplays.config.DisplayConfig
-import dev.furq.holodisplays.data.DisplayData
-import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.data.common.Rotation
+import dev.furq.holodisplays.data.common.Scale
+import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.data.display.ItemDisplay
+import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.DisplayHandler
+import dev.furq.holodisplays.handlers.DisplayHandler.DisplayProperty
 import dev.furq.holodisplays.menu.BlockEditMenu
-import dev.furq.holodisplays.menu.EditMenu
 import dev.furq.holodisplays.menu.ItemEditMenu
 import dev.furq.holodisplays.menu.TextEditMenu
 import dev.furq.holodisplays.utils.CommandUtils
@@ -19,7 +22,6 @@ import dev.furq.holodisplays.utils.CommandUtils.playErrorSound
 import dev.furq.holodisplays.utils.CommandUtils.playSuccessSound
 import dev.furq.holodisplays.utils.ErrorMessages
 import dev.furq.holodisplays.utils.ErrorMessages.ErrorType
-import dev.furq.holodisplays.utils.HandlerUtils.HologramProperty
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import net.minecraft.registry.Registries
 import net.minecraft.server.command.CommandManager
@@ -123,7 +125,7 @@ object DisplayEditCommand {
             .then(CommandManager.literal("alignment")
                 .then(CommandManager.argument("align", StringArgumentType.word())
                     .suggests { _, builder ->
-                        DisplayData.TextAlignment.entries.forEach {
+                        TextDisplay.TextAlignment.entries.forEach {
                             builder.suggest(it.name.lowercase())
                         }
                         builder.buildFuture()
@@ -158,6 +160,25 @@ object DisplayEditCommand {
             )
         )
 
+    private fun executeOpenMenu(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+
+        if (!DisplayConfig.exists(name)) {
+            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val display = DisplayConfig.getDisplay(name) ?: return 0
+        when (display.display) {
+            is TextDisplay -> TextEditMenu.show(context.source, name)
+            is ItemDisplay -> ItemEditMenu.show(context.source, name)
+            is BlockDisplay -> BlockEditMenu.show(context.source, name)
+        }
+        playSuccessSound(context.source)
+        return 1
+    }
+
     private fun executeCommonProperty(context: CommandContext<ServerCommandSource>, propertyName: String): Int {
         val name = StringArgumentType.getString(context, "name")
 
@@ -178,7 +199,7 @@ object DisplayEditCommand {
                     playErrorSound(context.source)
                     return 0
                 }
-                HologramProperty.Scale(HologramData.Scale(x, y, z))
+                DisplayProperty.Scale(Scale(x, y, z))
             }
 
             "billboard" -> {
@@ -189,7 +210,7 @@ object DisplayEditCommand {
                     playErrorSound(context.source)
                     return 0
                 }
-                HologramProperty.BillboardMode(mode)
+                DisplayProperty.BillboardMode(mode)
             }
 
             else -> return 0
@@ -197,10 +218,61 @@ object DisplayEditCommand {
 
         DisplayHandler.updateDisplayProperty(name, property)
         playSuccessSound(context.source)
-        when (display.displayType) {
-            is DisplayData.DisplayType.Text -> TextEditMenu.show(context.source, name)
-            is DisplayData.DisplayType.Item -> ItemEditMenu.show(context.source, name)
-            is DisplayData.DisplayType.Block -> BlockEditMenu.show(context.source, name)
+        when (display.display) {
+            is TextDisplay -> TextEditMenu.show(context.source, name)
+            is ItemDisplay -> ItemEditMenu.show(context.source, name)
+            is BlockDisplay -> BlockEditMenu.show(context.source, name)
+        }
+        return 1
+    }
+
+    private fun executeResetCommonProperty(context: CommandContext<ServerCommandSource>, propertyName: String): Int {
+        val name = StringArgumentType.getString(context, "name")
+
+        if (!DisplayConfig.exists(name)) {
+            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val display = DisplayConfig.getDisplay(name) ?: return 0
+        val property = when (propertyName) {
+            "scale" -> DisplayProperty.Scale(null)
+            "billboard" -> DisplayProperty.BillboardMode(null)
+            "rotation" -> DisplayProperty.Rotation(null)
+            else -> return 0
+        }
+
+        DisplayHandler.updateDisplayProperty(name, property)
+        playSuccessSound(context.source)
+        when (display.display) {
+            is TextDisplay -> TextEditMenu.show(context.source, name)
+            is ItemDisplay -> ItemEditMenu.show(context.source, name)
+            is BlockDisplay -> BlockEditMenu.show(context.source, name)
+        }
+        return 1
+    }
+
+    private fun executeRotation(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+
+        if (!DisplayConfig.exists(name)) {
+            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val display = DisplayConfig.getDisplay(name) ?: return 0
+        val pitch = FloatArgumentType.getFloat(context, "pitch")
+        val yaw = FloatArgumentType.getFloat(context, "yaw")
+        val roll = FloatArgumentType.getFloat(context, "roll")
+
+        DisplayHandler.updateDisplayProperty(name, DisplayProperty.Rotation(Rotation(pitch, yaw, roll)))
+        playSuccessSound(context.source)
+        when (display.display) {
+            is TextDisplay -> TextEditMenu.show(context.source, name)
+            is ItemDisplay -> ItemEditMenu.show(context.source, name)
+            is BlockDisplay -> BlockEditMenu.show(context.source, name)
         }
         return 1
     }
@@ -213,9 +285,15 @@ object DisplayEditCommand {
             return 0
         }
 
+        val display = DisplayConfig.getDisplay(name) ?: return 0
+        if (display.display !is TextDisplay) {
+            ErrorMessages.sendError(context.source, ErrorType.INVALID_DISPLAY_TYPE)
+            playErrorSound(context.source)
+            return 0
+        }
+
         val updatedProperty = when (property) {
-            "line" -> HologramProperty.Lines(listOf(StringArgumentType.getString(context, "content")))
-            "lineWidth" -> HologramProperty.LineWidth(IntegerArgumentType.getInteger(context, "width"))
+            "lineWidth" -> DisplayProperty.LineWidth(IntegerArgumentType.getInteger(context, "width"))
             "backgroundColor" -> {
                 val color = StringArgumentType.getString(context, "color")
                 if (!color.matches(Regex("^[0-9A-Fa-f]{6}$"))) {
@@ -223,21 +301,27 @@ object DisplayEditCommand {
                     playErrorSound(context.source)
                     return 0
                 }
-                val opacity = IntegerArgumentType.getInteger(context, "opacity")
+                val opacity = try {
+                    IntegerArgumentType.getInteger(context, "opacity")
+                } catch (e: IllegalArgumentException) {
+                    100
+                }
                 val opacityHex = ((opacity.coerceIn(1, 100) / 100.0 * 255).toInt())
                     .toString(16)
                     .padStart(2, '0')
                     .uppercase()
-                HologramProperty.Background("$opacityHex$color")
+                DisplayProperty.Background("$opacityHex$color")
             }
 
-            "textOpacity" -> HologramProperty.TextOpacity(IntegerArgumentType.getInteger(context, "opacity"))
-            "shadow" -> HologramProperty.Shadow(BoolArgumentType.getBool(context, "enabled"))
-            "seeThrough" -> HologramProperty.SeeThrough(BoolArgumentType.getBool(context, "enabled"))
+            "textOpacity" -> DisplayProperty.TextOpacity(IntegerArgumentType.getInteger(context, "opacity"))
+            "shadow" -> DisplayProperty.Shadow(BoolArgumentType.getBool(context, "enabled"))
+            "seeThrough" -> DisplayProperty.SeeThrough(BoolArgumentType.getBool(context, "enabled"))
             "alignment" -> {
                 try {
-                    HologramProperty.TextAlignment(
-                        DisplayData.TextAlignment.valueOf(StringArgumentType.getString(context, "align").uppercase())
+                    DisplayProperty.TextAlignment(
+                        TextDisplay.TextAlignment.valueOf(
+                            StringArgumentType.getString(context, "align").uppercase()
+                        )
                     )
                 } catch (e: IllegalArgumentException) {
                     ErrorMessages.sendError(context.source, ErrorType.INVALID_ALIGNMENT)
@@ -255,10 +339,126 @@ object DisplayEditCommand {
         return 1
     }
 
+    private fun executeDefaultBackground(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        if (!DisplayConfig.exists(name)) {
+            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val display = DisplayConfig.getDisplay(name) ?: return 0
+        if (display.display !is TextDisplay) {
+            ErrorMessages.sendError(context.source, ErrorType.INVALID_DISPLAY_TYPE)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        DisplayHandler.updateDisplayProperty(name, DisplayProperty.Background(null))
+        playSuccessSound(context.source)
+        TextEditMenu.show(context.source, name)
+        return 1
+    }
+
+    private fun executeAddTextLine(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        if (!DisplayConfig.exists(name)) {
+            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val display = DisplayConfig.getDisplay(name) ?: return 0
+        if (display.display !is TextDisplay) {
+            ErrorMessages.sendError(context.source, ErrorType.INVALID_DISPLAY_TYPE)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val content = StringArgumentType.getString(context, "content")
+        val lines = display.display.lines.toMutableList()
+        lines.add(content)
+
+        DisplayHandler.updateDisplayProperty(name, DisplayProperty.Lines(lines))
+        playSuccessSound(context.source)
+        TextEditMenu.show(context.source, name)
+        return 1
+    }
+
+    private fun executeEditTextLine(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        if (!DisplayConfig.exists(name)) {
+            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val display = DisplayConfig.getDisplay(name) ?: return 0
+        if (display.display !is TextDisplay) {
+            ErrorMessages.sendError(context.source, ErrorType.INVALID_DISPLAY_TYPE)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val lineIndex = IntegerArgumentType.getInteger(context, "lineIndex")
+        if (lineIndex >= display.display.lines.size) {
+            ErrorMessages.sendError(context.source, ErrorType.LINE_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val content = StringArgumentType.getString(context, "content")
+        val lines = display.display.lines.toMutableList()
+        lines[lineIndex] = content
+
+        DisplayHandler.updateDisplayProperty(name, DisplayProperty.Lines(lines))
+        playSuccessSound(context.source)
+        TextEditMenu.show(context.source, name)
+        return 1
+    }
+
+    private fun executeDeleteTextLine(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        if (!DisplayConfig.exists(name)) {
+            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val display = DisplayConfig.getDisplay(name) ?: return 0
+        if (display.display !is TextDisplay) {
+            ErrorMessages.sendError(context.source, ErrorType.INVALID_DISPLAY_TYPE)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val lineIndex = IntegerArgumentType.getInteger(context, "lineIndex")
+        if (lineIndex >= display.display.lines.size) {
+            ErrorMessages.sendError(context.source, ErrorType.LINE_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val lines = display.display.lines.toMutableList()
+        lines.removeAt(lineIndex)
+
+        DisplayHandler.updateDisplayProperty(name, DisplayProperty.Lines(lines))
+        playSuccessSound(context.source)
+        TextEditMenu.show(context.source, name)
+        return 1
+    }
+
     private fun executeItemProperty(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
         if (!DisplayConfig.exists(name)) {
             ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val display = DisplayConfig.getDisplay(name) ?: return 0
+        if (display.display !is ItemDisplay) {
+            ErrorMessages.sendError(context.source, ErrorType.INVALID_DISPLAY_TYPE)
             playErrorSound(context.source)
             return 0
         }
@@ -272,9 +472,30 @@ object DisplayEditCommand {
             playErrorSound(context.source)
             return 0
         }
-        val property = HologramProperty.ItemId(fullItemId)
 
-        DisplayHandler.updateDisplayProperty(name, property)
+        DisplayHandler.updateDisplayProperty(name, DisplayProperty.ItemId(fullItemId))
+        playSuccessSound(context.source)
+        ItemEditMenu.show(context.source, name)
+        return 1
+    }
+
+    private fun executeItemDisplayType(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        if (!DisplayConfig.exists(name)) {
+            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val display = DisplayConfig.getDisplay(name) ?: return 0
+        if (display.display !is ItemDisplay) {
+            ErrorMessages.sendError(context.source, ErrorType.INVALID_DISPLAY_TYPE)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val type = StringArgumentType.getString(context, "type")
+        DisplayHandler.updateDisplayProperty(name, DisplayProperty.ItemDisplayType(type))
         playSuccessSound(context.source)
         ItemEditMenu.show(context.source, name)
         return 1
@@ -284,6 +505,13 @@ object DisplayEditCommand {
         val name = StringArgumentType.getString(context, "name")
         if (!DisplayConfig.exists(name)) {
             ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
+            playErrorSound(context.source)
+            return 0
+        }
+
+        val display = DisplayConfig.getDisplay(name) ?: return 0
+        if (display.display !is BlockDisplay) {
+            ErrorMessages.sendError(context.source, ErrorType.INVALID_DISPLAY_TYPE)
             playErrorSound(context.source)
             return 0
         }
@@ -298,207 +526,9 @@ object DisplayEditCommand {
             return 0
         }
 
-        val property = HologramProperty.BlockId(fullBlockId)
-
-        DisplayHandler.updateDisplayProperty(name, property)
+        DisplayHandler.updateDisplayProperty(name, DisplayProperty.BlockId(fullBlockId))
         playSuccessSound(context.source)
         BlockEditMenu.show(context.source, name)
-        return 1
-    }
-
-    private fun executeRotation(context: CommandContext<ServerCommandSource>): Int {
-        val name = StringArgumentType.getString(context, "name")
-        if (!DisplayConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        val rotation = HologramProperty.Rotation(
-            HologramData.Rotation(
-                FloatArgumentType.getFloat(context, "pitch"),
-                FloatArgumentType.getFloat(context, "yaw"),
-                FloatArgumentType.getFloat(context, "roll")
-            )
-        )
-
-        DisplayHandler.updateDisplayProperty(name, rotation)
-        playSuccessSound(context.source)
-        EditMenu.showDisplay(context.source, name)
-        return 1
-    }
-
-    private fun executeResetCommonProperty(context: CommandContext<ServerCommandSource>, property: String): Int {
-        val name = StringArgumentType.getString(context, "name")
-        if (!DisplayConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        val updatedProperty = when (property) {
-            "scale" -> HologramProperty.Scale(null)
-            "billboard" -> HologramProperty.BillboardMode(null)
-            "rotation" -> HologramProperty.Rotation(null)
-            else -> return 0
-        }
-
-        DisplayHandler.updateDisplayProperty(name, updatedProperty)
-        playSuccessSound(context.source)
-        EditMenu.showDisplay(context.source, name)
-        return 1
-    }
-
-    private fun executeAddTextLine(context: CommandContext<ServerCommandSource>): Int {
-        val name = StringArgumentType.getString(context, "name")
-        if (!DisplayConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        val content = StringArgumentType.getString(context, "content")
-        val display = DisplayConfig.getDisplay(name)
-        val textDisplay = display?.displayType as? DisplayData.DisplayType.Text ?: return 0
-
-        val updatedLines = textDisplay.lines.toMutableList().apply {
-            add(content)
-        }
-
-        val updatedProperty = HologramProperty.Lines(updatedLines.toList())
-        DisplayHandler.updateDisplayProperty(name, updatedProperty)
-
-        playSuccessSound(context.source)
-        TextEditMenu.show(context.source, name)
-        return 1
-    }
-
-    private fun executeEditTextLine(context: CommandContext<ServerCommandSource>): Int {
-        val name = StringArgumentType.getString(context, "name")
-        if (!DisplayConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        val lineIndex = IntegerArgumentType.getInteger(context, "lineIndex")
-        val content = StringArgumentType.getString(context, "content")
-
-        val display = DisplayConfig.getDisplay(name)
-        val textDisplay = display?.displayType as? DisplayData.DisplayType.Text ?: return 0
-
-        if (lineIndex >= textDisplay.lines.size) return 0
-
-        val updatedLines = textDisplay.lines.toMutableList().apply {
-            set(lineIndex, content)
-        }
-
-        val updatedProperty = HologramProperty.Lines(updatedLines.toList())
-        DisplayHandler.updateDisplayProperty(name, updatedProperty)
-
-        playSuccessSound(context.source)
-        TextEditMenu.show(context.source, name)
-        return 1
-    }
-
-    private fun executeDeleteTextLine(context: CommandContext<ServerCommandSource>): Int {
-        val name = StringArgumentType.getString(context, "name")
-        if (!DisplayConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        val lineIndex = IntegerArgumentType.getInteger(context, "lineIndex")
-
-        val display = DisplayConfig.getDisplay(name)
-        val textDisplay = display?.displayType as? DisplayData.DisplayType.Text ?: return 0
-
-        if (lineIndex >= textDisplay.lines.size) return 0
-
-        val updatedLines = textDisplay.lines.toMutableList().apply {
-            removeAt(lineIndex)
-        }
-
-        val updatedProperty = HologramProperty.Lines(updatedLines.toList())
-        DisplayHandler.updateDisplayProperty(name, updatedProperty)
-
-        playSuccessSound(context.source)
-        TextEditMenu.show(context.source, name)
-        return 1
-    }
-
-    private fun executeOpenMenu(context: CommandContext<ServerCommandSource>): Int {
-        val name = StringArgumentType.getString(context, "name")
-
-        if (!DisplayConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        val display = DisplayConfig.getDisplay(name)
-        when (display?.displayType) {
-            is DisplayData.DisplayType.Text -> TextEditMenu.show(context.source, name)
-            is DisplayData.DisplayType.Item -> ItemEditMenu.show(context.source, name)
-            is DisplayData.DisplayType.Block -> BlockEditMenu.show(context.source, name)
-            null -> {
-                ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
-                playErrorSound(context.source)
-                return 0
-            }
-        }
-        playSuccessSound(context.source)
-        return 1
-    }
-
-    private fun executeItemDisplayType(context: CommandContext<ServerCommandSource>): Int {
-        val name = StringArgumentType.getString(context, "name")
-        if (!DisplayConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        val displayType = StringArgumentType.getString(context, "type")
-        val validTypes = listOf(
-            "none", "thirdperson_lefthand", "thirdperson_righthand",
-            "firstperson_lefthand", "firstperson_righthand", "head",
-            "gui", "ground", "fixed"
-        )
-
-        if (!validTypes.contains(displayType)) {
-            ErrorMessages.sendError(context.source, ErrorType.INVALID_DISPLAY_TYPE)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        val property = HologramProperty.ItemDisplayType(displayType)
-        DisplayHandler.updateDisplayProperty(name, property)
-        playSuccessSound(context.source)
-        ItemEditMenu.show(context.source, name)
-        return 1
-    }
-
-    private fun executeDefaultBackground(context: CommandContext<ServerCommandSource>): Int {
-        val name = StringArgumentType.getString(context, "name")
-        if (!DisplayConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.DISPLAY_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        val display = DisplayConfig.getDisplay(name)
-        if (display?.displayType !is DisplayData.DisplayType.Text) {
-            ErrorMessages.sendError(context.source, ErrorType.INVALID_DISPLAY_TYPE)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        val updatedProperty = HologramProperty.Background(null)
-        DisplayHandler.updateDisplayProperty(name, updatedProperty)
-        playSuccessSound(context.source)
-        TextEditMenu.show(context.source, name)
         return 1
     }
 }

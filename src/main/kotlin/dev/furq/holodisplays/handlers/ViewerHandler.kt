@@ -2,8 +2,8 @@ package dev.furq.holodisplays.handlers
 
 import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.config.DisplayConfig
-import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.data.display.TextDisplay
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.math.Vec3d
 import java.util.*
@@ -91,10 +91,10 @@ object ViewerHandler {
     private fun showHologramToPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) {
         hologram.displays.forEachIndexed { index, entity ->
             DisplayConfig.getDisplay(entity.displayId)?.let { display ->
-                val processedDisplay = when (display.displayType) {
-                    is DisplayData.DisplayType.Text -> display.copy(
-                        displayType = display.displayType.copy(
-                            lines = mutableListOf(display.displayType.lines.joinToString("\n"))
+                val processedDisplay = when (val displayType = display.display) {
+                    is TextDisplay -> display.copy(
+                        display = displayType.copy(
+                            lines = mutableListOf(displayType.lines.joinToString("\n"))
                         )
                     )
 
@@ -121,10 +121,10 @@ object ViewerHandler {
     private fun updateHologramForPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) {
         hologram.displays.forEachIndexed { index, entity ->
             DisplayConfig.getDisplay(entity.displayId)?.let { display ->
-                val processedDisplay = when (display.displayType) {
-                    is DisplayData.DisplayType.Text -> display.copy(
-                        displayType = display.displayType.copy(
-                            lines = mutableListOf(display.displayType.lines.joinToString("\n"))
+                val processedDisplay = when (val displayType = display.display) {
+                    is TextDisplay -> display.copy(
+                        display = displayType.copy(
+                            lines = mutableListOf(displayType.lines.joinToString("\n"))
                         )
                     )
 

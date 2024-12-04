@@ -6,7 +6,8 @@ import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import dev.furq.holodisplays.config.HologramConfig
-import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.data.common.Rotation
+import dev.furq.holodisplays.data.common.Scale
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.menu.EditMenu
 import dev.furq.holodisplays.utils.CommandUtils
@@ -14,7 +15,6 @@ import dev.furq.holodisplays.utils.CommandUtils.playErrorSound
 import dev.furq.holodisplays.utils.CommandUtils.playSuccessSound
 import dev.furq.holodisplays.utils.ErrorMessages
 import dev.furq.holodisplays.utils.ErrorMessages.ErrorType
-import dev.furq.holodisplays.utils.HandlerUtils.HologramProperty
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
@@ -81,6 +81,9 @@ object HologramEditCommand {
 
     private fun executeScale(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
+        val x = FloatArgumentType.getFloat(context, "x")
+        val y = FloatArgumentType.getFloat(context, "y")
+        val z = FloatArgumentType.getFloat(context, "z")
 
         if (!HologramConfig.exists(name)) {
             ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
@@ -88,17 +91,7 @@ object HologramEditCommand {
             return 0
         }
 
-        val x = FloatArgumentType.getFloat(context, "x")
-        val y = FloatArgumentType.getFloat(context, "y")
-        val z = FloatArgumentType.getFloat(context, "z")
-
-        if (x < 0.1f || y < 0.1f || z < 0.1f) {
-            ErrorMessages.sendError(context.source, ErrorType.INVALID_SCALE)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        HologramHandler.updateHologramProperty(name, HologramProperty.Scale(HologramData.Scale(x, y, z)))
+        HologramHandler.updateHologramProperty(name, HologramHandler.HologramProperty.Scale(Scale(x, y, z)))
         playSuccessSound(context.source)
         EditMenu.showHologram(context.source, name)
         return 1
@@ -106,6 +99,7 @@ object HologramEditCommand {
 
     private fun executeBillboard(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
+        val modeStr = StringArgumentType.getString(context, "mode").uppercase()
 
         if (!HologramConfig.exists(name)) {
             ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
@@ -113,15 +107,16 @@ object HologramEditCommand {
             return 0
         }
 
-        val modeStr = StringArgumentType.getString(context, "mode").uppercase()
         if (!BillboardMode.entries.map { it.name }.contains(modeStr)) {
             ErrorMessages.sendError(context.source, ErrorType.INVALID_BILLBOARD)
             playErrorSound(context.source)
             return 0
         }
 
-        val mode = BillboardMode.valueOf(modeStr)
-        HologramHandler.updateHologramProperty(name, HologramProperty.BillboardMode(mode))
+        HologramHandler.updateHologramProperty(
+            name,
+            HologramHandler.HologramProperty.BillboardMode(BillboardMode.valueOf(modeStr))
+        )
         playSuccessSound(context.source)
         EditMenu.showHologram(context.source, name)
         return 1
@@ -129,6 +124,7 @@ object HologramEditCommand {
 
     private fun executeUpdateRate(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
+        val ticks = IntegerArgumentType.getInteger(context, "ticks")
 
         if (!HologramConfig.exists(name)) {
             ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
@@ -136,8 +132,7 @@ object HologramEditCommand {
             return 0
         }
 
-        val ticks = IntegerArgumentType.getInteger(context, "ticks")
-        HologramHandler.updateHologramProperty(name, HologramProperty.UpdateRate(ticks))
+        HologramHandler.updateHologramProperty(name, HologramHandler.HologramProperty.UpdateRate(ticks))
         playSuccessSound(context.source)
         EditMenu.showHologram(context.source, name)
         return 1
@@ -145,6 +140,7 @@ object HologramEditCommand {
 
     private fun executeViewRange(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
+        val blocks = FloatArgumentType.getFloat(context, "blocks")
 
         if (!HologramConfig.exists(name)) {
             ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
@@ -152,14 +148,7 @@ object HologramEditCommand {
             return 0
         }
 
-        val blocks = FloatArgumentType.getFloat(context, "blocks")
-        if (blocks !in 1f..128f) {
-            ErrorMessages.sendError(context.source, ErrorType.INVALID_VIEW_RANGE)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        HologramHandler.updateHologramProperty(name, HologramProperty.ViewRange(blocks.toDouble()))
+        HologramHandler.updateHologramProperty(name, HologramHandler.HologramProperty.ViewRange(blocks.toDouble()))
         playSuccessSound(context.source)
         EditMenu.showHologram(context.source, name)
         return 1
@@ -167,6 +156,9 @@ object HologramEditCommand {
 
     private fun executeRotation(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
+        val pitch = FloatArgumentType.getFloat(context, "pitch")
+        val yaw = FloatArgumentType.getFloat(context, "yaw")
+        val roll = FloatArgumentType.getFloat(context, "roll")
 
         if (!HologramConfig.exists(name)) {
             ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
@@ -174,13 +166,9 @@ object HologramEditCommand {
             return 0
         }
 
-        val pitch = FloatArgumentType.getFloat(context, "pitch")
-        val yaw = FloatArgumentType.getFloat(context, "yaw")
-        val roll = FloatArgumentType.getFloat(context, "roll")
-
         HologramHandler.updateHologramProperty(
             name,
-            HologramProperty.Rotation(HologramData.Rotation(pitch, yaw, roll))
+            HologramHandler.HologramProperty.Rotation(Rotation(pitch, yaw, roll))
         )
         playSuccessSound(context.source)
         EditMenu.showHologram(context.source, name)
