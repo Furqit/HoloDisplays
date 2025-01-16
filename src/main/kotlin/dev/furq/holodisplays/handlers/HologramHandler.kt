@@ -44,7 +44,10 @@ object HologramHandler {
         }
     }
 
-    fun createHologram(name: String, data: HologramData) {
+    fun createHologram(name: String, data: HologramData) = ErrorHandler.withCatch {
+        if (HologramConfig.exists(name)) {
+            throw HologramException("Hologram with name $name already exists")
+        }
         HologramConfig.saveHologram(name, data)
         ViewerHandler.createTracker(name, data)
         showHologramToPlayers(name, data)
@@ -56,8 +59,10 @@ object HologramHandler {
         }
     }
 
-    fun updateHologramProperty(name: String, property: HologramProperty) {
-        val hologram = HologramConfig.getHologram(name) ?: return
+    fun updateHologramProperty(name: String, property: HologramProperty) = ErrorHandler.withCatch {
+        val hologram = HologramConfig.getHologram(name)
+            ?: throw HologramException("Hologram $name not found")
+
         updateHologramData(hologram, property)
         HologramConfig.saveHologram(name, hologram)
 
@@ -66,8 +71,7 @@ object HologramHandler {
             is HologramProperty.Rotation,
             is HologramProperty.LineOffset,
             is HologramProperty.AddLine,
-            is HologramProperty.RemoveLine,
-            -> true
+            is HologramProperty.RemoveLine -> true
 
             else -> false
         }
@@ -81,9 +85,24 @@ object HologramHandler {
 
     private fun updateHologramData(hologram: HologramData, property: HologramProperty) {
         when (property) {
-            is HologramProperty.Scale -> hologram.scale = property.value ?: hologram.scale
+            is HologramProperty.Scale -> {
+                if ((property.value?.x ?: 0f) < 0.1f ||
+                    (property.value?.y ?: 0f) < 0.1f ||
+                    (property.value?.z ?: 0f) < 0.1f
+                ) {
+                    throw HologramException("Scale must be at least 0.1")
+                }
+                hologram.scale = property.value ?: hologram.scale
+            }
+
             is HologramProperty.BillboardMode -> hologram.billboardMode = property.mode ?: hologram.billboardMode
-            is HologramProperty.ViewRange -> hologram.viewRange = property.value ?: hologram.viewRange
+            is HologramProperty.ViewRange -> {
+                if ((property.value ?: 0.0) !in 1.0..128.0) {
+                    throw HologramException("View range must be between 1 and 128")
+                }
+                hologram.viewRange = property.value ?: hologram.viewRange
+            }
+
             is HologramProperty.UpdateRate -> hologram.updateRate = property.value ?: hologram.updateRate
             is HologramProperty.Position -> {
                 hologram.position = property.position
@@ -91,7 +110,13 @@ object HologramHandler {
             }
 
             is HologramProperty.Rotation -> hologram.rotation = property.value ?: hologram.rotation
-            is HologramProperty.LineOffset -> updateLineOffset(hologram, property)
+            is HologramProperty.LineOffset -> {
+                if (property.index !in hologram.displays.indices) {
+                    throw HologramException("Invalid line index: ${property.index}")
+                }
+                updateLineOffset(hologram, property)
+            }
+
             is HologramProperty.AddLine -> hologram.displays.add(
                 HologramData.DisplayLine(
                     property.displayId,
@@ -115,7 +140,10 @@ object HologramHandler {
         }
     }
 
-    fun deleteHologram(name: String) {
+    fun deleteHologram(name: String) = ErrorHandler.withCatch {
+        if (!HologramConfig.exists(name)) {
+            throw HologramException("Hologram $name not found")
+        }
         ViewerHandler.removeHologramFromAllViewers(name)
         HologramConfig.deleteHologram(name)
         ViewerHandler.removeTracker(name)
@@ -145,7 +173,10 @@ object HologramHandler {
     }
 
     private fun getWorld(world: String): World {
-        val worldId = Identifier.tryParse(world)!!
-        return HoloDisplays.SERVER!!.getWorld(RegistryKey.of(RegistryKeys.WORLD, worldId))!!
+        val worldId = Identifier.tryParse(world)
+            ?: throw HologramException("Invalid world identifier: $world")
+
+        return HoloDisplays.SERVER?.getWorld(RegistryKey.of(RegistryKeys.WORLD, worldId))
+            ?: throw HologramException("World not found: $world")
     }
 }

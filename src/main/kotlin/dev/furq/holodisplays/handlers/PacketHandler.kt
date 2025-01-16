@@ -49,7 +49,7 @@ object PacketHandler {
         position: Vec3d,
         lineIndex: Int,
         hologram: HologramData,
-    ) {
+    ) = ErrorHandler.withCatch {
         val entityId = getNextEntityId()
         val displayRef = "${line.displayId}:$lineIndex"
 
@@ -110,15 +110,15 @@ object PacketHandler {
         entityId: Int,
         position: Vec3d,
         display: BaseDisplay,
-    ): EntitySpawnS2CPacket {
+    ): EntitySpawnS2CPacket = ErrorHandler.withCatch({
         val entityType = when (display) {
             is TextDisplay -> EntityType.TEXT_DISPLAY
             is ItemDisplay -> EntityType.ITEM_DISPLAY
             is BlockDisplay -> EntityType.BLOCK_DISPLAY
-            else -> throw IllegalArgumentException("Unknown display type")
+            else -> throw DisplayException("Unknown display type")
         }
 
-        return EntitySpawnS2CPacket(
+        EntitySpawnS2CPacket(
             entityId,
             UUID.randomUUID(),
             position.x, position.y, position.z,
@@ -128,7 +128,7 @@ object PacketHandler {
             Vec3d.ZERO,
             0.0
         )
-    }
+    }) ?: throw DisplayException("Failed to create spawn packet")
 
     private fun sendDisplayMetadata(
         player: ServerPlayerEntity,
@@ -235,31 +235,38 @@ object PacketHandler {
         add(createEntry(TextDisplayEntityAccessor.getTextDisplayFlags(), flags))
     }
 
-    private fun MutableList<DataTracker.SerializedEntry<*>>.addItemProperties(display: ItemDisplay) {
-        val itemStack = ItemStack(
-            Registries.ITEM.get(Identifier.tryParse(display.id) ?: return),
-        )
-        add(createEntry(ItemDisplayEntityAccessor.getItem(), itemStack))
+    private fun MutableList<DataTracker.SerializedEntry<*>>.addItemProperties(display: ItemDisplay) =
+        ErrorHandler.withCatch {
+            val item = Registries.ITEM.get(
+                Identifier.tryParse(display.id)
+                    ?: throw DisplayException("Invalid item identifier: ${display.id}")
+            )
 
-        val displayType = when (display.itemDisplayType.lowercase()) {
-            "none" -> 0
-            "thirdperson_lefthand" -> 1
-            "thirdperson_righthand" -> 2
-            "firstperson_lefthand" -> 3
-            "firstperson_righthand" -> 4
-            "head" -> 5
-            "gui" -> 6
-            "ground" -> 7
-            "fixed" -> 8
-            else -> 7
+            add(createEntry(ItemDisplayEntityAccessor.getItem(), ItemStack(item)))
+
+            val displayType = when (display.itemDisplayType.lowercase()) {
+                "none" -> 0
+                "thirdperson_lefthand" -> 1
+                "thirdperson_righthand" -> 2
+                "firstperson_lefthand" -> 3
+                "firstperson_righthand" -> 4
+                "head" -> 5
+                "gui" -> 6
+                "ground" -> 7
+                "fixed" -> 8
+                else -> 7
+            }
+            add(createEntry(ItemDisplayEntityAccessor.getItemDisplay(), displayType.toByte()))
         }
-        add(createEntry(ItemDisplayEntityAccessor.getItemDisplay(), displayType.toByte()))
-    }
 
-    private fun MutableList<DataTracker.SerializedEntry<*>>.addBlockProperties(display: BlockDisplay) {
-        val block = Registries.BLOCK.get(Identifier.tryParse(display.id) ?: return)
-        add(createEntry(BlockDisplayEntityAccessor.getBlockState(), block.defaultState))
-    }
+    private fun MutableList<DataTracker.SerializedEntry<*>>.addBlockProperties(display: BlockDisplay) =
+        ErrorHandler.withCatch {
+            val block = Registries.BLOCK.get(
+                Identifier.tryParse(display.id)
+                    ?: throw DisplayException("Invalid block identifier: ${display.id}")
+            )
+            add(createEntry(BlockDisplayEntityAccessor.getBlockState(), block.defaultState))
+        }
 
     private fun <T> createEntry(
         trackedData: TrackedData<T>,

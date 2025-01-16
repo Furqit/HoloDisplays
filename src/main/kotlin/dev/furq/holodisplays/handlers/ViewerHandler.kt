@@ -17,7 +17,7 @@ object ViewerHandler {
 
     private val trackedHolograms = mutableMapOf<String, TrackedHologram>()
 
-    fun createTracker(name: String, data: HologramData) {
+    fun createTracker(name: String, data: HologramData) = ErrorHandler.withCatch {
         trackedHolograms[name] = TrackedHologram(name, data)
     }
 
@@ -29,11 +29,10 @@ object ViewerHandler {
         trackedHolograms.clear()
     }
 
-    fun addViewer(player: ServerPlayerEntity, name: String) {
-        trackedHolograms[name]?.let { tracked ->
-            if (tracked.observers.add(player.uuid)) {
-                showHologramToPlayer(player, name, tracked.hologramData)
-            }
+    fun addViewer(player: ServerPlayerEntity, name: String) = ErrorHandler.withCatch {
+        val tracked = trackedHolograms[name] ?: throw HologramException("Hologram $name not found")
+        if (tracked.observers.add(player.uuid)) {
+            showHologramToPlayer(player, name, tracked.hologramData)
         }
     }
 
@@ -78,19 +77,21 @@ object ViewerHandler {
         }
     }
 
-    fun updateForAllObservers(name: String) {
-        trackedHolograms[name]?.let { tracked ->
-            HoloDisplays.SERVER?.playerManager?.playerList
-                ?.filter { tracked.observers.contains(it.uuid) }
-                ?.forEach { player ->
-                    updateHologramForPlayer(player, name, tracked.hologramData)
-                }
-        }
+    fun updateForAllObservers(name: String) = ErrorHandler.withCatch {
+        val tracked = trackedHolograms[name] ?: throw HologramException("Hologram $name not found")
+        HoloDisplays.SERVER?.playerManager?.playerList
+            ?.filter { tracked.observers.contains(it.uuid) }
+            ?.forEach { player ->
+                updateHologramForPlayer(player, name, tracked.hologramData)
+            }
     }
 
-    private fun showHologramToPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) {
-        hologram.displays.forEachIndexed { index, entity ->
-            DisplayConfig.getDisplay(entity.displayId)?.let { display ->
+    private fun showHologramToPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) =
+        ErrorHandler.withCatch {
+            hologram.displays.forEachIndexed { index, entity ->
+                val display = DisplayConfig.getDisplay(entity.displayId)
+                    ?: throw HologramException("Display ${entity.displayId} not found")
+
                 val processedDisplay = when (val displayType = display.display) {
                     is TextDisplay -> display.copy(
                         display = displayType.copy(
@@ -108,15 +109,14 @@ object ViewerHandler {
                     processedDisplay,
                     Vec3d(
                         hologram.position.x.toDouble(),
-                        hologram.position.x.toDouble(),
-                        hologram.position.x.toDouble()
+                        hologram.position.y.toDouble(),
+                        hologram.position.z.toDouble()
                     ),
                     index,
                     hologram
                 )
             }
         }
-    }
 
     private fun updateHologramForPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) {
         hologram.displays.forEachIndexed { index, entity ->

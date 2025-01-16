@@ -26,9 +26,12 @@ object DisplayHandler {
         data class ItemDisplayType(val value: String) : DisplayProperty
     }
 
-    fun updateDisplayProperty(displayId: String, property: DisplayProperty) {
-        val display = DisplayConfig.getDisplay(displayId) ?: return
-        val updatedDisplay = updateDisplayData(display, property) ?: return
+    fun updateDisplayProperty(displayId: String, property: DisplayProperty) = ErrorHandler.withCatch {
+        val display = DisplayConfig.getDisplay(displayId)
+            ?: throw DisplayException("Display $displayId not found")
+
+        val updatedDisplay = updateDisplayData(display, property)
+            ?: throw DisplayException("Failed to update display data")
 
         DisplayConfig.saveDisplay(displayId, updatedDisplay)
 

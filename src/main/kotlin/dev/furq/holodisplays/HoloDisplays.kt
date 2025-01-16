@@ -3,6 +3,7 @@ package dev.furq.holodisplays
 import dev.furq.holodisplays.commands.MainCommand
 import dev.furq.holodisplays.config.ConfigManager
 import dev.furq.holodisplays.config.HologramConfig
+import dev.furq.holodisplays.handlers.ErrorHandler
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.handlers.ViewerHandler
 import dev.furq.holodisplays.utils.TextProcessor
@@ -26,18 +27,14 @@ class HoloDisplays : ModInitializer {
             private set
     }
 
-    override fun onInitialize() {
-        try {
-            registerServerEvents()
-            initializeManagers()
-            registerCommands()
-            LOGGER.info("Initialized $MOD_ID v$VERSION")
-        } catch (e: Exception) {
-            LOGGER.error("Failed to initialize $MOD_ID!", e)
-        }
+    override fun onInitialize() = ErrorHandler.withCatch {
+        registerServerEvents()
+        initializeManagers()
+        registerCommands()
+        LOGGER.info("Initialized $MOD_ID v$VERSION")
     }
 
-    private fun handleServerTick(server: MinecraftServer) {
+    private fun handleServerTick(server: MinecraftServer) = ErrorHandler.withCatch {
         TextProcessor.tick()
         if (server.playerManager.playerList.isNotEmpty() && HologramConfig.getHolograms().isNotEmpty()) {
             server.playerManager.playerList.forEach { player ->
@@ -47,7 +44,7 @@ class HoloDisplays : ModInitializer {
         }
     }
 
-    private fun registerServerEvents() {
+    private fun registerServerEvents() = ErrorHandler.withCatch {
         ServerLifecycleEvents.SERVER_STARTING.register { SERVER = it }
         ServerTickEvents.END_SERVER_TICK.register(::handleServerTick)
 
@@ -59,20 +56,16 @@ class HoloDisplays : ModInitializer {
         }
     }
 
-    private fun initializeManagers() {
+    private fun initializeManagers() = ErrorHandler.withCatch {
         val configDir = FabricLoader.getInstance().configDir.resolve(MOD_ID)
         ConfigManager.init(configDir)
         HologramHandler.init()
         TextProcessor.init()
     }
 
-    private fun registerCommands() {
+    private fun registerCommands() = ErrorHandler.withCatch {
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
-            try {
-                MainCommand.register(dispatcher)
-            } catch (e: Exception) {
-                LOGGER.error("Failed to register commands!", e)
-            }
+            MainCommand.register(dispatcher)
         }
     }
 }
