@@ -2,13 +2,12 @@ package dev.furq.holodisplays.config
 
 import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.data.DisplayData
-import dev.furq.holodisplays.data.common.Rotation
-import dev.furq.holodisplays.data.common.Scale
 import dev.furq.holodisplays.data.display.BaseDisplay
 import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
+import org.joml.Vector3f
 import org.quiltmc.parsers.json.JsonReader
 import org.quiltmc.parsers.json.JsonWriter
 import java.io.FileFilter
@@ -113,22 +112,22 @@ object DisplayConfig : Config {
         return DisplayData(builder.build())
     }
 
-    private fun JsonReader.parseRotationArray(): Rotation {
+    private fun JsonReader.parseRotationArray(): Vector3f {
         beginArray()
         val pitch = nextDouble().toFloat()
         val yaw = nextDouble().toFloat()
         val roll = nextDouble().toFloat()
         endArray()
-        return Rotation(pitch, yaw, roll)
+        return Vector3f(pitch, yaw, roll)
     }
 
-    private fun JsonReader.parseScaleArray(): Scale {
+    private fun JsonReader.parseScaleArray(): Vector3f {
         beginArray()
         val x = nextDouble().toFloat()
         val y = nextDouble().toFloat()
         val z = nextDouble().toFloat()
         endArray()
-        return Scale(x, y, z)
+        return Vector3f(x, y, z)
     }
 
     private fun JsonReader.parseStringArray(): List<String> {
@@ -196,9 +195,9 @@ object DisplayConfig : Config {
     private fun writeCommonProperties(json: JsonWriter, display: BaseDisplay) {
         display.rotation?.let { rotation ->
             json.name("rotation").beginArray()
-            json.value(rotation.pitch)
-            json.value(rotation.yaw)
-            json.value(rotation.roll)
+            json.value(rotation.x)
+            json.value(rotation.y)
+            json.value(rotation.z)
             json.endArray()
         }
 

@@ -59,7 +59,8 @@ object TextProcessor {
 
     private fun updateHologramAnimations(name: String, hologram: HologramData) {
         hologram.displays.forEachIndexed { index, displayLine ->
-            val display = DisplayConfig.getDisplay(displayLine.displayId)?.display as? TextDisplay ?: return@forEachIndexed
+            val display =
+                DisplayConfig.getDisplay(displayLine.displayId)?.display as? TextDisplay ?: return@forEachIndexed
 
             val text = display.lines.joinToString("\n")
             if (!shouldUpdate(text, hologram.updateRate)) return@forEachIndexed

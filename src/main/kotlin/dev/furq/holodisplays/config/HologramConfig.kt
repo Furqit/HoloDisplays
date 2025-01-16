@@ -2,11 +2,8 @@ package dev.furq.holodisplays.config
 
 import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.data.HologramData
-import dev.furq.holodisplays.data.common.Offset
-import dev.furq.holodisplays.data.common.Position
-import dev.furq.holodisplays.data.common.Rotation
-import dev.furq.holodisplays.data.common.Scale
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
+import org.joml.Vector3f
 import org.quiltmc.parsers.json.JsonReader
 import org.quiltmc.parsers.json.JsonWriter
 import java.io.FileFilter
@@ -44,7 +41,12 @@ object HologramConfig : Config {
         while (hasNext()) {
             when (nextName()) {
                 "displays" -> builder.displays = parseDisplayLines()
-                "position" -> builder.position = parsePosition()
+                "position" -> {
+                    val (world, position) = parsePosition()
+                    builder.world = world
+                    builder.position = position
+                }
+
                 "rotation" -> builder.rotation = parseRotationArray()
                 "scale" -> builder.scale = parseScaleArray()
                 "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
@@ -64,7 +66,7 @@ object HologramConfig : Config {
         while (hasNext()) {
             beginObject()
             var name = ""
-            var offset = Offset()
+            var offset = Vector3f()
 
             while (hasNext()) {
                 when (nextName()) {
@@ -83,21 +85,22 @@ object HologramConfig : Config {
         return lines
     }
 
-    private fun JsonReader.parseOffsetArray(): Offset {
+    private fun JsonReader.parseOffsetArray(): Vector3f {
         beginArray()
         val x = nextDouble().toFloat()
         val y = nextDouble().toFloat()
         val z = nextDouble().toFloat()
         endArray()
-        return Offset(x, y, z)
+        return Vector3f(x, y, z)
     }
 
-    private fun JsonReader.parsePosition(): Position = beginObject().run {
+    private fun JsonReader.parsePosition(): Pair<String, Vector3f> {
         var world = "minecraft:overworld"
-        var x = 0.0f
-        var y = 0.0f
-        var z = 0.0f
+        var x = 0f
+        var y = 0f
+        var z = 0f
 
+        beginObject()
         while (hasNext()) {
             when (nextName()) {
                 "world" -> world = nextString()
@@ -108,25 +111,25 @@ object HologramConfig : Config {
             }
         }
         endObject()
-        Position(world, x, y, z)
+        return world to Vector3f(x, y, z)
     }
 
-    private fun JsonReader.parseRotationArray(): Rotation {
+    private fun JsonReader.parseRotationArray(): Vector3f {
         beginArray()
         val pitch = nextDouble().toFloat()
         val yaw = nextDouble().toFloat()
         val roll = nextDouble().toFloat()
         endArray()
-        return Rotation(pitch, yaw, roll)
+        return Vector3f(pitch, yaw, roll)
     }
 
-    private fun JsonReader.parseScaleArray(): Scale {
+    private fun JsonReader.parseScaleArray(): Vector3f {
         beginArray()
         val x = nextDouble().toFloat()
         val y = nextDouble().toFloat()
         val z = nextDouble().toFloat()
         endArray()
-        return Scale(x, y, z)
+        return Vector3f(x, y, z)
     }
 
     fun getHologram(name: String): HologramData? = holograms[name]
@@ -163,16 +166,16 @@ object HologramConfig : Config {
         endArray()
 
         name("position").beginObject()
-        name("world").value(hologram.position.world)
+        name("world").value(hologram.world)
         name("x").value(hologram.position.x)
         name("y").value(hologram.position.y)
         name("z").value(hologram.position.z)
         endObject()
 
         name("rotation").beginArray()
-        value(hologram.rotation.pitch)
-        value(hologram.rotation.yaw)
-        value(hologram.rotation.roll)
+        value(hologram.rotation.x)
+        value(hologram.rotation.y)
+        value(hologram.rotation.z)
         endArray()
 
         name("scale").beginArray()

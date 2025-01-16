@@ -43,6 +43,7 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:${deps["fabric_api"]}")
 
     modImplementation("eu.pb4:placeholder-api:${deps["placeholder-api"]}")
+    modImplementation(include("eu.pb4","sgui","1.6.0+1.21"))
     api(include("org.quiltmc.parsers", "json", "0.3.0"))
     api(include("org.quiltmc.parsers", "gson", "0.3.0"))
 

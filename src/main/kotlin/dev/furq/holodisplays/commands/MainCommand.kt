@@ -2,7 +2,7 @@ package dev.furq.holodisplays.commands
 
 import com.mojang.brigadier.CommandDispatcher
 import dev.furq.holodisplays.HoloDisplays
-import dev.furq.holodisplays.menu.MainMenu
+import dev.furq.holodisplays.gui.MainMenu
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
 
@@ -19,7 +19,7 @@ object MainCommand {
                 CommandManager.literal(alias)
                     .requires { it.hasPermissionLevel(2) }
                     .executes { context ->
-                        MainMenu.show(context.source)
+                        MainMenu.openMainMenu(context.source.player!!)
                         1
                     }
                     .then(CreateCommand.register())

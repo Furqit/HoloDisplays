@@ -108,8 +108,8 @@ object ViewerHandler {
                     processedDisplay,
                     Vec3d(
                         hologram.position.x.toDouble(),
-                        hologram.position.y.toDouble(),
-                        hologram.position.z.toDouble()
+                        hologram.position.x.toDouble(),
+                        hologram.position.x.toDouble()
                     ),
                     index,
                     hologram
@@ -145,7 +145,7 @@ object ViewerHandler {
     fun updatePlayerVisibility(player: ServerPlayerEntity) {
         trackedHolograms.values.forEach { tracked ->
             val isCurrentlyViewing = tracked.observers.contains(player.uuid)
-            val isInSameWorld = player.world.registryKey.value.toString() == tracked.hologramData.position.world
+            val isInSameWorld = player.world.registryKey.value.toString() == tracked.hologramData.world
 
             if (!isInSameWorld) {
                 if (isCurrentlyViewing) {
@@ -156,6 +156,7 @@ object ViewerHandler {
 
             val shouldView = HologramHandler.isPlayerInRange(
                 player,
+                tracked.hologramData.world,
                 tracked.hologramData.position,
                 tracked.hologramData.viewRange
             )

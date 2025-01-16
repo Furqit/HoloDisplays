@@ -7,9 +7,8 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
-import dev.furq.holodisplays.data.common.Offset
+import dev.furq.holodisplays.gui.HologramEdit
 import dev.furq.holodisplays.handlers.HologramHandler
-import dev.furq.holodisplays.menu.EditMenu
 import dev.furq.holodisplays.utils.CommandUtils
 import dev.furq.holodisplays.utils.CommandUtils.playErrorSound
 import dev.furq.holodisplays.utils.CommandUtils.playSuccessSound
@@ -17,6 +16,7 @@ import dev.furq.holodisplays.utils.ErrorMessages
 import dev.furq.holodisplays.utils.ErrorMessages.ErrorType
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
+import org.joml.Vector3f
 
 object LineCommand {
     fun register(): LiteralArgumentBuilder<ServerCommandSource> = CommandManager.literal("line")
@@ -67,7 +67,7 @@ object LineCommand {
 
         HologramHandler.updateHologramProperty(hologramName, HologramHandler.HologramProperty.AddLine(displayId))
         playSuccessSound(context.source)
-        EditMenu.showHologram(context.source, hologramName)
+        HologramEdit.open(context.source.playerOrThrow, hologramName)
         return 1
     }
 
@@ -90,7 +90,7 @@ object LineCommand {
 
         HologramHandler.updateHologramProperty(hologramName, HologramHandler.HologramProperty.RemoveLine(index))
         playSuccessSound(context.source)
-        EditMenu.showHologram(context.source, hologramName)
+        HologramEdit.open(context.source.playerOrThrow, hologramName)
         return 1
     }
 
@@ -116,10 +116,10 @@ object LineCommand {
 
         HologramHandler.updateHologramProperty(
             hologramName,
-            HologramHandler.HologramProperty.LineOffset(index, Offset(x, y, z))
+            HologramHandler.HologramProperty.LineOffset(index, Vector3f(x, y, z))
         )
         playSuccessSound(context.source)
-        EditMenu.showHologram(context.source, hologramName)
+        HologramEdit.open(context.source.playerOrThrow, hologramName)
         return 1
     }
 }

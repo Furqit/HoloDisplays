@@ -1,18 +1,18 @@
 package dev.furq.holodisplays.data.display
 
-import dev.furq.holodisplays.data.common.Rotation
-import dev.furq.holodisplays.data.common.Scale
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
+import org.joml.Vector3f
 
 abstract class BaseDisplay {
-    abstract val scale: Scale?
-    abstract val rotation: Rotation?
+    abstract val scale: Vector3f?
+    abstract val rotation: Vector3f?
     abstract val billboardMode: BillboardMode?
 
     interface Builder<T : BaseDisplay> {
-        var scale: Scale?
-        var rotation: Rotation?
+        var scale: Vector3f?
+        var rotation: Vector3f?
         var billboardMode: BillboardMode?
+        var conditionalPlaceholder: String?
 
         fun build(): T
     }

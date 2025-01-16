@@ -6,15 +6,14 @@ import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
-import dev.furq.holodisplays.data.common.Rotation as CommonRotation
-import dev.furq.holodisplays.data.common.Scale as CommonScale
+import org.joml.Vector3f
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode as MinecraftBillboardMode
 
 object DisplayHandler {
     sealed interface DisplayProperty {
-        data class Scale(val value: CommonScale?) : DisplayProperty
-        data class BillboardMode(val mode: MinecraftBillboardMode?) : DisplayProperty
-        data class Rotation(val value: CommonRotation?) : DisplayProperty
+        data class Scale(val value: Vector3f) : DisplayProperty
+        data class BillboardMode(val mode: MinecraftBillboardMode) : DisplayProperty
+        data class Rotation(val value: Vector3f) : DisplayProperty
         data class Lines(val value: List<String>) : DisplayProperty
         data class ItemId(val value: String) : DisplayProperty
         data class BlockId(val value: String) : DisplayProperty

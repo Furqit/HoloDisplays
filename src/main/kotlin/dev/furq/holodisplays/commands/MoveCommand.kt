@@ -4,18 +4,12 @@ import com.mojang.brigadier.arguments.FloatArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
-import dev.furq.holodisplays.config.HologramConfig
-import dev.furq.holodisplays.data.common.Position
-import dev.furq.holodisplays.handlers.HologramHandler
-import dev.furq.holodisplays.menu.EditMenu
+import dev.furq.holodisplays.gui.HologramEdit
 import dev.furq.holodisplays.utils.CommandUtils
-import dev.furq.holodisplays.utils.CommandUtils.playErrorSound
-import dev.furq.holodisplays.utils.CommandUtils.playSuccessSound
-import dev.furq.holodisplays.utils.ErrorMessages
-import dev.furq.holodisplays.utils.ErrorMessages.ErrorType
+import dev.furq.holodisplays.utils.Utils
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
-import net.minecraft.util.math.Vec3d
+import org.joml.Vector3f
 
 object MoveCommand {
     fun register(): LiteralArgumentBuilder<ServerCommandSource> = CommandManager.literal("move")
@@ -34,34 +28,21 @@ object MoveCommand {
 
     private fun executeMove(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
-
-        if (!HologramConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
         val worldId = context.source.world.registryKey.value.toString()
         val pos = try {
-            Vec3d(
-                FloatArgumentType.getFloat(context, "x").toDouble(),
-                FloatArgumentType.getFloat(context, "y").toDouble(),
-                FloatArgumentType.getFloat(context, "z").toDouble()
+            Vector3f(
+                FloatArgumentType.getFloat(context, "x"),
+                FloatArgumentType.getFloat(context, "y"),
+                FloatArgumentType.getFloat(context, "z")
             )
         } catch (e: IllegalArgumentException) {
-            context.source.position
+            context.source.position.toVector3f()
         }
 
-        val position = Position(
-            worldId,
-            String.format("%.3f", pos.x).toFloat(),
-            String.format("%.3f", pos.y).toFloat(),
-            String.format("%.3f", pos.z).toFloat()
-        )
-
-        HologramHandler.updateHologramProperty(name, HologramHandler.HologramProperty.Position(position))
-        playSuccessSound(context.source)
-        EditMenu.showHologram(context.source, name)
-        return 1
+        if (Utils.updateHologramPosition(name, pos, worldId, context.source)) {
+            HologramEdit.open(context.source.playerOrThrow, name)
+            return 1
+        }
+        return 0
     }
 }

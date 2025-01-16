@@ -5,25 +5,19 @@ import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
-import dev.furq.holodisplays.config.HologramConfig
-import dev.furq.holodisplays.data.common.Rotation
-import dev.furq.holodisplays.data.common.Scale
-import dev.furq.holodisplays.handlers.HologramHandler
-import dev.furq.holodisplays.menu.EditMenu
+import dev.furq.holodisplays.gui.HologramEdit
 import dev.furq.holodisplays.utils.CommandUtils
-import dev.furq.holodisplays.utils.CommandUtils.playErrorSound
-import dev.furq.holodisplays.utils.CommandUtils.playSuccessSound
-import dev.furq.holodisplays.utils.ErrorMessages
-import dev.furq.holodisplays.utils.ErrorMessages.ErrorType
+import dev.furq.holodisplays.utils.Utils
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
+import org.joml.Vector3f
 
 object HologramEditCommand {
     fun register(): ArgumentBuilder<ServerCommandSource, *> = CommandManager
         .argument("name", StringArgumentType.word())
         .suggests { _, builder -> CommandUtils.suggestHolograms(builder) }
-        .executes { context -> executeOpenMenu(context) }
+        .executes { context -> executeEdit(context) }
         .then(
             CommandManager.literal("scale")
                 .then(
@@ -65,17 +59,9 @@ object HologramEditCommand {
                 )
         )
 
-    private fun executeOpenMenu(context: CommandContext<ServerCommandSource>): Int {
+    private fun executeEdit(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
-
-        if (!HologramConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        EditMenu.showHologram(context.source, name)
-        playSuccessSound(context.source)
+        HologramEdit.open(context.source.playerOrThrow, name)
         return 1
     }
 
@@ -85,73 +71,25 @@ object HologramEditCommand {
         val y = FloatArgumentType.getFloat(context, "y")
         val z = FloatArgumentType.getFloat(context, "z")
 
-        if (!HologramConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        HologramHandler.updateHologramProperty(name, HologramHandler.HologramProperty.Scale(Scale(x, y, z)))
-        playSuccessSound(context.source)
-        EditMenu.showHologram(context.source, name)
-        return 1
+        return if (Utils.updateHologramScale(name, Vector3f(x, y, z), context.source)) 1 else 0
     }
 
     private fun executeBillboard(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
-        val modeStr = StringArgumentType.getString(context, "mode").uppercase()
-
-        if (!HologramConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        if (!BillboardMode.entries.map { it.name }.contains(modeStr)) {
-            ErrorMessages.sendError(context.source, ErrorType.INVALID_BILLBOARD)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        HologramHandler.updateHologramProperty(
-            name,
-            HologramHandler.HologramProperty.BillboardMode(BillboardMode.valueOf(modeStr))
-        )
-        playSuccessSound(context.source)
-        EditMenu.showHologram(context.source, name)
-        return 1
+        val mode = StringArgumentType.getString(context, "mode").uppercase()
+        return if (Utils.updateHologramBillboard(name, mode, context.source)) 1 else 0
     }
 
     private fun executeUpdateRate(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
         val ticks = IntegerArgumentType.getInteger(context, "ticks")
-
-        if (!HologramConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        HologramHandler.updateHologramProperty(name, HologramHandler.HologramProperty.UpdateRate(ticks))
-        playSuccessSound(context.source)
-        EditMenu.showHologram(context.source, name)
-        return 1
+        return if (Utils.updateHologramUpdateRate(name, ticks, context.source)) 1 else 0
     }
 
     private fun executeViewRange(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
         val blocks = FloatArgumentType.getFloat(context, "blocks")
-
-        if (!HologramConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        HologramHandler.updateHologramProperty(name, HologramHandler.HologramProperty.ViewRange(blocks.toDouble()))
-        playSuccessSound(context.source)
-        EditMenu.showHologram(context.source, name)
-        return 1
+        return if (Utils.updateHologramViewRange(name, blocks, context.source)) 1 else 0
     }
 
     private fun executeRotation(context: CommandContext<ServerCommandSource>): Int {
@@ -159,19 +97,6 @@ object HologramEditCommand {
         val pitch = FloatArgumentType.getFloat(context, "pitch")
         val yaw = FloatArgumentType.getFloat(context, "yaw")
         val roll = FloatArgumentType.getFloat(context, "roll")
-
-        if (!HologramConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorType.HOLOGRAM_NOT_FOUND)
-            playErrorSound(context.source)
-            return 0
-        }
-
-        HologramHandler.updateHologramProperty(
-            name,
-            HologramHandler.HologramProperty.Rotation(Rotation(pitch, yaw, roll))
-        )
-        playSuccessSound(context.source)
-        EditMenu.showHologram(context.source, name)
-        return 1
+        return if (Utils.updateHologramRotation(name, pitch, yaw, roll, context.source)) 1 else 0
     }
 }

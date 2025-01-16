@@ -2,8 +2,6 @@ package dev.furq.holodisplays.handlers
 
 import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.HologramData
-import dev.furq.holodisplays.data.common.Offset
-import dev.furq.holodisplays.data.common.Scale
 import dev.furq.holodisplays.data.display.BaseDisplay
 import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
@@ -172,9 +170,9 @@ object PacketHandler {
             createEntry(
                 DisplayEntityAccessor.getLeftRotation(),
                 Quaternionf()
-                    .rotateX(Math.toRadians(rotation.pitch.toDouble()).toFloat())
-                    .rotateY(Math.toRadians(rotation.yaw.toDouble()).toFloat())
-                    .rotateZ(Math.toRadians(rotation.roll.toDouble()).toFloat())
+                    .rotateX(Math.toRadians(rotation.x.toDouble()).toFloat())
+                    .rotateY(Math.toRadians(rotation.y.toDouble()).toFloat())
+                    .rotateZ(Math.toRadians(rotation.z.toDouble()).toFloat())
             )
         )
 
@@ -184,10 +182,10 @@ object PacketHandler {
 
     private fun calculateTranslation(
         display: BaseDisplay,
-        offset: Offset,
-        scale: Scale,
+        offset: Vector3f,
+        scale: Vector3f,
     ): Vector3f {
-        val baseOffset = Vector3f(offset.x, offset.y, offset.z)
+        val baseOffset = Vector3f(offset)
         return if (display is BlockDisplay) {
             baseOffset.add(
                 -0.5f * scale.x,
