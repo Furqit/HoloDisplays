@@ -58,6 +58,17 @@ object HologramEditCommand {
                         )
                 )
         )
+        .then(
+            CommandManager.literal("condition")
+                .then(
+                    CommandManager.argument("condition", StringArgumentType.greedyString())
+                        .executes { context -> executeCondition(context) }
+                )
+                .then(
+                    CommandManager.literal("remove")
+                        .executes { context -> executeConditionRemove(context) }
+                )
+        )
 
     private fun executeEdit(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
@@ -98,5 +109,16 @@ object HologramEditCommand {
         val yaw = FloatArgumentType.getFloat(context, "yaw")
         val roll = FloatArgumentType.getFloat(context, "roll")
         return if (Utils.updateHologramRotation(name, pitch, yaw, roll, context.source)) 1 else 0
+    }
+
+    private fun executeCondition(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        val condition = StringArgumentType.getString(context, "condition")
+        return if (Utils.updateHologramCondition(name, condition, context.source)) 1 else 0
+    }
+
+    private fun executeConditionRemove(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        return if (Utils.updateHologramCondition(name, null, context.source)) 1 else 0
     }
 }

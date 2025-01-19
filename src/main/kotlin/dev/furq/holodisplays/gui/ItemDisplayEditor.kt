@@ -97,7 +97,9 @@ object ItemDisplayEditor {
                 lore = listOf(
                     Text.empty()
                         .append(Text.literal("Current: ").formatted(Formatting.GRAY))
-                        .append(Text.literal(display.customModelData?.toString() ?: "none").formatted(Formatting.WHITE)),
+                        .append(
+                            Text.literal(display.customModelData?.toString() ?: "none").formatted(Formatting.WHITE)
+                        ),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
                         .append(Text.literal(" Click to change").formatted(Formatting.GRAY)),

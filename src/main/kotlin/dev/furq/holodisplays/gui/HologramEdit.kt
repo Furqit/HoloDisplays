@@ -18,7 +18,7 @@ object HologramEdit {
         gui.title = Text.literal("Edit Hologram")
 
         for (i in 0..44) {
-            if (i !in listOf(10, 12, 14, 16, 28, 31, 34, 36)) {
+            if (i !in listOf(10, 12, 14, 16, 28, 30, 32, 34, 36)) {
                 gui.setSlot(i, GuiItems.createBorderItem())
             }
         }
@@ -177,7 +177,7 @@ object HologramEdit {
         }
 
         gui.setSlot(
-            31, GuiItems.createGuiItem(
+            30, GuiItems.createGuiItem(
                 name = "Update Rate",
                 item = Items.CLOCK,
                 lore = listOf(
@@ -197,7 +197,7 @@ object HologramEdit {
         }
 
         gui.setSlot(
-            34, GuiItems.createGuiItem(
+            32, GuiItems.createGuiItem(
                 name = "Manage Displays",
                 item = Items.BOOK,
                 lore = listOf(
@@ -211,6 +211,38 @@ object HologramEdit {
             )
         ) { _, _, _, _ ->
             HologramDisplays.open(player, name)
+        }
+
+        gui.setSlot(
+            34, GuiItems.createGuiItem(
+                name = "Condition",
+                item = Items.REPEATER,
+                lore = listOf(
+                    Text.empty()
+                        .append(Text.literal("Current: ").formatted(Formatting.GRAY))
+                        .append(Text.literal(hologram.conditionalPlaceholder ?: "none").formatted(Formatting.WHITE)),
+                    Text.empty()
+                        .append(Text.literal("→").formatted(Formatting.YELLOW))
+                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY)),
+                    Text.empty()
+                        .append(Text.literal("→").formatted(Formatting.YELLOW))
+                        .append(Text.literal(" Right-Click to remove").formatted(Formatting.GRAY))
+                )
+            )
+        ) { _, type, _, _ ->
+            if (type.isLeft) {
+                AnvilInput.open(
+                    player = player,
+                    title = "Enter Condition",
+                    defaultText = hologram.conditionalPlaceholder ?: "%player:name% = Furq"
+                ) { condition ->
+                    Utils.updateHologramCondition(name, condition, player.commandSource)
+                    open(player, name)
+                }
+            } else if (type.isRight) {
+                Utils.updateHologramCondition(name, null, player.commandSource)
+                open(player, name)
+            }
         }
 
         gui.setSlot(36, GuiItems.createBackItem()) { _, _, _, _ ->

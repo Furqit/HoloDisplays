@@ -188,6 +188,26 @@ object Utils {
         return true
     }
 
+    fun updateHologramCondition(name: String, condition: String?, source: ServerCommandSource): Boolean {
+        if (!HologramConfig.exists(name)) {
+            Messages.sendError(source, ErrorType.HOLOGRAM_NOT_FOUND)
+            playErrorSound(source)
+            return false
+        }
+
+        HologramHandler.updateHologramProperty(
+            name,
+            HologramHandler.HologramProperty.ConditionalPlaceholder(condition)
+        )
+        Messages.sendFeedback(
+            source,
+            SuccessType.HOLOGRAM_UPDATED,
+            "condition to '${condition ?: "none"}'"
+        )
+        playSuccessSound(source)
+        return true
+    }
+
     // Display Creation and Management
     fun createTextDisplay(name: String, text: String, source: ServerCommandSource): Boolean {
         if (DisplayConfig.exists(name)) {
@@ -478,7 +498,10 @@ object Utils {
             .padStart(2, '0')
             .uppercase()
 
-        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextBackgroundColor("$opacityHex$color"))
+        DisplayHandler.updateDisplayProperty(
+            name,
+            DisplayHandler.DisplayProperty.TextBackgroundColor("$opacityHex$color")
+        )
         Messages.sendFeedback(source, SuccessType.BACKGROUND_UPDATED, "#$color (${opacity}% opacity)")
         playSuccessSound(source)
         return true
@@ -640,6 +663,26 @@ object Utils {
             source,
             SuccessType.DISPLAY_UPDATED,
             "custom model data to ${customModelData ?: "none"}"
+        )
+        playSuccessSound(source)
+        return true
+    }
+
+    fun updateDisplayCondition(name: String, condition: String?, source: ServerCommandSource): Boolean {
+        if (!DisplayConfig.exists(name)) {
+            Messages.sendError(source, ErrorType.DISPLAY_NOT_FOUND)
+            playErrorSound(source)
+            return false
+        }
+
+        DisplayHandler.updateDisplayProperty(
+            name,
+            DisplayHandler.DisplayProperty.ConditionalPlaceholder(condition)
+        )
+        Messages.sendFeedback(
+            source,
+            SuccessType.DISPLAY_UPDATED,
+            "condition to ${condition ?: "none"}"
         )
         playSuccessSound(source)
         return true

@@ -25,6 +25,7 @@ object DisplayHandler {
         data class ItemDisplayType(val value: String) : DisplayProperty()
         data class ItemCustomModelData(val value: Int?) : DisplayProperty()
         data class BlockId(val value: String) : DisplayProperty()
+        data class ConditionalPlaceholder(val value: String?) : DisplayProperty()
     }
 
     fun updateDisplayProperty(displayId: String, property: DisplayProperty) = ErrorHandler.withCatch {
@@ -42,7 +43,9 @@ object DisplayHandler {
             }
 
         val needsRespawn = when (property) {
+            is DisplayProperty.ConditionalPlaceholder,
             is DisplayProperty.Rotation -> true
+
             else -> false
         }
 
@@ -78,6 +81,7 @@ object DisplayHandler {
             is DisplayProperty.TextShadow -> display.copy(shadow = property.value)
             is DisplayProperty.TextSeeThrough -> display.copy(seeThrough = property.value)
             is DisplayProperty.TextAlignment -> display.copy(alignment = property.value)
+            is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
             else -> null
         }
     }
@@ -90,6 +94,7 @@ object DisplayHandler {
             is DisplayProperty.ItemId -> display.copy(id = property.value)
             is DisplayProperty.ItemDisplayType -> display.copy(itemDisplayType = property.value)
             is DisplayProperty.ItemCustomModelData -> display.copy(customModelData = property.value)
+            is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
             else -> null
         }
     }
@@ -100,6 +105,7 @@ object DisplayHandler {
             is DisplayProperty.BillboardMode -> display.copy(billboardMode = property.mode)
             is DisplayProperty.Rotation -> display.copy(rotation = property.value)
             is DisplayProperty.BlockId -> display.copy(id = property.value)
+            is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
             else -> null
         }
     }

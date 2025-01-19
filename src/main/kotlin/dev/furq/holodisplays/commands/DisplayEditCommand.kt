@@ -165,6 +165,17 @@ object DisplayEditCommand {
                     .executes { context -> executeBlockId(context) })
             )
         )
+        .then(
+            CommandManager.literal("condition")
+                .then(
+                    CommandManager.argument("condition", StringArgumentType.greedyString())
+                        .executes { context -> executeCondition(context) }
+                )
+                .then(
+                    CommandManager.literal("remove")
+                        .executes { context -> executeConditionRemove(context) }
+                )
+        )
 
     private fun executeEdit(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
@@ -303,5 +314,16 @@ object DisplayEditCommand {
         val name = StringArgumentType.getString(context, "name")
         val blockId = StringArgumentType.getString(context, "blockId")
         return if (Utils.updateDisplayBlock(name, blockId, context.source)) 1 else 0
+    }
+
+    private fun executeCondition(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        val condition = StringArgumentType.getString(context, "condition")
+        return if (Utils.updateDisplayCondition(name, condition, context.source)) 1 else 0
+    }
+
+    private fun executeConditionRemove(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        return if (Utils.updateDisplayCondition(name, null, context.source)) 1 else 0
     }
 }

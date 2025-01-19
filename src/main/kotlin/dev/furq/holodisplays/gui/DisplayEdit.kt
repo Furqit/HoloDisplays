@@ -21,13 +21,13 @@ object DisplayEdit {
         gui.title = Text.literal("Edit Display")
 
         for (i in 0..44) {
-            if (i !in listOf(10, 12, 14, 16, 34, 40)) {
+            if (i !in listOf(11, 13, 15, 30, 32, 36)) {
                 gui.setSlot(i, GuiItems.createBorderItem())
             }
         }
 
         gui.setSlot(
-            10, GuiItems.createGuiItem(
+            11, GuiItems.createGuiItem(
                 name = "Scale",
                 item = Items.SCAFFOLDING,
                 lore = listOf(
@@ -66,7 +66,7 @@ object DisplayEdit {
         }
 
         gui.setSlot(
-            12, GuiItems.createGuiItem(
+            13, GuiItems.createGuiItem(
                 name = "Billboard Mode",
                 item = Items.COMPASS,
                 lore = listOf(
@@ -102,7 +102,7 @@ object DisplayEdit {
         }
 
         gui.setSlot(
-            14, GuiItems.createGuiItem(
+            15, GuiItems.createGuiItem(
                 name = "Rotation",
                 item = Items.CLOCK,
                 lore = listOf(
@@ -143,7 +143,41 @@ object DisplayEdit {
         }
 
         gui.setSlot(
-            16, GuiItems.createGuiItem(
+            30, GuiItems.createGuiItem(
+                name = "Condition",
+                item = Items.REPEATER,
+                lore = listOf(
+                    Text.empty()
+                        .append(Text.literal("Current: ").formatted(Formatting.GRAY))
+                        .append(
+                            Text.literal(display.display.conditionalPlaceholder ?: "none").formatted(Formatting.WHITE)
+                        ),
+                    Text.empty()
+                        .append(Text.literal("→").formatted(Formatting.YELLOW))
+                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY)),
+                    Text.empty()
+                        .append(Text.literal("→").formatted(Formatting.YELLOW))
+                        .append(Text.literal(" Right-Click to remove").formatted(Formatting.GRAY))
+                )
+            )
+        ) { _, type, _, _ ->
+            if (type.isLeft) {
+                AnvilInput.open(
+                    player = player,
+                    title = "Enter Condition",
+                    defaultText = display.display.conditionalPlaceholder ?: "%player:name% = Furq"
+                ) { condition ->
+                    Utils.updateDisplayCondition(name, condition, player.commandSource)
+                    open(player, name, returnCallback)
+                }
+            } else if (type.isRight) {
+                Utils.updateDisplayCondition(name, null, player.commandSource)
+                open(player, name, returnCallback)
+            }
+        }
+
+        gui.setSlot(
+            32, GuiItems.createGuiItem(
                 name = "Type Settings",
                 item = when (display.display) {
                     is TextDisplay -> Items.PAPER
@@ -162,32 +196,13 @@ object DisplayEdit {
             )
         ) { _, _, _, _ ->
             when (display.display) {
-                is TextDisplay -> TextDisplayEditor.open(player, name, returnCallback)
-                is ItemDisplay -> ItemDisplayEditor.open(player, name, returnCallback)
-                is BlockDisplay -> BlockDisplayEditor.open(player, name, returnCallback)
+                is TextDisplay -> TextDisplayEditor.open(player, name)
+                is ItemDisplay -> ItemDisplayEditor.open(player, name)
+                is BlockDisplay -> BlockDisplayEditor.open(player, name)
             }
         }
 
-        gui.setSlot(
-            34, GuiItems.createGuiItem(
-                name = "Delete Display",
-                item = Items.BARRIER,
-                lore = listOf(
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to delete").formatted(Formatting.GRAY)),
-                    Text.empty()
-                        .append(Text.literal("Display: ").formatted(Formatting.GRAY))
-                        .append(Text.literal(name).formatted(Formatting.WHITE))
-                )
-            )
-        ) { _, _, _, _ ->
-            DeleteConfirmation.open(player, name, "display") {
-                DisplayList.open(player)
-            }
-        }
-
-        gui.setSlot(40, GuiItems.createBackItem()) { _, _, _, _ ->
+        gui.setSlot(36, GuiItems.createBackItem()) { _, _, _, _ ->
             returnCallback()
         }
 

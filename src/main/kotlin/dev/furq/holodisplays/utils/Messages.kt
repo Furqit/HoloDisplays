@@ -24,7 +24,8 @@ object Messages {
         INVALID_OFFSET,
         INVALID_TEXT_OPACITY,
         INVALID_UPDATE_RATE,
-        INVALID_ROTATION;
+        INVALID_ROTATION,
+        INVALID_CONDITION;
 
         fun getMessage(): String = when (this) {
             HOLOGRAM_EXISTS -> "A hologram with this name already exists"
@@ -46,6 +47,8 @@ object Messages {
             INVALID_TEXT_OPACITY -> "Text opacity must be between 1 and 100"
             INVALID_UPDATE_RATE -> "Update rate must be between 1 and 100 ticks"
             INVALID_ROTATION -> "Invalid rotation values"
+            INVALID_CONDITION -> "Invalid condition format. Use format: %placeholder% operator value"
+            else -> "An unknown error occurred"
         }
     }
 

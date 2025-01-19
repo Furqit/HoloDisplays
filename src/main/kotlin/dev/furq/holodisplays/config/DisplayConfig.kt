@@ -72,6 +72,7 @@ object DisplayConfig : Config {
                 "seeThrough" -> builder.seeThrough = nextBoolean()
                 "alignment" -> builder.alignment = TextDisplay.TextAlignment.valueOf(nextString().uppercase())
                 "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
+                "conditionalPlaceholder" -> builder.conditionalPlaceholder = nextString()
                 else -> skipValue()
             }
         }
@@ -90,6 +91,7 @@ object DisplayConfig : Config {
                 "scale" -> builder.scale = parseScaleArray()
                 "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
                 "customModelData" -> builder.customModelData = nextInt()
+                "conditionalPlaceholder" -> builder.conditionalPlaceholder = nextString()
                 else -> skipValue()
             }
         }
@@ -106,6 +108,7 @@ object DisplayConfig : Config {
                 "rotation" -> builder.rotation = parseRotationArray()
                 "scale" -> builder.scale = parseScaleArray()
                 "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
+                "conditionalPlaceholder" -> builder.conditionalPlaceholder = nextString()
                 else -> skipValue()
             }
         }
@@ -212,6 +215,7 @@ object DisplayConfig : Config {
         }
 
         display.billboardMode?.let { json.name("billboardMode").value(it.name) }
+        display.conditionalPlaceholder?.let { json.name("conditionalPlaceholder").value(it) }
     }
 
     fun deleteDisplay(name: String) {

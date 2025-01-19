@@ -52,6 +52,7 @@ object HologramConfig : Config {
                 "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
                 "updateRate" -> builder.updateRate = nextInt()
                 "viewRange" -> builder.viewRange = nextDouble()
+                "conditionalPlaceholder" -> builder.conditionalPlaceholder = nextString()
                 else -> skipValue()
             }
         }
@@ -187,6 +188,7 @@ object HologramConfig : Config {
         name("billboardMode").value(hologram.billboardMode.name)
         name("updateRate").value(hologram.updateRate)
         name("viewRange").value(hologram.viewRange)
+        hologram.conditionalPlaceholder?.let { name("conditionalPlaceholder").value(it) }
         endObject()
     }
 

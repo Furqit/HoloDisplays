@@ -23,6 +23,7 @@ object HologramHandler {
         data class LineOffset(val index: Int, val offset: Vector3f) : HologramProperty()
         data class AddLine(val displayId: String, val offset: Vector3f = Vector3f()) : HologramProperty()
         data class RemoveLine(val index: Int) : HologramProperty()
+        data class ConditionalPlaceholder(val value: String?) : HologramProperty()
     }
 
     fun init() {
@@ -69,6 +70,7 @@ object HologramHandler {
         val needsRespawn = when (property) {
             is HologramProperty.Position,
             is HologramProperty.Rotation,
+            is HologramProperty.ConditionalPlaceholder,
             is HologramProperty.LineOffset,
             is HologramProperty.AddLine,
             is HologramProperty.RemoveLine -> true
@@ -89,10 +91,12 @@ object HologramHandler {
             is HologramProperty.BillboardMode -> hologram.billboardMode = property.mode ?: MinecraftBillboardMode.CENTER
             is HologramProperty.ViewRange -> hologram.viewRange = property.value ?: 48.0
             is HologramProperty.UpdateRate -> hologram.updateRate = property.value ?: 20
+            is HologramProperty.ConditionalPlaceholder -> hologram.conditionalPlaceholder = property.value
             is HologramProperty.Position -> {
                 hologram.position = property.position
                 hologram.world = property.world
             }
+
             is HologramProperty.Rotation -> hologram.rotation = property.value ?: Vector3f()
             is HologramProperty.LineOffset -> {
                 if (property.index !in hologram.displays.indices) {
@@ -100,12 +104,14 @@ object HologramHandler {
                 }
                 updateLineOffset(hologram, property)
             }
+
             is HologramProperty.AddLine -> hologram.displays.add(
                 HologramData.DisplayLine(
                     property.displayId,
                     property.offset
                 )
             )
+
             is HologramProperty.RemoveLine -> {
                 if (property.index in hologram.displays.indices) {
                     hologram.displays.removeAt(property.index)

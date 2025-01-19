@@ -12,6 +12,7 @@ data class HologramData(
     var updateRate: Int = 20,
     var viewRange: Double = 48.0,
     var rotation: Vector3f = Vector3f(),
+    var conditionalPlaceholder: String? = null,
 ) {
     data class DisplayLine(
         val displayId: String,
@@ -27,7 +28,18 @@ data class HologramData(
         var updateRate: Int = 20
         var viewRange: Double = 16.0
         var rotation: Vector3f = Vector3f()
+        var conditionalPlaceholder: String? = null
 
-        fun build() = HologramData(displays, position, world, scale, billboardMode, updateRate, viewRange, rotation)
+        fun build() = HologramData(
+            displays,
+            position,
+            world,
+            scale,
+            billboardMode,
+            updateRate,
+            viewRange,
+            rotation,
+            conditionalPlaceholder
+        )
     }
 }

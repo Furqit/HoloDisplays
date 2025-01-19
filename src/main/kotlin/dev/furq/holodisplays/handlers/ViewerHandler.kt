@@ -4,6 +4,7 @@ import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.data.HologramData
 import dev.furq.holodisplays.data.display.TextDisplay
+import dev.furq.holodisplays.utils.ConditionEvaluator
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.math.Vec3d
 import java.util.*
@@ -88,9 +89,17 @@ object ViewerHandler {
 
     private fun showHologramToPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) =
         ErrorHandler.withCatch {
+            if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) {
+                return@withCatch
+            }
+
             hologram.displays.forEachIndexed { index, entity ->
                 val display = DisplayConfig.getDisplay(entity.displayId)
                     ?: throw HologramException("Display ${entity.displayId} not found")
+
+                if (!ConditionEvaluator.evaluate(display.display.conditionalPlaceholder, player)) {
+                    return@forEachIndexed
+                }
 
                 val processedDisplay = when (val displayType = display.display) {
                     is TextDisplay -> display.copy(
@@ -119,8 +128,16 @@ object ViewerHandler {
         }
 
     private fun updateHologramForPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) {
+        if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) {
+            return
+        }
+
         hologram.displays.forEachIndexed { index, entity ->
             DisplayConfig.getDisplay(entity.displayId)?.let { display ->
+                if (!ConditionEvaluator.evaluate(display.display.conditionalPlaceholder, player)) {
+                    return@let
+                }
+
                 val processedDisplay = when (val displayType = display.display) {
                     is TextDisplay -> display.copy(
                         display = displayType.copy(
