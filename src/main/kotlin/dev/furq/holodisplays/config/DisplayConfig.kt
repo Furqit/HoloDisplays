@@ -89,6 +89,7 @@ object DisplayConfig : Config {
                 "rotation" -> builder.rotation = parseRotationArray()
                 "scale" -> builder.scale = parseScaleArray()
                 "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
+                "customModelData" -> builder.customModelData = nextInt()
                 else -> skipValue()
             }
         }
@@ -166,19 +167,20 @@ object DisplayConfig : Config {
                 json.name("lines").beginArray()
                 display.lines.forEach { json.value(it) }
                 json.endArray()
-                writeCommonProperties(json, display)
                 display.lineWidth?.let { json.name("lineWidth").value(it) }
                 display.backgroundColor?.let { json.name("backgroundColor").value(it) }
                 display.textOpacity?.let { json.name("textOpacity").value(it) }
                 display.shadow?.let { json.name("shadow").value(it) }
                 display.seeThrough?.let { json.name("seeThrough").value(it) }
                 display.alignment?.let { json.name("alignment").value(it.name) }
+                writeCommonProperties(json, display)
             }
 
             is ItemDisplay -> {
                 json.name("type").value("item")
                 json.name("id").value(display.id)
                 json.name("displayType").value(display.itemDisplayType)
+                display.customModelData?.let { json.name("customModelData").value(it) }
                 writeCommonProperties(json, display)
             }
 

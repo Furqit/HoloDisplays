@@ -627,4 +627,21 @@ object Utils {
         playSuccessSound(source)
         return true
     }
+
+    fun updateItemCustomModelData(name: String, customModelData: Int?, source: ServerCommandSource): Boolean {
+        if (!DisplayConfig.exists(name)) {
+            Messages.sendError(source, ErrorType.DISPLAY_NOT_FOUND)
+            playErrorSound(source)
+            return false
+        }
+
+        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.CustomModelData(customModelData))
+        Messages.sendFeedback(
+            source,
+            SuccessType.DISPLAY_UPDATED,
+            "custom model data to ${customModelData ?: "none"}"
+        )
+        playSuccessSound(source)
+        return true
+    }
 }

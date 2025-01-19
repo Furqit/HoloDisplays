@@ -12,6 +12,8 @@ import dev.furq.holodisplays.mixin.ItemDisplayEntityAccessor
 import dev.furq.holodisplays.mixin.TextDisplayEntityAccessor
 import dev.furq.holodisplays.utils.TextProcessor
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import net.minecraft.component.DataComponentTypes
+import net.minecraft.component.type.CustomModelDataComponent
 import net.minecraft.entity.EntityType
 import net.minecraft.entity.data.DataTracker
 import net.minecraft.entity.data.TrackedData
@@ -242,7 +244,12 @@ object PacketHandler {
                     ?: throw DisplayException("Invalid item identifier: ${display.id}")
             )
 
-            add(createEntry(ItemDisplayEntityAccessor.getItem(), ItemStack(item)))
+            val itemStack = ItemStack(item)
+            display.customModelData?.let { cmd ->
+                itemStack.set(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelDataComponent(cmd))
+            }
+
+            add(createEntry(ItemDisplayEntityAccessor.getItem(), itemStack))
 
             val displayType = when (display.itemDisplayType.lowercase()) {
                 "none" -> 0

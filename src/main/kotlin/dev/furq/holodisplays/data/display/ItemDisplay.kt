@@ -10,6 +10,7 @@ data class ItemDisplay(
     override val rotation: Vector3f? = null,
     override val scale: Vector3f? = null,
     override val billboardMode: BillboardMode? = null,
+    override var conditionalPlaceholder: String? = null
 ) : BaseDisplay() {
     class Builder : BaseDisplay.Builder<ItemDisplay> {
         var id: String = ""

@@ -14,6 +14,7 @@ data class TextDisplay(
     override val rotation: Vector3f? = null,
     override val scale: Vector3f? = null,
     override val billboardMode: BillboardMode? = null,
+    override var conditionalPlaceholder: String? = null
 ) : BaseDisplay() {
     enum class TextAlignment {
         LEFT, CENTER, RIGHT

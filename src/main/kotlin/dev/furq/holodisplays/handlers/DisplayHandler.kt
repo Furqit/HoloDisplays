@@ -24,6 +24,7 @@ object DisplayHandler {
         data class SeeThrough(val value: Boolean?) : DisplayProperty
         data class TextAlignment(val value: TextDisplay.TextAlignment?) : DisplayProperty
         data class ItemDisplayType(val value: String) : DisplayProperty
+        data class CustomModelData(val value: Int?) : DisplayProperty
     }
 
     fun updateDisplayProperty(displayId: String, property: DisplayProperty) = ErrorHandler.withCatch {
@@ -88,6 +89,7 @@ object DisplayHandler {
             is DisplayProperty.Rotation -> display.copy(rotation = property.value)
             is DisplayProperty.ItemId -> display.copy(id = property.value)
             is DisplayProperty.ItemDisplayType -> display.copy(itemDisplayType = property.value)
+            is DisplayProperty.CustomModelData -> display.copy(customModelData = property.value)
             else -> null
         }
     }

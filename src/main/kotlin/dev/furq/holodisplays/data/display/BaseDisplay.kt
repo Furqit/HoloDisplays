@@ -7,6 +7,7 @@ abstract class BaseDisplay {
     abstract val scale: Vector3f?
     abstract val rotation: Vector3f?
     abstract val billboardMode: BillboardMode?
+    abstract val conditionalPlaceholder: String?
 
     interface Builder<T : BaseDisplay> {
         var scale: Vector3f?

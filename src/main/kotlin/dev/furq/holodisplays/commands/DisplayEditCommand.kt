@@ -140,6 +140,23 @@ object DisplayEditCommand {
                     }
                     .executes { context -> executeItemDisplayType(context) })
             )
+            .then(CommandManager.literal("customModelData")
+                .then(CommandManager.argument("value", IntegerArgumentType.integer(1))
+                    .executes { context ->
+                        val name = StringArgumentType.getString(context, "name")
+                        val value = IntegerArgumentType.getInteger(context, "value")
+                        Utils.updateItemCustomModelData(name, value, context.source)
+                        1
+                    }
+                )
+                .then(CommandManager.literal("reset")
+                    .executes { context ->
+                        val name = StringArgumentType.getString(context, "name")
+                        Utils.updateItemCustomModelData(name, null, context.source)
+                        1
+                    }
+                )
+            )
         )
         .then(CommandManager.literal("block")
             .then(CommandManager.literal("id")
