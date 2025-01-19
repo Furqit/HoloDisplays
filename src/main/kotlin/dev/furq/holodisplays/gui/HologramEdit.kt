@@ -154,22 +154,26 @@ object HologramEdit {
 
         gui.setSlot(
             28, GuiItems.createGuiItem(
-                name = "Billboard",
-                item = Items.ITEM_FRAME,
+                name = "Billboard Mode",
+                item = Items.COMPASS,
                 lore = listOf(
                     Text.empty()
                         .append(Text.literal("Current: ").formatted(Formatting.GRAY))
-                        .append(Text.literal("${hologram.billboardMode}").formatted(Formatting.WHITE)),
+                        .append(Text.literal(hologram.billboardMode.name.lowercase()).formatted(Formatting.WHITE)),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY))
+                        .append(Text.literal(" Click to cycle through modes").formatted(Formatting.GRAY)),
+                    Text.empty()
+                        .append(Text.literal("Available modes: ").formatted(Formatting.GRAY))
+                        .append(Text.literal("HORIZONTAL, VERTICAL, CENTER, FIXED").formatted(Formatting.WHITE))
                 )
             )
         ) { _, _, _, _ ->
-            AnvilInput.open(player, "Enter Billboard Mode", hologram.billboardMode.toString()) { billboard ->
-                Utils.updateHologramBillboard(name, billboard, player.commandSource)
-                open(player, name)
-            }
+            val modes = listOf("HORIZONTAL", "VERTICAL", "CENTER", "FIXED")
+            val currentIndex = modes.indexOf(hologram.billboardMode.name)
+            val nextMode = modes[(currentIndex + 1) % modes.size]
+            Utils.updateHologramBillboard(name, nextMode, player.commandSource)
+            open(player, name)
         }
 
         gui.setSlot(

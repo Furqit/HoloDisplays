@@ -57,18 +57,33 @@ object ItemDisplayEditor {
                         .append(Text.literal(display.itemDisplayType.lowercase()).formatted(Formatting.WHITE)),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY))
+                        .append(Text.literal(" Click to cycle through modes").formatted(Formatting.GRAY)),
+                    Text.empty()
+                        .append(Text.literal("Available modes: ").formatted(Formatting.GRAY)),
+                    Text.empty()
+                        .append(Text.literal("NONE, HEAD, GUI, GROUND, FIXED").formatted(Formatting.WHITE)),
+                    Text.empty()
+                        .append(Text.literal("THIRDPERSON (LEFT/RIGHT)").formatted(Formatting.WHITE)),
+                    Text.empty()
+                        .append(Text.literal("FIRSTPERSON (LEFT/RIGHT)").formatted(Formatting.WHITE))
                 )
             )
         ) { _, _, _, _ ->
-            AnvilInput.open(
-                player,
-                "Enter Display Type (none/head/thirdperson/firstperson/ground/gui/fixed)",
-                display.itemDisplayType.lowercase()
-            ) { type ->
-                Utils.updateItemDisplayType(name, type, player.commandSource)
-                open(player, name)
-            }
+            val modes = listOf(
+                "none",
+                "thirdperson_lefthand",
+                "thirdperson_righthand",
+                "firstperson_lefthand",
+                "firstperson_righthand",
+                "head",
+                "gui",
+                "ground",
+                "fixed"
+            )
+            val currentIndex = modes.indexOf(display.itemDisplayType.lowercase())
+            val nextMode = modes[(currentIndex + 1) % modes.size]
+            Utils.updateItemDisplayType(name, nextMode, player.commandSource)
+            open(player, name)
         }
 
         gui.setSlot(6, GuiItems.createBackItem()) { _, _, _, _ ->

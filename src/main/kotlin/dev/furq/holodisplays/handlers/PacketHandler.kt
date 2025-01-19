@@ -110,7 +110,7 @@ object PacketHandler {
         entityId: Int,
         position: Vec3d,
         display: BaseDisplay,
-    ): EntitySpawnS2CPacket = ErrorHandler.withCatch({
+    ): EntitySpawnS2CPacket = ErrorHandler.withCatch<EntitySpawnS2CPacket> {
         val entityType = when (display) {
             is TextDisplay -> EntityType.TEXT_DISPLAY
             is ItemDisplay -> EntityType.ITEM_DISPLAY
@@ -128,7 +128,7 @@ object PacketHandler {
             Vec3d.ZERO,
             0.0
         )
-    }) ?: throw DisplayException("Failed to create spawn packet")
+    } ?: throw DisplayException("Failed to create spawn packet")
 
     private fun sendDisplayMetadata(
         player: ServerPlayerEntity,

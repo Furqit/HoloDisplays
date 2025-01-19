@@ -70,18 +70,19 @@ object DisplayEdit {
                         ),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY))
+                        .append(Text.literal(" Click to cycle through modes").formatted(Formatting.GRAY)),
+                    Text.empty()
+                        .append(Text.literal("Available modes: ").formatted(Formatting.GRAY))
+                        .append(Text.literal("HORIZONTAL, VERTICAL, CENTER, FIXED").formatted(Formatting.WHITE))
                 )
             )
         ) { _, _, _, _ ->
-            AnvilInput.open(
-                player,
-                "Enter Billboard Mode (none/fixed/vertical/horizontal/center)",
-                display.display.billboardMode?.name?.lowercase() ?: "none"
-            ) { mode ->
-                Utils.updateDisplayBillboard(name, mode, player.commandSource)
-                open(player, name)
-            }
+            val modes = listOf("HORIZONTAL", "VERTICAL", "CENTER", "FIXED")
+            val currentMode = display.display.billboardMode?.name ?: "FIXED"
+            val currentIndex = modes.indexOf(currentMode)
+            val nextMode = modes[(currentIndex + 1) % modes.size]
+            Utils.updateDisplayBillboard(name, nextMode.lowercase(), player.commandSource)
+            open(player, name)
         }
 
         gui.setSlot(

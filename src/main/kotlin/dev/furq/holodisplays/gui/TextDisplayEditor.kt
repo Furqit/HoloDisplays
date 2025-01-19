@@ -120,14 +120,15 @@ object TextDisplayEditor {
                 lore = listOf(
                     Text.empty()
                         .append(Text.literal("Current: ").formatted(Formatting.GRAY))
-                        .append(Text.literal(display.shadow.toString()).formatted(Formatting.WHITE)),
+                        .append(Text.literal((display.shadow ?: false).toString()).formatted(Formatting.WHITE)),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
                         .append(Text.literal(" Click to toggle").formatted(Formatting.GRAY))
                 )
             )
         ) { _, _, _, _ ->
-            Utils.updateDisplayShadow(name, !display.shadow!!, player.commandSource)
+            val currentValue = display.shadow ?: false
+            Utils.updateDisplayShadow(name, !currentValue, player.commandSource)
             open(player, name)
         }
 
@@ -138,14 +139,15 @@ object TextDisplayEditor {
                 lore = listOf(
                     Text.empty()
                         .append(Text.literal("Current: ").formatted(Formatting.GRAY))
-                        .append(Text.literal(display.seeThrough.toString()).formatted(Formatting.WHITE)),
+                        .append(Text.literal((display.seeThrough ?: false).toString()).formatted(Formatting.WHITE)),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
                         .append(Text.literal(" Click to toggle").formatted(Formatting.GRAY))
                 )
             )
         ) { _, _, _, _ ->
-            Utils.updateDisplaySeeThrough(name, !display.seeThrough!!, player.commandSource)
+            val currentValue = display.seeThrough ?: false
+            Utils.updateDisplaySeeThrough(name, !currentValue, player.commandSource)
             open(player, name)
         }
 
@@ -161,18 +163,19 @@ object TextDisplayEditor {
                         ),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY))
+                        .append(Text.literal(" Click to cycle through modes").formatted(Formatting.GRAY)),
+                    Text.empty()
+                        .append(Text.literal("Available modes: ").formatted(Formatting.GRAY))
+                        .append(Text.literal("LEFT, CENTER, RIGHT").formatted(Formatting.WHITE))
                 )
             )
         ) { _, _, _, _ ->
-            AnvilInput.open(
-                player,
-                "Enter Alignment (left/center/right)",
-                display.alignment?.name?.lowercase() ?: "center"
-            ) { alignment ->
-                Utils.updateDisplayAlignment(name, alignment, player.commandSource)
-                open(player, name)
-            }
+            val modes = listOf("left", "center", "right")
+            val currentMode = display.alignment?.name?.lowercase() ?: "center"
+            val currentIndex = modes.indexOf(currentMode)
+            val nextMode = modes[(currentIndex + 1) % modes.size]
+            Utils.updateDisplayAlignment(name, nextMode, player.commandSource)
+            open(player, name)
         }
 
         gui.setSlot(36, GuiItems.createBackItem()) { _, _, _, _ ->
