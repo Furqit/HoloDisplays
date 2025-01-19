@@ -85,45 +85,27 @@ object HologramHandler {
 
     private fun updateHologramData(hologram: HologramData, property: HologramProperty) {
         when (property) {
-            is HologramProperty.Scale -> {
-                if ((property.value?.x ?: 0f) < 0.1f ||
-                    (property.value?.y ?: 0f) < 0.1f ||
-                    (property.value?.z ?: 0f) < 0.1f
-                ) {
-                    throw HologramException("Scale must be at least 0.1")
-                }
-                hologram.scale = property.value ?: hologram.scale
-            }
-
-            is HologramProperty.BillboardMode -> hologram.billboardMode = property.mode ?: hologram.billboardMode
-            is HologramProperty.ViewRange -> {
-                if ((property.value ?: 0.0) !in 1.0..128.0) {
-                    throw HologramException("View range must be between 1 and 128")
-                }
-                hologram.viewRange = property.value ?: hologram.viewRange
-            }
-
-            is HologramProperty.UpdateRate -> hologram.updateRate = property.value ?: hologram.updateRate
+            is HologramProperty.Scale -> hologram.scale = property.value ?: Vector3f(1f)
+            is HologramProperty.BillboardMode -> hologram.billboardMode = property.mode ?: MinecraftBillboardMode.CENTER
+            is HologramProperty.ViewRange -> hologram.viewRange = property.value ?: 48.0
+            is HologramProperty.UpdateRate -> hologram.updateRate = property.value ?: 20
             is HologramProperty.Position -> {
                 hologram.position = property.position
                 hologram.world = property.world
             }
-
-            is HologramProperty.Rotation -> hologram.rotation = property.value ?: hologram.rotation
+            is HologramProperty.Rotation -> hologram.rotation = property.value ?: Vector3f()
             is HologramProperty.LineOffset -> {
                 if (property.index !in hologram.displays.indices) {
                     throw HologramException("Invalid line index: ${property.index}")
                 }
                 updateLineOffset(hologram, property)
             }
-
             is HologramProperty.AddLine -> hologram.displays.add(
                 HologramData.DisplayLine(
                     property.displayId,
                     property.offset
                 )
             )
-
             is HologramProperty.RemoveLine -> {
                 if (property.index in hologram.displays.indices) {
                     hologram.displays.removeAt(property.index)

@@ -280,7 +280,7 @@ object Utils {
             return false
         }
 
-        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.Lines(listOf(text)))
+        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextLines(listOf(text)))
         Messages.sendFeedback(source, SuccessType.TEXT_UPDATED, text)
         playSuccessSound(source)
         return true
@@ -293,7 +293,7 @@ object Utils {
             return false
         }
 
-        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.LineWidth(width))
+        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextLineWidth(width))
         Messages.sendFeedback(source, SuccessType.DISPLAY_UPDATED, "line width to $width")
         playSuccessSound(source)
         return true
@@ -306,7 +306,7 @@ object Utils {
             return false
         }
 
-        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.SeeThrough(seeThrough))
+        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextSeeThrough(seeThrough))
         Messages.sendFeedback(
             source,
             SuccessType.DISPLAY_UPDATED,
@@ -478,7 +478,7 @@ object Utils {
             .padStart(2, '0')
             .uppercase()
 
-        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.Background("$opacityHex$color"))
+        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextBackgroundColor("$opacityHex$color"))
         Messages.sendFeedback(source, SuccessType.BACKGROUND_UPDATED, "#$color (${opacity}% opacity)")
         playSuccessSound(source)
         return true
@@ -491,7 +491,7 @@ object Utils {
             return false
         }
 
-        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.Background(null))
+        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextBackgroundColor(null))
         Messages.sendFeedback(source, SuccessType.DISPLAY_UPDATED)
         playSuccessSound(source)
         return true
@@ -523,7 +523,7 @@ object Utils {
             return false
         }
 
-        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.Shadow(shadow))
+        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextShadow(shadow))
         Messages.sendFeedback(
             source,
             SuccessType.DISPLAY_UPDATED,
@@ -635,7 +635,7 @@ object Utils {
             return false
         }
 
-        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.CustomModelData(customModelData))
+        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.ItemCustomModelData(customModelData))
         Messages.sendFeedback(
             source,
             SuccessType.DISPLAY_UPDATED,

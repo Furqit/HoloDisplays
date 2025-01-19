@@ -10,21 +10,21 @@ import org.joml.Vector3f
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode as MinecraftBillboardMode
 
 object DisplayHandler {
-    sealed interface DisplayProperty {
-        data class Scale(val value: Vector3f) : DisplayProperty
-        data class BillboardMode(val mode: MinecraftBillboardMode) : DisplayProperty
-        data class Rotation(val value: Vector3f) : DisplayProperty
-        data class Lines(val value: List<String>) : DisplayProperty
-        data class ItemId(val value: String) : DisplayProperty
-        data class BlockId(val value: String) : DisplayProperty
-        data class LineWidth(val value: Int?) : DisplayProperty
-        data class Background(val value: String?) : DisplayProperty
-        data class TextOpacity(val value: Int?) : DisplayProperty
-        data class Shadow(val value: Boolean?) : DisplayProperty
-        data class SeeThrough(val value: Boolean?) : DisplayProperty
-        data class TextAlignment(val value: TextDisplay.TextAlignment?) : DisplayProperty
-        data class ItemDisplayType(val value: String) : DisplayProperty
-        data class CustomModelData(val value: Int?) : DisplayProperty
+    sealed class DisplayProperty {
+        data class Scale(val value: Vector3f?) : DisplayProperty()
+        data class BillboardMode(val mode: MinecraftBillboardMode?) : DisplayProperty()
+        data class Rotation(val value: Vector3f?) : DisplayProperty()
+        data class TextLines(val value: List<String>) : DisplayProperty()
+        data class TextLineWidth(val value: Int?) : DisplayProperty()
+        data class TextBackgroundColor(val value: String?) : DisplayProperty()
+        data class TextOpacity(val value: Int?) : DisplayProperty()
+        data class TextShadow(val value: Boolean?) : DisplayProperty()
+        data class TextSeeThrough(val value: Boolean?) : DisplayProperty()
+        data class TextAlignment(val value: TextDisplay.TextAlignment?) : DisplayProperty()
+        data class ItemId(val value: String) : DisplayProperty()
+        data class ItemDisplayType(val value: String) : DisplayProperty()
+        data class ItemCustomModelData(val value: Int?) : DisplayProperty()
+        data class BlockId(val value: String) : DisplayProperty()
     }
 
     fun updateDisplayProperty(displayId: String, property: DisplayProperty) = ErrorHandler.withCatch {
@@ -71,12 +71,12 @@ object DisplayHandler {
             is DisplayProperty.Scale -> display.copy(scale = property.value)
             is DisplayProperty.BillboardMode -> display.copy(billboardMode = property.mode)
             is DisplayProperty.Rotation -> display.copy(rotation = property.value)
-            is DisplayProperty.Lines -> display.copy(lines = property.value.toMutableList())
-            is DisplayProperty.LineWidth -> display.copy(lineWidth = property.value)
-            is DisplayProperty.Background -> display.copy(backgroundColor = property.value)
+            is DisplayProperty.TextLines -> display.copy(lines = property.value.toMutableList())
+            is DisplayProperty.TextLineWidth -> display.copy(lineWidth = property.value)
+            is DisplayProperty.TextBackgroundColor -> display.copy(backgroundColor = property.value)
             is DisplayProperty.TextOpacity -> display.copy(textOpacity = property.value)
-            is DisplayProperty.Shadow -> display.copy(shadow = property.value)
-            is DisplayProperty.SeeThrough -> display.copy(seeThrough = property.value)
+            is DisplayProperty.TextShadow -> display.copy(shadow = property.value)
+            is DisplayProperty.TextSeeThrough -> display.copy(seeThrough = property.value)
             is DisplayProperty.TextAlignment -> display.copy(alignment = property.value)
             else -> null
         }
@@ -89,7 +89,7 @@ object DisplayHandler {
             is DisplayProperty.Rotation -> display.copy(rotation = property.value)
             is DisplayProperty.ItemId -> display.copy(id = property.value)
             is DisplayProperty.ItemDisplayType -> display.copy(itemDisplayType = property.value)
-            is DisplayProperty.CustomModelData -> display.copy(customModelData = property.value)
+            is DisplayProperty.ItemCustomModelData -> display.copy(customModelData = property.value)
             else -> null
         }
     }
