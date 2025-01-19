@@ -12,7 +12,11 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 object ItemDisplayEditor {
-    fun open(player: ServerPlayerEntity, name: String) {
+    fun open(
+        player: ServerPlayerEntity,
+        name: String,
+        returnCallback: () -> Unit = { DisplayEdit.open(player, name) }
+    ) {
         val display = DisplayConfig.getDisplay(name)?.display as? ItemDisplay ?: return
         val gui = SimpleGui(ScreenHandlerType.GENERIC_3X3, player, false)
         gui.title = Text.literal("Edit Item Display")
@@ -54,7 +58,7 @@ object ItemDisplayEditor {
                 lore = listOf(
                     Text.empty()
                         .append(Text.literal("Current: ").formatted(Formatting.GRAY))
-                        .append(Text.literal(display.itemDisplayType.lowercase()).formatted(Formatting.WHITE)),
+                        .append(Text.literal(display.itemDisplayType.uppercase()).formatted(Formatting.WHITE)),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
                         .append(Text.literal(" Click to cycle through modes").formatted(Formatting.GRAY)),
@@ -87,7 +91,7 @@ object ItemDisplayEditor {
         }
 
         gui.setSlot(6, GuiItems.createBackItem()) { _, _, _, _ ->
-            DisplayEdit.open(player, name)
+            DisplayEdit.open(player, name, returnCallback)
         }
 
         gui.open()

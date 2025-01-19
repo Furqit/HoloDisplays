@@ -11,7 +11,7 @@ import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.gui.DisplayEdit
 import dev.furq.holodisplays.utils.CommandUtils
 import dev.furq.holodisplays.utils.CommandUtils.playErrorSound
-import dev.furq.holodisplays.utils.ErrorMessages
+import dev.furq.holodisplays.utils.Messages
 import dev.furq.holodisplays.utils.Utils
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import net.minecraft.server.command.CommandManager
@@ -152,7 +152,7 @@ object DisplayEditCommand {
     private fun executeEdit(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
         if (!DisplayConfig.exists(name)) {
-            ErrorMessages.sendError(context.source, ErrorMessages.ErrorType.DISPLAY_NOT_FOUND)
+            Messages.sendError(context.source, Messages.ErrorType.DISPLAY_NOT_FOUND)
             playErrorSound(context.source)
             return 0
         }

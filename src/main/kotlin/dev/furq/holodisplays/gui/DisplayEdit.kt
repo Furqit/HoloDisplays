@@ -15,7 +15,7 @@ import net.minecraft.util.Formatting
 import org.joml.Vector3f
 
 object DisplayEdit {
-    fun open(player: ServerPlayerEntity, name: String) {
+    fun open(player: ServerPlayerEntity, name: String, returnCallback: () -> Unit = { DisplayList.open(player) }) {
         val display = DisplayConfig.getDisplay(name) ?: return
         val gui = SimpleGui(ScreenHandlerType.GENERIC_9X5, player, false)
         gui.title = Text.literal("Edit Display")
@@ -39,19 +39,27 @@ object DisplayEdit {
                         ),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY))
+                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY)),
+                    Text.empty()
+                        .append(Text.literal("→").formatted(Formatting.YELLOW))
+                        .append(Text.literal(" Right click to reset").formatted(Formatting.GRAY))
                 )
             )
-        ) { _, _, _, _ ->
-            AnvilInput.open(player, "Enter X Scale", display.display.scale?.x?.toString() ?: "1.0") { x ->
-                AnvilInput.open(player, "Enter Y Scale", display.display.scale?.y?.toString() ?: "1.0") { y ->
-                    AnvilInput.open(player, "Enter Z Scale", display.display.scale?.z?.toString() ?: "1.0") { z ->
-                        Utils.updateDisplayScale(
-                            name,
-                            Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
-                            player.commandSource
-                        )
-                        open(player, name)
+        ) { _, type, _, _ ->
+            if (type.isRight) {
+                Utils.resetDisplayScale(name, player.commandSource)
+                open(player, name, returnCallback)
+            } else {
+                AnvilInput.open(player, "Enter X Scale", display.display.scale?.x?.toString() ?: "1.0") { x ->
+                    AnvilInput.open(player, "Enter Y Scale", display.display.scale?.y?.toString() ?: "1.0") { y ->
+                        AnvilInput.open(player, "Enter Z Scale", display.display.scale?.z?.toString() ?: "1.0") { z ->
+                            Utils.updateDisplayScale(
+                                name,
+                                Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
+                                player.commandSource
+                            )
+                            open(player, name, returnCallback)
+                        }
                     }
                 }
             }
@@ -65,24 +73,32 @@ object DisplayEdit {
                     Text.empty()
                         .append(Text.literal("Current: ").formatted(Formatting.GRAY))
                         .append(
-                            Text.literal(display.display.billboardMode?.name?.lowercase() ?: "none")
+                            Text.literal(display.display.billboardMode?.name?.uppercase() ?: "NONE")
                                 .formatted(Formatting.WHITE)
                         ),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
                         .append(Text.literal(" Click to cycle through modes").formatted(Formatting.GRAY)),
                     Text.empty()
+                        .append(Text.literal("→").formatted(Formatting.YELLOW))
+                        .append(Text.literal(" Right click to reset").formatted(Formatting.GRAY)),
+                    Text.empty()
                         .append(Text.literal("Available modes: ").formatted(Formatting.GRAY))
                         .append(Text.literal("HORIZONTAL, VERTICAL, CENTER, FIXED").formatted(Formatting.WHITE))
                 )
             )
-        ) { _, _, _, _ ->
-            val modes = listOf("HORIZONTAL", "VERTICAL", "CENTER", "FIXED")
-            val currentMode = display.display.billboardMode?.name ?: "FIXED"
-            val currentIndex = modes.indexOf(currentMode)
-            val nextMode = modes[(currentIndex + 1) % modes.size]
-            Utils.updateDisplayBillboard(name, nextMode.lowercase(), player.commandSource)
-            open(player, name)
+        ) { _, type, _, _ ->
+            if (type.isRight) {
+                Utils.resetDisplayBillboard(name, player.commandSource)
+                open(player, name, returnCallback)
+            } else {
+                val modes = listOf("HORIZONTAL", "VERTICAL", "CENTER", "FIXED")
+                val currentMode = display.display.billboardMode?.name ?: "FIXED"
+                val currentIndex = modes.indexOf(currentMode)
+                val nextMode = modes[(currentIndex + 1) % modes.size]
+                Utils.updateDisplayBillboard(name, nextMode.lowercase(), player.commandSource)
+                open(player, name, returnCallback)
+            }
         }
 
         gui.setSlot(
@@ -98,21 +114,29 @@ object DisplayEdit {
                         ),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY))
+                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY)),
+                    Text.empty()
+                        .append(Text.literal("→").formatted(Formatting.YELLOW))
+                        .append(Text.literal(" Right click to reset").formatted(Formatting.GRAY))
                 )
             )
-        ) { _, _, _, _ ->
-            AnvilInput.open(player, "Enter Pitch", display.display.rotation?.x?.toString() ?: "0") { pitch ->
-                AnvilInput.open(player, "Enter Yaw", display.display.rotation?.y?.toString() ?: "0") { yaw ->
-                    AnvilInput.open(player, "Enter Roll", display.display.rotation?.z?.toString() ?: "0") { roll ->
-                        Utils.updateDisplayRotation(
-                            name,
-                            pitch.toFloat(),
-                            yaw.toFloat(),
-                            roll.toFloat(),
-                            player.commandSource
-                        )
-                        open(player, name)
+        ) { _, type, _, _ ->
+            if (type.isRight) {
+                Utils.resetDisplayRotation(name, player.commandSource)
+                open(player, name, returnCallback)
+            } else {
+                AnvilInput.open(player, "Enter Pitch", display.display.rotation?.x?.toString() ?: "0") { pitch ->
+                    AnvilInput.open(player, "Enter Yaw", display.display.rotation?.y?.toString() ?: "0") { yaw ->
+                        AnvilInput.open(player, "Enter Roll", display.display.rotation?.z?.toString() ?: "0") { roll ->
+                            Utils.updateDisplayRotation(
+                                name,
+                                pitch.toFloat(),
+                                yaw.toFloat(),
+                                roll.toFloat(),
+                                player.commandSource
+                            )
+                            open(player, name, returnCallback)
+                        }
                     }
                 }
             }
@@ -138,9 +162,9 @@ object DisplayEdit {
             )
         ) { _, _, _, _ ->
             when (display.display) {
-                is TextDisplay -> TextDisplayEditor.open(player, name)
-                is ItemDisplay -> ItemDisplayEditor.open(player, name)
-                is BlockDisplay -> BlockDisplayEditor.open(player, name)
+                is TextDisplay -> TextDisplayEditor.open(player, name, returnCallback)
+                is ItemDisplay -> ItemDisplayEditor.open(player, name, returnCallback)
+                is BlockDisplay -> BlockDisplayEditor.open(player, name, returnCallback)
             }
         }
 
@@ -164,7 +188,7 @@ object DisplayEdit {
         }
 
         gui.setSlot(40, GuiItems.createBackItem()) { _, _, _, _ ->
-            DisplayList.open(player)
+            returnCallback()
         }
 
         gui.open()

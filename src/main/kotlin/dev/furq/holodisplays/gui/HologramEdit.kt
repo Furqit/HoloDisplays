@@ -159,7 +159,7 @@ object HologramEdit {
                 lore = listOf(
                     Text.empty()
                         .append(Text.literal("Current: ").formatted(Formatting.GRAY))
-                        .append(Text.literal(hologram.billboardMode.name.lowercase()).formatted(Formatting.WHITE)),
+                        .append(Text.literal(hologram.billboardMode.name.uppercase()).formatted(Formatting.WHITE)),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
                         .append(Text.literal(" Click to cycle through modes").formatted(Formatting.GRAY)),

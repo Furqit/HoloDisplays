@@ -12,7 +12,11 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 object TextDisplayEditor {
-    fun open(player: ServerPlayerEntity, name: String) {
+    fun open(
+        player: ServerPlayerEntity,
+        name: String,
+        returnCallback: () -> Unit = { DisplayEdit.open(player, name) }
+    ) {
         val display = DisplayConfig.getDisplay(name)?.display as? TextDisplay ?: return
         val gui = SimpleGui(ScreenHandlerType.GENERIC_9X5, player, false)
         gui.title = Text.literal("Edit Text Display")
@@ -159,7 +163,7 @@ object TextDisplayEditor {
                     Text.empty()
                         .append(Text.literal("Current: ").formatted(Formatting.GRAY))
                         .append(
-                            Text.literal(display.alignment?.name?.lowercase() ?: "center").formatted(Formatting.WHITE)
+                            Text.literal(display.alignment?.name?.uppercase() ?: "CENTER").formatted(Formatting.WHITE)
                         ),
                     Text.empty()
                         .append(Text.literal("→").formatted(Formatting.YELLOW))
@@ -179,7 +183,7 @@ object TextDisplayEditor {
         }
 
         gui.setSlot(36, GuiItems.createBackItem()) { _, _, _, _ ->
-            DisplayEdit.open(player, name)
+            DisplayEdit.open(player, name, returnCallback)
         }
 
         gui.open()

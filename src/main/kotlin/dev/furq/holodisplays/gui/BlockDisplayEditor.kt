@@ -12,7 +12,11 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 object BlockDisplayEditor {
-    fun open(player: ServerPlayerEntity, name: String) {
+    fun open(
+        player: ServerPlayerEntity,
+        name: String,
+        returnCallback: () -> Unit = { DisplayEdit.open(player, name) }
+    ) {
         val display = DisplayConfig.getDisplay(name)?.display as? BlockDisplay ?: return
         val gui = SimpleGui(ScreenHandlerType.GENERIC_3X3, player, false)
         gui.title = Text.literal("Edit Block Display")
@@ -48,7 +52,7 @@ object BlockDisplayEditor {
         }
 
         gui.setSlot(6, GuiItems.createBackItem()) { _, _, _, _ ->
-            DisplayEdit.open(player, name)
+            DisplayEdit.open(player, name, returnCallback)
         }
 
         gui.open()

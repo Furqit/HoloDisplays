@@ -3,6 +3,7 @@ package dev.furq.holodisplays.gui
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.utils.GuiItems
+import dev.furq.holodisplays.utils.Utils
 import eu.pb4.sgui.api.gui.SimpleGui
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
@@ -58,16 +59,22 @@ object HologramDisplays {
                             .append(Text.literal(" Left-Click to edit offset").formatted(Formatting.GRAY)),
                         Text.empty()
                             .append(Text.literal("→").formatted(Formatting.YELLOW))
-                            .append(Text.literal(" Right-Click to remove").formatted(Formatting.GRAY))
+                            .append(Text.literal(" Right-Click to remove").formatted(Formatting.GRAY)),
+                        Text.empty(),
+                        Text.empty()
+                            .append(Text.literal("→").formatted(Formatting.YELLOW))
+                            .append(Text.literal(" Middle-Click to edit display").formatted(Formatting.GRAY))
                     )
                 )
             ) { _, type, _, _ ->
-                if (type.isRight) {
-                    HologramHandler.updateHologramProperty(
-                        hologramName,
-                        HologramHandler.HologramProperty.RemoveLine(i)
-                    )
-                    open(player, hologramName, currentPage)
+                if (type.isMiddle) {
+                    DisplayEdit.open(player, display.displayId) {
+                        open(player, hologramName, currentPage)
+                    }
+                } else if (type.isRight) {
+                    if (Utils.removeLineFromHologram(hologramName, i, player.commandSource)) {
+                        open(player, hologramName, currentPage)
+                    }
                 } else {
                     AnvilInput.open(player, "Enter X Offset", display.offset.x.toString()) { x ->
                         AnvilInput.open(player, "Enter Y Offset", display.offset.y.toString()) { y ->
@@ -144,11 +151,9 @@ object HologramDisplays {
                     selectionMode = true,
                     hologramName = hologramName,
                     onSelect = { displayName ->
-                        HologramHandler.updateHologramProperty(
-                            hologramName,
-                            HologramHandler.HologramProperty.AddLine(displayName)
-                        )
-                        open(player, hologramName, currentPage)
+                        if (Utils.addDisplayToHologram(hologramName, displayName, player.commandSource)) {
+                            open(player, hologramName, currentPage)
+                        }
                     }
                 )
             } else {

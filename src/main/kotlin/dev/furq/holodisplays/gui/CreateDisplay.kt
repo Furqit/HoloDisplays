@@ -44,8 +44,12 @@ object CreateDisplay {
                     if (Utils.createTextDisplay(name, text, player.commandSource)) {
                         if (hologramName != null) {
                             Utils.addDisplayToHologram(hologramName, name, player.commandSource)
+                            DisplayEdit.open(player, name) {
+                                HologramDisplays.open(player, hologramName)
+                            }
+                        } else {
+                            DisplayEdit.open(player, name)
                         }
-                        DisplayEdit.open(player, name)
                     }
                 }
             }
@@ -75,8 +79,12 @@ object CreateDisplay {
                     if (Utils.createItemDisplay(name, itemId, player.commandSource)) {
                         if (hologramName != null) {
                             Utils.addDisplayToHologram(hologramName, name, player.commandSource)
+                            DisplayEdit.open(player, name) {
+                                HologramDisplays.open(player, hologramName)
+                            }
+                        } else {
+                            DisplayEdit.open(player, name)
                         }
-                        DisplayEdit.open(player, name)
                     }
                 }
             }
@@ -106,8 +114,12 @@ object CreateDisplay {
                     if (Utils.createBlockDisplay(name, blockId, player.commandSource)) {
                         if (hologramName != null) {
                             Utils.addDisplayToHologram(hologramName, name, player.commandSource)
+                            DisplayEdit.open(player, name) {
+                                HologramDisplays.open(player, hologramName)
+                            }
+                        } else {
+                            DisplayEdit.open(player, name)
                         }
-                        DisplayEdit.open(player, name)
                     }
                 }
             }
