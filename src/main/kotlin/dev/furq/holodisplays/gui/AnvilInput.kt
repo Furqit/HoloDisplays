@@ -38,7 +38,7 @@ object AnvilInput {
 
         gui.title = Text.literal(title)
         gui.setSlot(
-            0, GuiItems.createGuiItem(
+            1, GuiItems.createGuiItem(
                 name = "Cancel",
                 item = Items.BARRIER,
                 lore = listOf(
@@ -53,7 +53,7 @@ object AnvilInput {
         }
 
         gui.setSlot(
-            1, GuiItems.createGuiItem(
+            0, GuiItems.createGuiItem(
                 name = defaultText,
                 item = Items.PAPER,
                 lore = listOf(
