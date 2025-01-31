@@ -76,20 +76,29 @@ object HologramDisplays {
                         open(player, hologramName, currentPage)
                     }
                 } else {
-                    AnvilInput.open(player, "Enter X Offset", display.offset.x.toString()) { x ->
-                        AnvilInput.open(player, "Enter Y Offset", display.offset.y.toString()) { y ->
-                            AnvilInput.open(player, "Enter Z Offset", display.offset.z.toString()) { z ->
-                                HologramHandler.updateHologramProperty(
-                                    hologramName,
-                                    HologramHandler.HologramProperty.LineOffset(
-                                        i,
-                                        Vector3f(x.toFloat(), y.toFloat(), z.toFloat())
+                    AnvilInput.open(player, "Enter X Offset", display.offset.x.toString(),
+                        onSubmit = { x ->
+                            AnvilInput.open(player, "Enter Y Offset", display.offset.y.toString(),
+                                onSubmit = { y ->
+                                    AnvilInput.open(player, "Enter Z Offset", display.offset.z.toString(),
+                                        onSubmit = { z ->
+                                            HologramHandler.updateHologramProperty(
+                                                hologramName,
+                                                HologramHandler.HologramProperty.LineOffset(
+                                                    i,
+                                                    Vector3f(x.toFloat(), y.toFloat(), z.toFloat())
+                                                )
+                                            )
+                                            open(player, hologramName, currentPage)
+                                        },
+                                        onCancel = { open(player, hologramName, currentPage) }
                                     )
-                                )
-                                open(player, hologramName, currentPage)
-                            }
-                        }
-                    }
+                                },
+                                onCancel = { open(player, hologramName, currentPage) }
+                            )
+                        },
+                        onCancel = { open(player, hologramName, currentPage) }
+                    )
                 }
             }
             slot++

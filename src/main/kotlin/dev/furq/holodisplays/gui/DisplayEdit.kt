@@ -50,18 +50,27 @@ object DisplayEdit {
                 Utils.resetDisplayScale(name, player.commandSource)
                 open(player, name, returnCallback)
             } else {
-                AnvilInput.open(player, "Enter X Scale", display.display.scale?.x?.toString() ?: "1.0") { x ->
-                    AnvilInput.open(player, "Enter Y Scale", display.display.scale?.y?.toString() ?: "1.0") { y ->
-                        AnvilInput.open(player, "Enter Z Scale", display.display.scale?.z?.toString() ?: "1.0") { z ->
-                            Utils.updateDisplayScale(
-                                name,
-                                Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
-                                player.commandSource
-                            )
-                            open(player, name, returnCallback)
-                        }
-                    }
-                }
+                AnvilInput.open(player, "Enter X Scale", display.display.scale?.x?.toString() ?: "1.0",
+                    onSubmit = { x ->
+                        AnvilInput.open(player, "Enter Y Scale", display.display.scale?.y?.toString() ?: "1.0",
+                            onSubmit = { y ->
+                                AnvilInput.open(player, "Enter Z Scale", display.display.scale?.z?.toString() ?: "1.0",
+                                    onSubmit = { z ->
+                                        Utils.updateDisplayScale(
+                                            name,
+                                            Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
+                                            player.commandSource
+                                        )
+                                        open(player, name, returnCallback)
+                                    },
+                                    onCancel = { open(player, name, returnCallback) }
+                                )
+                            },
+                            onCancel = { open(player, name, returnCallback) }
+                        )
+                    },
+                    onCancel = { open(player, name, returnCallback) }
+                )
             }
         }
 
@@ -125,20 +134,29 @@ object DisplayEdit {
                 Utils.resetDisplayRotation(name, player.commandSource)
                 open(player, name, returnCallback)
             } else {
-                AnvilInput.open(player, "Enter Pitch", display.display.rotation?.x?.toString() ?: "0") { pitch ->
-                    AnvilInput.open(player, "Enter Yaw", display.display.rotation?.y?.toString() ?: "0") { yaw ->
-                        AnvilInput.open(player, "Enter Roll", display.display.rotation?.z?.toString() ?: "0") { roll ->
-                            Utils.updateDisplayRotation(
-                                name,
-                                pitch.toFloat(),
-                                yaw.toFloat(),
-                                roll.toFloat(),
-                                player.commandSource
-                            )
-                            open(player, name, returnCallback)
-                        }
-                    }
-                }
+                AnvilInput.open(player, "Enter Pitch", display.display.rotation?.x?.toString() ?: "0",
+                    onSubmit = { pitch ->
+                        AnvilInput.open(player, "Enter Yaw", display.display.rotation?.y?.toString() ?: "0",
+                            onSubmit = { yaw ->
+                                AnvilInput.open(player, "Enter Roll", display.display.rotation?.z?.toString() ?: "0",
+                                    onSubmit = { roll ->
+                                        Utils.updateDisplayRotation(
+                                            name,
+                                            pitch.toFloat(),
+                                            yaw.toFloat(),
+                                            roll.toFloat(),
+                                            player.commandSource
+                                        )
+                                        open(player, name, returnCallback)
+                                    },
+                                    onCancel = { open(player, name, returnCallback) }
+                                )
+                            },
+                            onCancel = { open(player, name, returnCallback) }
+                        )
+                    },
+                    onCancel = { open(player, name, returnCallback) }
+                )
             }
         }
 
@@ -165,11 +183,13 @@ object DisplayEdit {
                 AnvilInput.open(
                     player = player,
                     title = "Enter Condition",
-                    defaultText = display.display.conditionalPlaceholder ?: "%player:name% = Furq"
-                ) { condition ->
-                    Utils.updateDisplayCondition(name, condition, player.commandSource)
-                    open(player, name, returnCallback)
-                }
+                    defaultText = display.display.conditionalPlaceholder ?: "%player:name% = Furq",
+                    onSubmit = { condition ->
+                        Utils.updateDisplayCondition(name, condition, player.commandSource)
+                        open(player, name, returnCallback)
+                    },
+                    onCancel = { open(player, name, returnCallback) }
+                )
             } else if (type.isRight) {
                 Utils.updateDisplayCondition(name, null, player.commandSource)
                 open(player, name, returnCallback)

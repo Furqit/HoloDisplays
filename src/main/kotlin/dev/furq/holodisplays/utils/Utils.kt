@@ -286,7 +286,7 @@ object Utils {
         Messages.sendFeedback(
             source,
             SuccessType.DISPLAY_CREATED,
-            " block display '$name'"
+            "block display '$name'"
         )
         playSuccessSound(source)
         return true
@@ -330,7 +330,7 @@ object Utils {
         Messages.sendFeedback(
             source,
             SuccessType.DISPLAY_UPDATED,
-            "see through to ${if (seeThrough) "enabled" else "disabled"}"
+            "see through ${if (seeThrough) "enabled" else "disabled"}"
         )
         playSuccessSound(source)
         return true
@@ -515,7 +515,7 @@ object Utils {
         }
 
         DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextBackgroundColor(null))
-        Messages.sendFeedback(source, SuccessType.DISPLAY_UPDATED)
+        Messages.sendFeedback(source, SuccessType.DISPLAY_UPDATED, "background reset to default")
         playSuccessSound(source)
         return true
     }

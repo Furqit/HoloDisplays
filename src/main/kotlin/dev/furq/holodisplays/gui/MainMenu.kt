@@ -34,11 +34,13 @@ object MainMenu {
             AnvilInput.open(
                 player = player,
                 title = "Enter Hologram Name",
-                defaultText = "hologram"
-            ) { name ->
-                Utils.createHologram(name, player)
-                HologramEdit.open(player, name)
-            }
+                defaultText = "hologram",
+                onSubmit = { name ->
+                    Utils.createHologram(name, player)
+                    HologramEdit.open(player, name)
+                },
+                onCancel = { openMainMenu(player) }
+            )
         }
 
         gui.setSlot(

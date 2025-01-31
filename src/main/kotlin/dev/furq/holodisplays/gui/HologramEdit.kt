@@ -44,19 +44,28 @@ object HologramEdit {
             )
         ) { _, type, _, _ ->
             if (type.isLeft) {
-                AnvilInput.open(player, "Enter X Position", hologram.position.x.toString()) { x ->
-                    AnvilInput.open(player, "Enter Y Position", hologram.position.y.toString()) { y ->
-                        AnvilInput.open(player, "Enter Z Position", hologram.position.z.toString()) { z ->
-                            Utils.updateHologramPosition(
-                                name,
-                                Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
-                                player.world.registryKey.value.toString(),
-                                player.commandSource
-                            )
-                            open(player, name)
-                        }
-                    }
-                }
+                AnvilInput.open(player, "Enter X Position", hologram.position.x.toString(),
+                    onSubmit = { x ->
+                        AnvilInput.open(player, "Enter Y Position", hologram.position.y.toString(),
+                            onSubmit = { y ->
+                                AnvilInput.open(player, "Enter Z Position", hologram.position.z.toString(),
+                                    onSubmit = { z ->
+                                        Utils.updateHologramPosition(
+                                            name,
+                                            Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
+                                            player.world.registryKey.value.toString(),
+                                            player.commandSource
+                                        )
+                                        open(player, name)
+                                    },
+                                    onCancel = { open(player, name) }
+                                )
+                            },
+                            onCancel = { open(player, name) }
+                        )
+                    },
+                    onCancel = { open(player, name) }
+                )
             } else if (type.isRight) {
                 Utils.updateHologramPosition(
                     name,
@@ -82,10 +91,13 @@ object HologramEdit {
                 )
             )
         ) { _, _, _, _ ->
-            AnvilInput.open(player, "Enter View Range", hologram.viewRange.toString()) { range ->
-                Utils.updateHologramViewRange(name, range.toFloat(), player.commandSource)
-                open(player, name)
-            }
+            AnvilInput.open(player, "Enter View Range", hologram.viewRange.toString(),
+                onSubmit = { range ->
+                    Utils.updateHologramViewRange(name, range.toFloat(), player.commandSource)
+                    open(player, name)
+                },
+                onCancel = { open(player, name) }
+            )
         }
 
         gui.setSlot(
@@ -105,18 +117,27 @@ object HologramEdit {
                 )
             )
         ) { _, _, _, _ ->
-            AnvilInput.open(player, "Enter X Scale", hologram.scale.x.toString()) { x ->
-                AnvilInput.open(player, "Enter Y Scale", hologram.scale.y.toString()) { y ->
-                    AnvilInput.open(player, "Enter Z Scale", hologram.scale.z.toString()) { z ->
-                        Utils.updateHologramScale(
-                            name,
-                            Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
-                            player.commandSource
-                        )
-                        open(player, name)
-                    }
-                }
-            }
+            AnvilInput.open(player, "Enter X Scale", hologram.scale.x.toString(),
+                onSubmit = { x ->
+                    AnvilInput.open(player, "Enter Y Scale", hologram.scale.y.toString(),
+                        onSubmit = { y ->
+                            AnvilInput.open(player, "Enter Z Scale", hologram.scale.z.toString(),
+                                onSubmit = { z ->
+                                    Utils.updateHologramScale(
+                                        name,
+                                        Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
+                                        player.commandSource
+                                    )
+                                    open(player, name)
+                                },
+                                onCancel = { open(player, name) }
+                            )
+                        },
+                        onCancel = { open(player, name) }
+                    )
+                },
+                onCancel = { open(player, name) }
+            )
         }
 
         gui.setSlot(
@@ -136,20 +157,29 @@ object HologramEdit {
                 )
             )
         ) { _, _, _, _ ->
-            AnvilInput.open(player, "Enter Pitch", hologram.rotation.x.toString()) { pitch ->
-                AnvilInput.open(player, "Enter Yaw", hologram.rotation.y.toString()) { yaw ->
-                    AnvilInput.open(player, "Enter Roll", hologram.rotation.z.toString()) { roll ->
-                        Utils.updateHologramRotation(
-                            name,
-                            pitch.toFloat(),
-                            yaw.toFloat(),
-                            roll.toFloat(),
-                            player.commandSource
-                        )
-                        open(player, name)
-                    }
-                }
-            }
+            AnvilInput.open(player, "Enter Pitch", hologram.rotation.x.toString(),
+                onSubmit = { pitch ->
+                    AnvilInput.open(player, "Enter Yaw", hologram.rotation.y.toString(),
+                        onSubmit = { yaw ->
+                            AnvilInput.open(player, "Enter Roll", hologram.rotation.z.toString(),
+                                onSubmit = { roll ->
+                                    Utils.updateHologramRotation(
+                                        name,
+                                        pitch.toFloat(),
+                                        yaw.toFloat(),
+                                        roll.toFloat(),
+                                        player.commandSource
+                                    )
+                                    open(player, name)
+                                },
+                                onCancel = { open(player, name) }
+                            )
+                        },
+                        onCancel = { open(player, name) }
+                    )
+                },
+                onCancel = { open(player, name) }
+            )
         }
 
         gui.setSlot(
@@ -190,10 +220,13 @@ object HologramEdit {
                 )
             )
         ) { _, _, _, _ ->
-            AnvilInput.open(player, "Enter Update Rate (ticks)", hologram.updateRate.toString()) { ticks ->
-                Utils.updateHologramUpdateRate(name, ticks.toInt(), player.commandSource)
-                open(player, name)
-            }
+            AnvilInput.open(player, "Enter Update Rate (ticks)", hologram.updateRate.toString(),
+                onSubmit = { ticks ->
+                    Utils.updateHologramUpdateRate(name, ticks.toInt(), player.commandSource)
+                    open(player, name)
+                },
+                onCancel = { open(player, name) }
+            )
         }
 
         gui.setSlot(
@@ -234,11 +267,13 @@ object HologramEdit {
                 AnvilInput.open(
                     player = player,
                     title = "Enter Condition",
-                    defaultText = hologram.conditionalPlaceholder ?: "%player:name% = Furq"
-                ) { condition ->
-                    Utils.updateHologramCondition(name, condition, player.commandSource)
-                    open(player, name)
-                }
+                    defaultText = hologram.conditionalPlaceholder ?: "%player:name% = Furq",
+                    onSubmit = { condition ->
+                        Utils.updateHologramCondition(name, condition, player.commandSource)
+                        open(player, name)
+                    },
+                    onCancel = { open(player, name) }
+                )
             } else if (type.isRight) {
                 Utils.updateHologramCondition(name, null, player.commandSource)
                 open(player, name)

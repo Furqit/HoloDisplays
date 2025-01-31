@@ -44,11 +44,13 @@ object ItemDisplayEditor {
             AnvilInput.open(
                 player = player,
                 title = "Enter Item ID",
-                defaultText = display.id
-            ) { itemId ->
-                Utils.updateDisplayItem(name, itemId, player.commandSource)
-                open(player, name)
-            }
+                defaultText = display.id,
+                onSubmit = { itemId ->
+                    Utils.updateDisplayItem(name, itemId, player.commandSource)
+                    open(player, name)
+                },
+                onCancel = { open(player, name) }
+            )
         }
 
         gui.setSlot(
@@ -113,14 +115,16 @@ object ItemDisplayEditor {
                 AnvilInput.open(
                     player = player,
                     title = "Enter Custom Model Data",
-                    defaultText = display.customModelData?.toString() ?: "1"
-                ) { input ->
-                    val cmd = input.toIntOrNull()
-                    if (cmd != null && cmd > 0) {
-                        Utils.updateItemCustomModelData(name, cmd, player.commandSource)
-                    }
-                    open(player, name)
-                }
+                    defaultText = display.customModelData?.toString() ?: "1",
+                    onSubmit = { input ->
+                        val cmd = input.toIntOrNull()
+                        if (cmd != null && cmd > 0) {
+                            Utils.updateItemCustomModelData(name, cmd, player.commandSource)
+                        }
+                        open(player, name)
+                    },
+                    onCancel = { open(player, name) }
+                )
             } else if (type.isRight) {
                 Utils.updateItemCustomModelData(name, null, player.commandSource)
                 open(player, name)

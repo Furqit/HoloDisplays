@@ -44,11 +44,13 @@ object BlockDisplayEditor {
             AnvilInput.open(
                 player = player,
                 title = "Enter Block ID",
-                defaultText = display.id
-            ) { blockId ->
-                Utils.updateDisplayBlock(name, blockId, player.commandSource)
-                open(player, name)
-            }
+                defaultText = display.id,
+                onSubmit = { blockId ->
+                    Utils.updateDisplayBlock(name, blockId, player.commandSource)
+                    open(player, name)
+                },
+                onCancel = { open(player, name) }
+            )
         }
 
         gui.setSlot(6, GuiItems.createBackItem()) { _, _, _, _ ->

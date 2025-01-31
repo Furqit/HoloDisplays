@@ -34,25 +34,29 @@ object CreateDisplay {
             AnvilInput.open(
                 player = player,
                 title = "Enter Display Name",
-                defaultText = "text_display"
-            ) { name ->
-                AnvilInput.open(
-                    player = player,
-                    title = "Enter Text",
-                    defaultText = "Hello World!"
-                ) { text ->
-                    if (Utils.createTextDisplay(name, text, player.commandSource)) {
-                        if (hologramName != null) {
-                            Utils.addDisplayToHologram(hologramName, name, player.commandSource)
-                            DisplayEdit.open(player, name) {
-                                HologramDisplays.open(player, hologramName)
+                defaultText = "text_display",
+                onSubmit = { name ->
+                    AnvilInput.open(
+                        player = player,
+                        title = "Enter Text",
+                        defaultText = "Hello World!",
+                        onSubmit = { text ->
+                            if (Utils.createTextDisplay(name, text, player.commandSource)) {
+                                if (hologramName != null) {
+                                    Utils.addDisplayToHologram(hologramName, name, player.commandSource)
+                                    DisplayEdit.open(player, name) {
+                                        HologramDisplays.open(player, hologramName)
+                                    }
+                                } else {
+                                    DisplayEdit.open(player, name)
+                                }
                             }
-                        } else {
-                            DisplayEdit.open(player, name)
-                        }
-                    }
-                }
-            }
+                        },
+                        onCancel = { open(player, hologramName) }
+                    )
+                },
+                onCancel = { open(player, hologramName) }
+            )
         }
 
         gui.setSlot(
@@ -69,25 +73,29 @@ object CreateDisplay {
             AnvilInput.open(
                 player = player,
                 title = "Enter Display Name",
-                defaultText = "item_display"
-            ) { name ->
-                AnvilInput.open(
-                    player = player,
-                    title = "Enter Item ID",
-                    defaultText = "minecraft:diamond_sword"
-                ) { itemId ->
-                    if (Utils.createItemDisplay(name, itemId, player.commandSource)) {
-                        if (hologramName != null) {
-                            Utils.addDisplayToHologram(hologramName, name, player.commandSource)
-                            DisplayEdit.open(player, name) {
-                                HologramDisplays.open(player, hologramName)
+                defaultText = "item_display",
+                onSubmit = { name ->
+                    AnvilInput.open(
+                        player = player,
+                        title = "Enter Item ID",
+                        defaultText = "minecraft:diamond_sword",
+                        onSubmit = { itemId ->
+                            if (Utils.createItemDisplay(name, itemId, player.commandSource)) {
+                                if (hologramName != null) {
+                                    Utils.addDisplayToHologram(hologramName, name, player.commandSource)
+                                    DisplayEdit.open(player, name) {
+                                        HologramDisplays.open(player, hologramName)
+                                    }
+                                } else {
+                                    DisplayEdit.open(player, name)
+                                }
                             }
-                        } else {
-                            DisplayEdit.open(player, name)
-                        }
-                    }
-                }
-            }
+                        },
+                        onCancel = { open(player, hologramName) }
+                    )
+                },
+                onCancel = { open(player, hologramName) }
+            )
         }
 
         gui.setSlot(
@@ -104,25 +112,29 @@ object CreateDisplay {
             AnvilInput.open(
                 player = player,
                 title = "Enter Display Name",
-                defaultText = "block_display"
-            ) { name ->
-                AnvilInput.open(
-                    player = player,
-                    title = "Enter Block ID",
-                    defaultText = "minecraft:grass_block"
-                ) { blockId ->
-                    if (Utils.createBlockDisplay(name, blockId, player.commandSource)) {
-                        if (hologramName != null) {
-                            Utils.addDisplayToHologram(hologramName, name, player.commandSource)
-                            DisplayEdit.open(player, name) {
-                                HologramDisplays.open(player, hologramName)
+                defaultText = "block_display",
+                onSubmit = { name ->
+                    AnvilInput.open(
+                        player = player,
+                        title = "Enter Block ID",
+                        defaultText = "minecraft:grass_block",
+                        onSubmit = { blockId ->
+                            if (Utils.createBlockDisplay(name, blockId, player.commandSource)) {
+                                if (hologramName != null) {
+                                    Utils.addDisplayToHologram(hologramName, name, player.commandSource)
+                                    DisplayEdit.open(player, name) {
+                                        HologramDisplays.open(player, hologramName)
+                                    }
+                                } else {
+                                    DisplayEdit.open(player, name)
+                                }
                             }
-                        } else {
-                            DisplayEdit.open(player, name)
-                        }
-                    }
-                }
-            }
+                        },
+                        onCancel = { open(player, hologramName) }
+                    )
+                },
+                onCancel = { open(player, hologramName) }
+            )
         }
 
         gui.setSlot(6, GuiItems.createBackItem()) { _, _, _, _ ->

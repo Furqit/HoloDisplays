@@ -12,7 +12,8 @@ object AnvilInput {
         player: ServerPlayerEntity,
         title: String,
         defaultText: String = "",
-        onSubmit: (String) -> Unit
+        onSubmit: (String) -> Unit,
+        onCancel: () -> Unit = {}
     ) {
         val gui = object : AnvilInputGui(player, false) {
             override fun onInput(text: String) {
@@ -38,6 +39,21 @@ object AnvilInput {
         gui.title = Text.literal(title)
         gui.setSlot(
             0, GuiItems.createGuiItem(
+                name = "Cancel",
+                item = Items.BARRIER,
+                lore = listOf(
+                    Text.empty()
+                        .append(Text.literal("→").formatted(Formatting.YELLOW))
+                        .append(Text.literal(" Click to cancel").formatted(Formatting.GRAY))
+                )
+            )
+        ) { _, _, _, _ ->
+            gui.close()
+            onCancel()
+        }
+
+        gui.setSlot(
+            1, GuiItems.createGuiItem(
                 name = defaultText,
                 item = Items.PAPER,
                 lore = listOf(
@@ -47,6 +63,7 @@ object AnvilInput {
                 )
             )
         ) { _, _, _, _ -> }
+
         gui.open()
     }
 }

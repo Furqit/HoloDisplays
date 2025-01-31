@@ -41,10 +41,16 @@ object TextDisplayEditor {
                 )
             )
         ) { _, _, _, _ ->
-            AnvilInput.open(player, "Enter Text", display.lines.firstOrNull() ?: "") { text ->
-                Utils.updateDisplayText(name, text, player.commandSource)
-                open(player, name)
-            }
+            AnvilInput.open(
+                player = player,
+                title = "Enter Text",
+                defaultText = display.lines.firstOrNull() ?: "",
+                onSubmit = { text ->
+                    Utils.updateDisplayText(name, text, player.commandSource)
+                    open(player, name)
+                },
+                onCancel = { open(player, name) }
+            )
         }
 
         gui.setSlot(
@@ -61,10 +67,13 @@ object TextDisplayEditor {
                 )
             )
         ) { _, _, _, _ ->
-            AnvilInput.open(player, "Enter Line Width (1-200)", display.lineWidth.toString()) { width ->
-                Utils.updateDisplayLineWidth(name, width.toInt(), player.commandSource)
-                open(player, name)
-            }
+            AnvilInput.open(player, "Enter Line Width (1-200)", display.lineWidth.toString(),
+                onSubmit = { width ->
+                    Utils.updateDisplayLineWidth(name, width.toInt(), player.commandSource)
+                    open(player, name)
+                },
+                onCancel = { open(player, name) }
+            )
         }
 
         gui.setSlot(
@@ -85,12 +94,18 @@ object TextDisplayEditor {
             )
         ) { _, type, _, _ ->
             if (type.isLeft) {
-                AnvilInput.open(player, "Enter Color (hex)", "FFFFFF") { color ->
-                    AnvilInput.open(player, "Enter Opacity (1-100)", "100") { opacity ->
-                        Utils.updateDisplayBackground(name, color, opacity.toInt(), player.commandSource)
-                        open(player, name)
-                    }
-                }
+                AnvilInput.open(player, "Enter Color (hex)", "FFFFFF",
+                    onSubmit = { color ->
+                        AnvilInput.open(player, "Enter Opacity (1-100)", "100",
+                            onSubmit = { opacity ->
+                                Utils.updateDisplayBackground(name, color, opacity.toInt(), player.commandSource)
+                                open(player, name)
+                            },
+                            onCancel = { open(player, name) }
+                        )
+                    },
+                    onCancel = { open(player, name) }
+                )
             } else if (type.isRight) {
                 Utils.resetDisplayBackground(name, player.commandSource)
                 open(player, name)
@@ -111,10 +126,13 @@ object TextDisplayEditor {
                 )
             )
         ) { _, _, _, _ ->
-            AnvilInput.open(player, "Enter Opacity (1-100)", display.textOpacity.toString()) { opacity ->
-                Utils.updateDisplayTextOpacity(name, opacity.toInt(), player.commandSource)
-                open(player, name)
-            }
+            AnvilInput.open(player, "Enter Opacity (1-100)", display.textOpacity.toString(),
+                onSubmit = { opacity ->
+                    Utils.updateDisplayTextOpacity(name, opacity.toInt(), player.commandSource)
+                    open(player, name)
+                },
+                onCancel = { open(player, name) }
+            )
         }
 
         gui.setSlot(

@@ -53,21 +53,21 @@ object Messages {
     }
 
     enum class SuccessType(private val messageProvider: (String?) -> String) {
-        HOLOGRAM_CREATED({ name -> "Successfully created hologram${name?.let { " '$it'" } ?: ""}" }),
-        HOLOGRAM_DELETED({ name -> "Successfully deleted hologram${name?.let { " '$it'" } ?: ""}" }),
-        HOLOGRAM_UPDATED({ details -> "Successfully updated hologram${details?.let { ": $it" } ?: ""}" }),
-        DISPLAY_CREATED({ details -> "Successfully created display${details?.let { " $it" } ?: ""}" }),
-        DISPLAY_DELETED({ name -> "Successfully deleted display${name?.let { " '$it'" } ?: ""}" }),
-        DISPLAY_UPDATED({ details -> "Successfully updated display${details?.let { ": $it" } ?: ""}" }),
-        LINE_ADDED({ details -> "Successfully added display${details?.let { " '$it'" } ?: ""} to hologram" }),
-        LINE_REMOVED({ details -> "Successfully removed line${details?.let { " $it" } ?: ""} from hologram" }),
-        POSITION_UPDATED({ details -> "Successfully updated position${details?.let { " to $it" } ?: ""}" }),
-        SCALE_UPDATED({ details -> "Successfully updated scale${details?.let { " to $it" } ?: ""}" }),
-        BILLBOARD_UPDATED({ details -> "Successfully updated billboard mode${details?.let { " to $it" } ?: ""}" }),
-        ROTATION_UPDATED({ details -> "Successfully updated rotation${details?.let { " to $it" } ?: ""}" }),
-        TEXT_UPDATED({ details -> "Successfully updated text${details?.let { " to '$it'" } ?: ""}" }),
-        BACKGROUND_UPDATED({ details -> "Successfully updated background${details?.let { " to $it" } ?: ""}" }),
-        OPACITY_UPDATED({ details -> "Successfully updated opacity${details?.let { " to $it%" } ?: ""}" });
+        HOLOGRAM_CREATED({ name -> "Successfully created hologram " + Formatting.WHITE + "'$name'" }),
+        HOLOGRAM_DELETED({ name -> "Successfully deleted hologram " + Formatting.WHITE + "'$name'" }),
+        HOLOGRAM_UPDATED({ details -> "Successfully updated hologram " + Formatting.WHITE + details }),
+        DISPLAY_CREATED({ details -> "Successfully created " + Formatting.WHITE + details }),
+        DISPLAY_DELETED({ name -> "Successfully deleted display " + Formatting.WHITE + "'$name'" }),
+        DISPLAY_UPDATED({ details -> "Successfully updated display " + Formatting.WHITE + details }),
+        LINE_ADDED({ details -> "Successfully added display " + Formatting.WHITE + "'$details'" + Formatting.GREEN + " to hologram" }),
+        LINE_REMOVED({ details -> "Successfully removed line " + Formatting.WHITE + details + Formatting.GREEN + " from hologram" }),
+        POSITION_UPDATED({ details -> "Successfully updated position to " + Formatting.WHITE + details }),
+        SCALE_UPDATED({ details -> "Successfully updated scale to " + Formatting.WHITE + details }),
+        BILLBOARD_UPDATED({ details -> "Successfully updated billboard mode to " + Formatting.WHITE + details }),
+        ROTATION_UPDATED({ details -> "Successfully updated rotation to " + Formatting.WHITE + details }),
+        TEXT_UPDATED({ details -> "Successfully updated text to " + Formatting.WHITE + "'$details'" }),
+        BACKGROUND_UPDATED({ details -> "Successfully updated background to " + Formatting.WHITE + details }),
+        OPACITY_UPDATED({ details -> "Successfully updated opacity to " + Formatting.WHITE + details + "%" });
 
         fun getMessage(details: String? = null): String = messageProvider(details)
     }
