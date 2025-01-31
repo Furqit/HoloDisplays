@@ -1,11 +1,12 @@
 package dev.furq.holodisplays.config
 
-import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.display.BaseDisplay
 import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
+import dev.furq.holodisplays.handlers.ConfigException
+import dev.furq.holodisplays.handlers.ErrorHandler
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import org.joml.Vector3f
 import org.quiltmc.parsers.json.JsonReader
@@ -23,15 +24,16 @@ object DisplayConfig : Config {
         super.init(baseDir)
     }
 
-    override fun reload() {
+    override fun reload() = ErrorHandler.withCatch {
         displays.clear()
-        runCatching {
-            configDir.toFile().listFiles(jsonFilter)?.forEach { file ->
-                JsonReader.json5(file.inputStream().reader()).use { json ->
-                    displays[file.nameWithoutExtension] = parseDisplayData(json)
-                }
+        val files =
+            configDir.toFile().listFiles(jsonFilter) ?: throw ConfigException("Failed to list display config files")
+
+        files.forEach { file ->
+            JsonReader.json5(file.inputStream().reader()).use { json ->
+                displays[file.nameWithoutExtension] = parseDisplayData(json)
             }
-        }.onFailure { HoloDisplays.LOGGER.error("Failed to load displays", it) }
+        }
     }
 
     private fun parseDisplayData(json: JsonReader): DisplayData = json.run {
@@ -148,17 +150,14 @@ object DisplayConfig : Config {
     fun getDisplays(): Map<String, DisplayData> = displays.toMap()
     fun exists(name: String): Boolean = displays.containsKey(name)
 
-    fun saveDisplay(name: String, display: DisplayData) {
+    fun saveDisplay(name: String, display: DisplayData) = ErrorHandler.withCatch {
         displays[name] = display
+        val file = configDir.resolve("$name.json").toFile()
+        file.parentFile.mkdirs()
 
-        runCatching {
-            val file = configDir.resolve("$name.json").toFile()
-            file.parentFile.mkdirs()
-
-            file.outputStream().writer().use { writer ->
-                JsonWriter.json(writer).use { json -> writeDisplay(json, display) }
-            }
-        }.onFailure { HoloDisplays.LOGGER.error("Failed to save display $name", it) }
+        file.outputStream().writer().use { writer ->
+            JsonWriter.json(writer).use { json -> writeDisplay(json, display) }
+        }
     }
 
     private fun writeDisplay(json: JsonWriter, displayData: DisplayData) {
@@ -218,12 +217,14 @@ object DisplayConfig : Config {
         display.conditionalPlaceholder?.let { json.name("conditionalPlaceholder").value(it) }
     }
 
-    fun deleteDisplay(name: String) {
-        runCatching {
-            configDir.resolve("$name.json").toFile().let {
-                if (it.exists()) it.delete()
-            }
-            displays.remove(name)
-        }.onFailure { HoloDisplays.LOGGER.error("Failed to delete display $name", it) }
+    fun deleteDisplay(name: String) = ErrorHandler.withCatch {
+        val file = configDir.resolve("$name.json").toFile()
+        if (!file.exists()) {
+            throw ConfigException("Display config file for $name does not exist")
+        }
+        if (!file.delete()) {
+            throw ConfigException("Failed to delete display config file for $name")
+        }
+        displays.remove(name)
     }
 }

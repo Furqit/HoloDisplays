@@ -1,7 +1,8 @@
 package dev.furq.holodisplays.config
 
-import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.data.AnimationData
+import dev.furq.holodisplays.handlers.ConfigException
+import dev.furq.holodisplays.handlers.ErrorHandler
 import org.quiltmc.parsers.json.JsonReader
 import org.quiltmc.parsers.json.JsonWriter
 import java.io.FileFilter
@@ -17,15 +18,16 @@ object AnimationConfig : Config {
         super.init(baseDir)
     }
 
-    override fun reload() {
+    override fun reload() = ErrorHandler.withCatch {
         animations.clear()
-        runCatching {
-            configDir.toFile().listFiles(jsonFilter)?.forEach { file ->
-                JsonReader.json5(file.inputStream().reader()).use { json ->
-                    animations[file.nameWithoutExtension] = parseAnimationData(json)
-                }
+        val files =
+            configDir.toFile().listFiles(jsonFilter) ?: throw ConfigException("Failed to list animation config files")
+
+        files.forEach { file ->
+            JsonReader.json5(file.inputStream().reader()).use { json ->
+                animations[file.nameWithoutExtension] = parseAnimationData(json)
             }
-        }.onFailure { HoloDisplays.LOGGER.error("Failed to load animations", it) }
+        }
     }
 
     private fun parseAnimationData(json: JsonReader): AnimationData = json.run {
@@ -54,17 +56,14 @@ object AnimationConfig : Config {
     fun getAnimation(name: String) = animations[name]
     fun getAnimations() = animations.toMap()
 
-    private fun saveAnimation(name: String, animation: AnimationData) {
+    fun saveAnimation(name: String, animation: AnimationData) = ErrorHandler.withCatch {
         animations[name] = animation
+        val file = configDir.resolve("$name.json").toFile()
+        file.parentFile.mkdirs()
 
-        runCatching {
-            val file = configDir.resolve("$name.json").toFile()
-            file.parentFile.mkdirs()
-
-            file.outputStream().writer().use { writer ->
-                JsonWriter.json(writer).use { json -> writeAnimation(json, animation) }
-            }
-        }.onFailure { HoloDisplays.LOGGER.error("Failed to save animation $name", it) }
+        file.outputStream().writer().use { writer ->
+            JsonWriter.json(writer).use { json -> writeAnimation(json, animation) }
+        }
     }
 
     private fun writeAnimation(json: JsonWriter, animation: AnimationData) = json.run {
@@ -76,12 +75,14 @@ object AnimationConfig : Config {
         endObject()
     }
 
-    fun deleteAnimation(name: String) {
-        runCatching {
-            configDir.resolve("$name.json").toFile().let {
-                if (it.exists()) it.delete()
-            }
-            animations.remove(name)
-        }.onFailure { HoloDisplays.LOGGER.error("Failed to delete animation $name", it) }
+    fun deleteAnimation(name: String) = ErrorHandler.withCatch {
+        val file = configDir.resolve("$name.json").toFile()
+        if (!file.exists()) {
+            throw ConfigException("Animation config file for $name does not exist")
+        }
+        if (!file.delete()) {
+            throw ConfigException("Failed to delete animation config file for $name")
+        }
+        animations.remove(name)
     }
 }

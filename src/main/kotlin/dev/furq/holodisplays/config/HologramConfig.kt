@@ -1,7 +1,8 @@
 package dev.furq.holodisplays.config
 
-import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.handlers.ConfigException
+import dev.furq.holodisplays.handlers.ErrorHandler
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import org.joml.Vector3f
 import org.quiltmc.parsers.json.JsonReader
@@ -19,18 +20,15 @@ object HologramConfig : Config {
         super.init(baseDir)
     }
 
-    override fun reload() {
+    override fun reload() = ErrorHandler.withCatch {
         holograms.clear()
-        runCatching {
-            configDir.toFile()
-                .listFiles(jsonFilter)
-                ?.forEach { file ->
-                    JsonReader.json5(file.inputStream().reader()).use { json ->
-                        holograms[file.nameWithoutExtension] = parseHologramData(json)
-                    }
-                }
-        }.onFailure {
-            HoloDisplays.LOGGER.error("Failed to load holograms", it)
+        val files =
+            configDir.toFile().listFiles(jsonFilter) ?: throw ConfigException("Failed to list hologram config files")
+
+        files.forEach { file ->
+            JsonReader.json5(file.inputStream().reader()).use { json ->
+                holograms[file.nameWithoutExtension] = parseHologramData(json)
+            }
         }
     }
 
@@ -137,17 +135,14 @@ object HologramConfig : Config {
     fun getHolograms(): Map<String, HologramData> = holograms.toMap()
     fun exists(name: String): Boolean = holograms.containsKey(name)
 
-    fun saveHologram(name: String, hologram: HologramData) = runCatching {
+    fun saveHologram(name: String, hologram: HologramData) = ErrorHandler.withCatch {
         holograms[name] = hologram
-
         val file = configDir.resolve("$name.json").toFile()
         file.parentFile.mkdirs()
 
         file.outputStream().writer().use { writer ->
             JsonWriter.json(writer).use { json -> writeHologram(json, hologram) }
         }
-    }.onFailure {
-        HoloDisplays.LOGGER.error("Failed to save hologram $name", it)
     }
 
     private fun writeHologram(json: JsonWriter, hologram: HologramData) = json.run {
@@ -192,12 +187,14 @@ object HologramConfig : Config {
         endObject()
     }
 
-    fun deleteHologram(name: String) = runCatching {
-        configDir.resolve("$name.json").toFile().let {
-            if (it.exists()) it.delete()
+    fun deleteHologram(name: String) = ErrorHandler.withCatch {
+        val file = configDir.resolve("$name.json").toFile()
+        if (!file.exists()) {
+            throw ConfigException("Hologram config file for $name does not exist")
+        }
+        if (!file.delete()) {
+            throw ConfigException("Failed to delete hologram config file for $name")
         }
         holograms.remove(name)
-    }.onFailure {
-        HoloDisplays.LOGGER.error("Failed to delete hologram $name", it)
     }
 }

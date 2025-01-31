@@ -1,6 +1,6 @@
 package dev.furq.holodisplays.config
 
-import dev.furq.holodisplays.HoloDisplays
+import dev.furq.holodisplays.handlers.ErrorHandler
 import java.nio.file.Path
 
 object ConfigManager {
@@ -11,18 +11,14 @@ object ConfigManager {
     )
 
     fun init(configDir: Path) = configs.forEach { config ->
-        runCatching {
+        ErrorHandler.withCatch {
             config.init(configDir)
-        }.onFailure { error ->
-            HoloDisplays.LOGGER.error("Failed to initialize ${config::class.simpleName}", error)
         }
     }
 
     fun reload() = configs.forEach { config ->
-        runCatching {
+        ErrorHandler.withCatch {
             config.reload()
-        }.onFailure { error ->
-            HoloDisplays.LOGGER.error("Failed to reload ${config::class.simpleName}", error)
         }
     }
 }
