@@ -266,11 +266,28 @@ object HologramEdit {
             if (type.isLeft) {
                 AnvilInput.open(
                     player = player,
-                    title = "Enter Condition",
-                    defaultText = hologram.conditionalPlaceholder ?: "%player:name% = Furq",
-                    onSubmit = { condition ->
-                        Utils.updateHologramCondition(name, condition, player.commandSource)
-                        open(player, name)
+                    title = "Enter Value 1",
+                    defaultText = "%player:name%",
+                    onSubmit = { placeholder ->
+                        AnvilInput.open(
+                            player = player,
+                            title = "Enter Operator",
+                            defaultText = "=",
+                            onSubmit = { operator ->
+                                AnvilInput.open(
+                                    player = player,
+                                    title = "Enter Value 2",
+                                    defaultText = "Furq_",
+                                    onSubmit = { target ->
+                                        val condition = "$placeholder $operator $target"
+                                        Utils.updateHologramCondition(name, condition, player.commandSource)
+                                        open(player, name)
+                                    },
+                                    onCancel = { open(player, name) }
+                                )
+                            },
+                            onCancel = { open(player, name) }
+                        )
                     },
                     onCancel = { open(player, name) }
                 )

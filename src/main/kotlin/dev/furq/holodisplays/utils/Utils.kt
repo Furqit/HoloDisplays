@@ -293,19 +293,6 @@ object Utils {
     }
 
     // Display Properties Management
-    fun updateDisplayText(name: String, text: String, source: ServerCommandSource): Boolean {
-        if (!DisplayConfig.exists(name)) {
-            Messages.sendError(source, ErrorType.DISPLAY_NOT_FOUND)
-            playErrorSound(source)
-            return false
-        }
-
-        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextLines(listOf(text)))
-        Messages.sendFeedback(source, SuccessType.TEXT_UPDATED, text)
-        playSuccessSound(source)
-        return true
-    }
-
     fun updateDisplayLineWidth(name: String, width: Int, source: ServerCommandSource): Boolean {
         if (!DisplayConfig.exists(name)) {
             Messages.sendError(source, ErrorType.DISPLAY_NOT_FOUND)

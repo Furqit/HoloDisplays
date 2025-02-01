@@ -182,11 +182,28 @@ object DisplayEdit {
             if (type.isLeft) {
                 AnvilInput.open(
                     player = player,
-                    title = "Enter Condition",
-                    defaultText = display.display.conditionalPlaceholder ?: "%player:name% = Furq",
-                    onSubmit = { condition ->
-                        Utils.updateDisplayCondition(name, condition, player.commandSource)
-                        open(player, name, returnCallback)
+                    title = "Enter Value 1",
+                    defaultText = "%player:name%",
+                    onSubmit = { placeholder ->
+                        AnvilInput.open(
+                            player = player,
+                            title = "Enter Operator",
+                            defaultText = "=",
+                            onSubmit = { operator ->
+                                AnvilInput.open(
+                                    player = player,
+                                    title = "Enter Value 2",
+                                    defaultText = "Furq_",
+                                    onSubmit = { target ->
+                                        val condition = "$placeholder $operator $target"
+                                        Utils.updateDisplayCondition(name, condition, player.commandSource)
+                                        open(player, name, returnCallback)
+                                    },
+                                    onCancel = { open(player, name, returnCallback) }
+                                )
+                            },
+                            onCancel = { open(player, name, returnCallback) }
+                        )
                     },
                     onCancel = { open(player, name, returnCallback) }
                 )

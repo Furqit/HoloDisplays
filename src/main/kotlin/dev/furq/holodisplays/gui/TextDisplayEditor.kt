@@ -2,6 +2,7 @@ package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.data.display.TextDisplay
+import dev.furq.holodisplays.handlers.DisplayHandler
 import dev.furq.holodisplays.utils.GuiItems
 import dev.furq.holodisplays.utils.Utils
 import eu.pb4.sgui.api.gui.SimpleGui
@@ -29,28 +30,50 @@ object TextDisplayEditor {
 
         gui.setSlot(
             10, GuiItems.createGuiItem(
-                name = "Text",
+                name = "Text Lines",
                 item = Items.PAPER,
-                lore = listOf(
-                    Text.empty()
-                        .append(Text.literal("Current: ").formatted(Formatting.GRAY))
-                        .append(Text.literal(display.lines.firstOrNull() ?: "").formatted(Formatting.WHITE)),
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY))
+                lore = buildList {
+                    add(
+                        Text.empty()
+                            .append(Text.literal("Current Lines:").formatted(Formatting.GRAY))
+                    )
+                    display.lines.forEachIndexed { index, line ->
+                        add(
+                            Text.empty()
+                                .append(Text.literal("${index + 1}. ").formatted(Formatting.GRAY))
+                                .append(Text.literal(line).formatted(Formatting.WHITE))
+                        )
+                    }
+                    add(Text.empty())
+                    add(
+                        Text.empty()
+                            .append(Text.literal("→").formatted(Formatting.YELLOW))
+                            .append(Text.literal(" Left-Click to add line").formatted(Formatting.GRAY))
+                    )
+                    add(
+                        Text.empty()
+                            .append(Text.literal("→").formatted(Formatting.YELLOW))
+                            .append(Text.literal(" Right-Click to edit lines").formatted(Formatting.GRAY))
+                    )
+                }
+            )
+        ) { _, type, _, _ ->
+            if (type.isLeft) {
+                AnvilInput.open(
+                    player = player,
+                    title = "Enter New Line",
+                    defaultText = "",
+                    onSubmit = { text ->
+                        val lines = display.lines.toMutableList()
+                        lines.add(text)
+                        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextLines(lines))
+                        open(player, name)
+                    },
+                    onCancel = { open(player, name) }
                 )
-            )
-        ) { _, _, _, _ ->
-            AnvilInput.open(
-                player = player,
-                title = "Enter Text",
-                defaultText = display.lines.firstOrNull() ?: "",
-                onSubmit = { text ->
-                    Utils.updateDisplayText(name, text, player.commandSource)
-                    open(player, name)
-                },
-                onCancel = { open(player, name) }
-            )
+            } else if (type.isRight) {
+                TextLineEditor.open(player, name)
+            }
         }
 
         gui.setSlot(

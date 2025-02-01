@@ -1,6 +1,10 @@
 package dev.furq.holodisplays.gui
 
+import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
+import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.data.display.ItemDisplay
+import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.utils.GuiItems
 import dev.furq.holodisplays.utils.Utils
@@ -39,10 +43,18 @@ object HologramDisplays {
                 slot += 2
             }
 
+            val displayConfig = DisplayConfig.getDisplay(display.displayId)
+            val icon = when (displayConfig?.display) {
+                is TextDisplay -> Items.PAPER
+                is ItemDisplay -> Items.ITEM_FRAME
+                is BlockDisplay -> Items.GRASS_BLOCK
+                else -> Items.BARRIER
+            }
+
             gui.setSlot(
                 slot, GuiItems.createGuiItem(
                     name = "Line ${i + 1}",
-                    item = Items.PAPER,
+                    item = icon,
                     lore = listOf(
                         Text.empty()
                             .append(Text.literal("Display: ").formatted(Formatting.GRAY))

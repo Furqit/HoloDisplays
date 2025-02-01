@@ -9,6 +9,7 @@ import com.mojang.brigadier.context.CommandContext
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.gui.DisplayEdit
+import dev.furq.holodisplays.handlers.DisplayHandler
 import dev.furq.holodisplays.utils.CommandUtils
 import dev.furq.holodisplays.utils.CommandUtils.playErrorSound
 import dev.furq.holodisplays.utils.Messages
@@ -232,7 +233,8 @@ object DisplayEditCommand {
         val display = DisplayConfig.getDisplay(name)?.display as? TextDisplay ?: return 0
         val lines = display.lines.toMutableList()
         lines.add(content)
-        return if (Utils.updateDisplayText(name, content, context.source)) 1 else 0
+        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextLines(lines))
+        return 1
     }
 
     private fun executeEditTextLine(context: CommandContext<ServerCommandSource>): Int {
@@ -243,7 +245,8 @@ object DisplayEditCommand {
         if (lineIndex >= display.lines.size) return 0
         val lines = display.lines.toMutableList()
         lines[lineIndex] = content
-        return if (Utils.updateDisplayText(name, content, context.source)) 1 else 0
+        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextLines(lines))
+        return 1
     }
 
     private fun executeDeleteTextLine(context: CommandContext<ServerCommandSource>): Int {
@@ -253,7 +256,8 @@ object DisplayEditCommand {
         if (lineIndex >= display.lines.size) return 0
         val lines = display.lines.toMutableList()
         lines.removeAt(lineIndex)
-        return if (Utils.updateDisplayText(name, lines.joinToString("\n"), context.source)) 1 else 0
+        DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextLines(lines))
+        return 1
     }
 
     private fun executeLineWidth(context: CommandContext<ServerCommandSource>): Int {

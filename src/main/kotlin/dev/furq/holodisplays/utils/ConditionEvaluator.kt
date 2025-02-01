@@ -1,5 +1,6 @@
 package dev.furq.holodisplays.utils
 
+import dev.furq.holodisplays.handlers.ErrorHandler
 import eu.pb4.placeholders.api.PlaceholderContext
 import eu.pb4.placeholders.api.Placeholders
 import eu.pb4.placeholders.api.parsers.NodeParser
@@ -10,26 +11,29 @@ object ConditionEvaluator {
     private val OPERATORS = listOf("=", "!=", ">", "<", ">=", "<=", "contains", "!contains", "startsWith", "endsWith")
     private val parser = NodeParser.merge(TagParser.DEFAULT, Placeholders.DEFAULT_PLACEHOLDER_PARSER)
 
-    fun evaluate(condition: String?, player: ServerPlayerEntity): Boolean {
+    fun evaluate(condition: String?, player: ServerPlayerEntity): Boolean = ErrorHandler.withCatch<Boolean> {
         if (condition == null) {
-            return true
+            return@withCatch true
         }
 
-        val parts = parseCondition(condition) ?: return true
-
+        val parts = parseCondition(condition) ?: return@withCatch true
         val (placeholder, operator, value) = parts
         val resolvedPlaceholder = resolvePlaceholder(placeholder.trim(), player)
 
-        return when (operator.trim()) {
+        when (operator.trim()) {
             "=" -> resolvedPlaceholder == value
             "!=" -> resolvedPlaceholder != value
-            ">" -> resolvedPlaceholder.toDoubleOrNull()?.let { it > (value.toDoubleOrNull() ?: return false) } ?: false
-            "<" -> resolvedPlaceholder.toDoubleOrNull()?.let { it < (value.toDoubleOrNull() ?: return false) } ?: false
-            ">=" -> resolvedPlaceholder.toDoubleOrNull()?.let { it >= (value.toDoubleOrNull() ?: return false) }
-                ?: false
+            ">" -> resolvedPlaceholder.toDoubleOrNull()
+                ?.let { it > (value.toDoubleOrNull() ?: return@withCatch false) } ?: false
 
-            "<=" -> resolvedPlaceholder.toDoubleOrNull()?.let { it <= (value.toDoubleOrNull() ?: return false) }
-                ?: false
+            "<" -> resolvedPlaceholder.toDoubleOrNull()
+                ?.let { it < (value.toDoubleOrNull() ?: return@withCatch false) } ?: false
+
+            ">=" -> resolvedPlaceholder.toDoubleOrNull()
+                ?.let { it >= (value.toDoubleOrNull() ?: return@withCatch false) } ?: false
+
+            "<=" -> resolvedPlaceholder.toDoubleOrNull()
+                ?.let { it <= (value.toDoubleOrNull() ?: return@withCatch false) } ?: false
 
             "contains" -> resolvedPlaceholder.contains(value)
             "!contains" -> !resolvedPlaceholder.contains(value)
@@ -37,19 +41,21 @@ object ConditionEvaluator {
             "endsWith" -> resolvedPlaceholder.endsWith(value)
             else -> true
         }
-    }
+    } ?: true
 
-    private fun parseCondition(condition: String): Triple<String, String, String>? {
-        val operator = OPERATORS.find { condition.contains(" $it ") } ?: return null
-        val parts = condition.split(" $operator ")
-        if (parts.size != 2) {
-            return null
+    private fun parseCondition(condition: String): Triple<String, String, String>? =
+        ErrorHandler.withCatch<Triple<String, String, String>?> {
+            val operator = OPERATORS.find { condition.contains(" $it ") } ?: return@withCatch null
+            val parts = condition.split(" $operator ")
+            if (parts.size != 2) {
+                return@withCatch null
+            }
+            Triple(parts[0], operator, parts[1])
         }
-        return Triple(parts[0], operator, parts[1])
-    }
 
-    private fun resolvePlaceholder(placeholder: String, player: ServerPlayerEntity): String {
-        val node = parser.parseNode(placeholder)
-        return node.toText(PlaceholderContext.of(player)).string
-    }
+    private fun resolvePlaceholder(placeholder: String, player: ServerPlayerEntity): String =
+        ErrorHandler.withCatch<String> {
+            val node = parser.parseNode(placeholder)
+            node.toText(PlaceholderContext.of(player)).string
+        } ?: placeholder
 }
