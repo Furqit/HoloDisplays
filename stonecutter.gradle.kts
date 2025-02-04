@@ -10,6 +10,11 @@ stonecutter registerChiseled tasks.register("chiseledBuild", stonecutter.chisele
 
 stonecutter configureEach {
     swap("mod_version", "\"${property("mod.version")}\";")
-    const("release", property("mod.id") != "vinyls")
+    const("release", property("mod.id") != "holodisplays")
     dependency("fapi", project.property("deps.fabric_api").toString())
+}
+
+stonecutter registerChiseled tasks.register("chiseledPublishMods", stonecutter.chiseled) {
+    group = "project"
+    ofTask("publishMods")
 }

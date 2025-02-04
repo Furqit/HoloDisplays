@@ -1,8 +1,16 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.*
 
 plugins {
     kotlin("jvm") version "2.0.+"
     id("fabric-loom") version "1.8.+"
+    id("me.modmuss50.mod-publish-plugin") version "0.8.+"
+}
+
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.let {
+        load(it.inputStream())
+    }
 }
 
 class ModData {
@@ -42,8 +50,8 @@ dependencies {
     modImplementation("net.fabricmc:fabric-language-kotlin:1.12.3+kotlin.2.0.21")
     modImplementation("net.fabricmc.fabric-api:fabric-api:${deps["fabric_api"]}")
 
-    modImplementation("eu.pb4","placeholder-api", deps["placeholder-api"])
-    modImplementation(include("eu.pb4","sgui", deps["sgui"]))
+    modImplementation("eu.pb4", "placeholder-api", deps["placeholder-api"])
+    modImplementation(include("eu.pb4", "sgui", deps["sgui"]))
     api(include("org.quiltmc.parsers", "json", "0.3.0"))
     api(include("org.quiltmc.parsers", "gson", "0.3.0"))
 
@@ -103,4 +111,57 @@ tasks.register<Copy>("buildAndCollect") {
     from(tasks.remapJar.get().archiveFile)
     into(rootProject.layout.buildDirectory.file("libs/${mod.version}"))
     dependsOn("build")
+}
+
+publishMods {
+    file = tasks.remapJar.get().archiveFile
+    displayName = "${mod.name} ${mod.version}"
+    version = mod.version
+    changelog = rootProject.file("CHANGELOG.md").readText()
+    type = STABLE
+    modLoaders.add("fabric")
+
+    val versions = listOf("1.20.5", "1.20.6", "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4")
+        .filter { ver ->
+            mcDep.split(" ")
+                .all { constraint ->
+                    when {
+                        constraint.startsWith(">=") -> stonecutter.compare(ver, constraint.substring(2)) >= 0
+                        constraint.startsWith("<=") -> stonecutter.compare(ver, constraint.substring(2)) <= 0
+                        else -> true
+                    }
+                }
+        }
+
+    modrinth {
+        projectId = "WdbPWi13"
+        accessToken = localProperties.getProperty("MODRINTH_TOKEN")
+        versions.forEach { minecraftVersions.add(it) }
+
+        requires {
+            slug = "fabric-api"
+        }
+        requires {
+            slug = "placeholder-api"
+        }
+        requires {
+            slug = "fabric-language-kotlin"
+        }
+    }
+
+    curseforge {
+        projectId = "1150354"
+        accessToken = localProperties.getProperty("CURSEFORGE_TOKEN")
+        versions.forEach { minecraftVersions.add(it) }
+
+        requires {
+            slug = "fabric-api"
+        }
+        requires {
+            slug = "text-placeholder-api"
+        }
+        requires {
+            slug = "fabric-language-kotlin"
+        }
+    }
 }
