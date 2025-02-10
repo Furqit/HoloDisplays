@@ -120,8 +120,8 @@ publishMods {
             mcDep.split(" ")
                 .all { constraint ->
                     when {
-                        constraint.startsWith(">=") -> stonecutter.eval(ver, constraint.substring(2))
-                        constraint.startsWith("<=") -> stonecutter.eval(ver, constraint.substring(2))
+                        constraint.startsWith(">=") -> stonecutter.evalLenient(ver, constraint)
+                        constraint.startsWith("<=") -> stonecutter.evalLenient(ver, constraint)
                         else -> true
                     }
                 }
