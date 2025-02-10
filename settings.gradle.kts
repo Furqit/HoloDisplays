@@ -1,4 +1,4 @@
-import dev.kikugie.stonecutter.StonecutterSettings
+import dev.kikugie.stonecutter.settings.StonecutterSettings
 
 pluginManagement {
     repositories {
@@ -9,7 +9,7 @@ pluginManagement {
 }
 
 plugins {
-    id("dev.kikugie.stonecutter") version "0.4.+"
+    id("dev.kikugie.stonecutter") version "0.5.+"
 }
 
 extensions.configure<StonecutterSettings> {

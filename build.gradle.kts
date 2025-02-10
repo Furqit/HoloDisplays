@@ -74,19 +74,13 @@ loom {
 
 tasks.withType<KotlinCompile> {
     compilerOptions {
-        jvmTarget.set(
-            if (stonecutter.compare(mcVersion, "1.20.6") >= 0)
-                org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
-            else
-                org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
-        )
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
 }
 
 java {
     withSourcesJar()
-    val javaVersion =
-        if (stonecutter.compare(mcVersion, "1.20.6") >= 0) JavaVersion.VERSION_21 else JavaVersion.VERSION_17
+    val javaVersion = JavaVersion.VERSION_21
     targetCompatibility = javaVersion
     sourceCompatibility = javaVersion
 }
@@ -126,8 +120,8 @@ publishMods {
             mcDep.split(" ")
                 .all { constraint ->
                     when {
-                        constraint.startsWith(">=") -> stonecutter.compare(ver, constraint.substring(2)) >= 0
-                        constraint.startsWith("<=") -> stonecutter.compare(ver, constraint.substring(2)) <= 0
+                        constraint.startsWith(">=") -> stonecutter.eval(ver, constraint.substring(2))
+                        constraint.startsWith("<=") -> stonecutter.eval(ver, constraint.substring(2))
                         else -> true
                     }
                 }

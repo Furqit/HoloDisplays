@@ -5,8 +5,8 @@ import dev.furq.holodisplays.config.ConfigManager
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.handlers.ErrorHandler
 import dev.furq.holodisplays.handlers.HologramHandler
+import dev.furq.holodisplays.handlers.TickHandler
 import dev.furq.holodisplays.handlers.ViewerHandler
-import dev.furq.holodisplays.utils.TextProcessor
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
 class HoloDisplays : ModInitializer {
     companion object {
         const val MOD_ID = "HoloDisplays"
-        const val VERSION = "0.2.1"
+        const val VERSION = "0.2.2"
         val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
 
         var SERVER: MinecraftServer? = null
@@ -34,13 +34,12 @@ class HoloDisplays : ModInitializer {
         LOGGER.info("Initialized $MOD_ID v$VERSION")
     }
 
-    private fun handleServerTick(server: MinecraftServer) = ErrorHandler.withCatch {
-        TextProcessor.tick()
+    private fun handleServerTick(server: MinecraftServer) {
+        TickHandler.tick()
         if (server.playerManager.playerList.isNotEmpty() && HologramConfig.getHolograms().isNotEmpty()) {
             server.playerManager.playerList.forEach { player ->
                 ViewerHandler.updatePlayerVisibility(player)
             }
-            TextProcessor.updateAnimations()
         }
     }
 
@@ -60,7 +59,7 @@ class HoloDisplays : ModInitializer {
         val configDir = FabricLoader.getInstance().configDir.resolve(MOD_ID)
         ConfigManager.init(configDir)
         HologramHandler.init()
-        TextProcessor.init()
+        TickHandler.init()
     }
 
     private fun registerCommands() = ErrorHandler.withCatch {

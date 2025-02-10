@@ -3,7 +3,6 @@ package dev.furq.holodisplays.handlers
 import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.data.HologramData
-import dev.furq.holodisplays.utils.TextProcessor
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.server.network.ServerPlayerEntity
@@ -30,12 +29,6 @@ object HologramHandler {
         HologramConfig.getHolograms().forEach { (name, data) ->
             ViewerHandler.createTracker(name, data)
         }
-    }
-
-    fun clearAll() {
-        PacketHandler.clearAllHolograms()
-        TextProcessor.init()
-        ViewerHandler.clearAllTrackers()
     }
 
     fun reinitialize() {

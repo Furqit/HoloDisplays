@@ -26,7 +26,7 @@ object ViewerHandler {
         trackedHolograms.remove(name)
     }
 
-    fun clearAllTrackers() {
+    fun resetHologramObservers() {
         trackedHolograms.clear()
     }
 
@@ -163,20 +163,15 @@ object ViewerHandler {
         trackedHolograms.values.forEach { tracked ->
             val isCurrentlyViewing = tracked.observers.contains(player.uuid)
             val isInSameWorld = player.world.registryKey.value.toString() == tracked.hologramData.world
-
-            if (!isInSameWorld) {
-                if (isCurrentlyViewing) {
-                    removeViewer(player, tracked.hologramName)
-                }
-                return@forEach
-            }
-
-            val shouldView = HologramHandler.isPlayerInRange(
+            val meetsCondition = ConditionEvaluator.evaluate(tracked.hologramData.conditionalPlaceholder, player)
+            val isInRange = HologramHandler.isPlayerInRange(
                 player,
                 tracked.hologramData.world,
                 tracked.hologramData.position,
                 tracked.hologramData.viewRange
             )
+
+            val shouldView = isInSameWorld && meetsCondition && isInRange
 
             when {
                 shouldView && !isCurrentlyViewing -> addViewer(player, tracked.hologramName)

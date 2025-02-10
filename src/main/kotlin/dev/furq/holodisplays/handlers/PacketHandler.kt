@@ -10,7 +10,6 @@ import dev.furq.holodisplays.mixin.BlockDisplayEntityAccessor
 import dev.furq.holodisplays.mixin.DisplayEntityAccessor
 import dev.furq.holodisplays.mixin.ItemDisplayEntityAccessor
 import dev.furq.holodisplays.mixin.TextDisplayEntityAccessor
-import dev.furq.holodisplays.utils.TextProcessor
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.component.type.CustomModelDataComponent
@@ -37,7 +36,7 @@ object PacketHandler {
     private val recycledIds = mutableSetOf<Int>()
     private val entityIds = mutableMapOf<UUID, MutableMap<String, MutableMap<String, Int>>>()
 
-    fun clearAllHolograms() {
+    fun resetEntityTracking() {
         entityIds.clear()
         nextEntityId = INITIAL_ENTITY_ID
         recycledIds.clear()
@@ -202,7 +201,7 @@ object PacketHandler {
         player: ServerPlayerEntity,
     ) {
         val processedText = Text.literal(display.lines.joinToString("\n")).let { text ->
-            TextProcessor.processText(text.string, player)
+            TickHandler.processText(text.string, player)
         }
         add(createEntry(TextDisplayEntityAccessor.getText(), processedText))
 
