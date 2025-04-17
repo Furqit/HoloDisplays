@@ -19,6 +19,7 @@ import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.Identifier
 import org.joml.Vector3f
+import java.util.*
 
 object Utils {
     // Hologram Creation and Deletion
@@ -42,9 +43,9 @@ object Utils {
         val hologram = HologramData(
             displays = mutableListOf(HologramData.DisplayLine(defaultDisplayName)),
             position = Vector3f(
-                String.format("%.3f", pos.x).toFloat(),
-                String.format("%.3f", pos.y).toFloat(),
-                String.format("%.3f", pos.z).toFloat()
+                String.format(Locale.US, "%.3f", pos.x).toFloat(),
+                String.format(Locale.US, "%.3f", pos.y).toFloat(),
+                String.format(Locale.US, "%.3f", pos.z).toFloat()
             ),
             world = player.world.registryKey.value.toString(),
             rotation = Vector3f(),
@@ -80,9 +81,9 @@ object Utils {
         }
 
         val formattedPosition = Vector3f(
-            String.format("%.3f", pos.x).toFloat(),
-            String.format("%.3f", pos.y).toFloat(),
-            String.format("%.3f", pos.z).toFloat()
+            String.format(Locale.US, "%.3f", pos.x).toFloat(),
+            String.format(Locale.US, "%.3f", pos.y).toFloat(),
+            String.format(Locale.US, "%.3f", pos.z).toFloat()
         )
 
         HologramHandler.updateHologramProperty(

@@ -3,7 +3,7 @@ import java.util.*
 
 plugins {
     kotlin("jvm") version "2.0.+"
-    id("fabric-loom") version "1.8.+"
+    id("fabric-loom") version "1.10.+"
     id("me.modmuss50.mod-publish-plugin") version "0.8.+"
 }
 

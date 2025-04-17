@@ -245,7 +245,15 @@ object PacketHandler {
 
             val itemStack = ItemStack(item)
             display.customModelData?.let { cmd ->
-                itemStack.set(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelDataComponent(cmd))
+                itemStack.set(
+                    //? if <=1.21.3 {
+                    DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelDataComponent(cmd)
+                    //?} else {
+                    /*DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelDataComponent(
+                        listOf(cmd.toFloat()), listOf(), listOf(), listOf()
+                    )
+                    *///?}
+                )
             }
 
             add(createEntry(ItemDisplayEntityAccessor.getItem(), itemStack))
