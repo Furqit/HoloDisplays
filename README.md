@@ -2,7 +2,7 @@
 
 # HoloDisplays
 
-A powerful packet-based hologram system built with Minecraft's display entities for better performance and flexibility.
+A high-performance, packet-based hologram system utilizing Minecraft’s display entities for optimal efficiency and flexibility.
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.20.6--1.21.4-green.svg)](https://minecraft.net)
 [![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue.svg)](https://fabricmc.net)
@@ -11,47 +11,50 @@ A powerful packet-based hologram system built with Minecraft's display entities 
 
 </div>
 
+---
+
 ## Overview
 
-HoloDisplays is a performance-focused hologram mod that uses packets and Minecraft's display entities to create virtual displays. Since it's entirely packet-based and doesn't spawn actual entities in the world, it provides excellent performance while letting you create awesome visual displays on your server.
+**HoloDisplays** is a Minecraft mod that enables efficient, virtual holograms using packet-based display entities. By avoiding real entity spawning, it significantly reduces server load while providing powerful, customizable visual effects.
+
+---
 
 ## Features
 
-<div align="center">
+| Feature                   | Description                                                                  |
+|---------------------------|------------------------------------------------------------------------------|
+| Packet-Based Architecture | Utilizes network packets instead of real entities to minimize server load.   |
+| Animation Support         | Enables smooth, dynamic text animations.                                     |
+| Multiple Display Types    | Supports text, item, and block displays with full customization.             |
+| Placeholder Integration   | Fully compatible with the Text Placeholder API.                              |
+| Advanced Text Formatting  | Includes gradient support, color codes, and QuickText formatting.            |
+| GUI Display Manager       | Intuitive GUI for creating, editing, and managing displays.                  |
+| Command System            | Command-based customization as an alternative to the GUI.                    |
+| Public Developer API      | Allows developers to create holograms and displays controlled by their mods. |
 
-| Core Features                                                                                                           |
-|-------------------------------------------------------------------------------------------------------------------------|
-| 🚀 **Packet-Based System**<br>No real entities spawned, just efficient network packets for optimal server performance   |
-| ✨ **Animations Support**<br>Create dynamic text displays with smooth text animations                                    |
-| 📦 **Multiple Display Types**<br>Create holograms using text, items and blocks displays with customizable properties    |
-| 🎮 **Placeholder Support**<br>Full integration with Text Placeholder API for placeholder support                        |
-| 🌈 **Text Formatting**<br>Uses Text Placeholder API QuickText Format for support of gradients, color codes etc          |
-| ⌨️ **Command Chat Menu**<br>User-friendly chat-based menu system for easy creation, editing, and management of displays |
+---
 
-</div>
+## Planned Features
 
-## Roadmap
+| Feature                 | Description                                                   | Status   |
+|-------------------------|---------------------------------------------------------------|----------|
+| Entity Display Support  | Show mob entities with configurable properties.               | Planned  |
+| Block & Item Animations | Enable animations such as rotation, scaling, and translation. | Planned  |
+| Particle Effects        | Integrate with Snowstorm for advanced particle visuals.       | Possible |
 
-<div align="center">
-
-| Planned Features                                                                                                           | Status  |
-|----------------------------------------------------------------------------------------------------------------------------|---------|
-| 🎭 **Entity Displays**<br>Support for displaying mob entities with customizable properties                                 | Planned |
-| 🔄 **Block & Item Animations**<br>Support for animation of block and item displays with rotation, scaling, translation etc | Planned |
-| 🎨 **Particle Effects**<br>Support for particles and particle animations using snowstorm                                   | Maybe   |
-| 🛠️ **API Support**<br>Public API for developers to create custom displays, animations, and integrate features             | Maybe   |
-
-</div>
+---
 
 ## Commands
 
-Keep it simple with these commands:
+Available commands:
 - `/holodisplays`
 - `/holo` (alias)
 - `/hd` (alias)
 
-For more information about the mod, head over to the [wiki page](https://github.com/Furq07/HoloDisplays/wiki)!
+For full documentation, refer to the [Wiki](https://github.com/Furq07/HoloDisplays/wiki).
+
+---
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+Licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for more information.
