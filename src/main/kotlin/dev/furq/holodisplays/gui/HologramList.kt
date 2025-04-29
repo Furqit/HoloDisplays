@@ -68,7 +68,7 @@ object HologramList {
         val endIndex = minOf(startIndex + ITEMS_PER_PAGE, holograms.size)
 
         for (i in startIndex until endIndex) {
-            val (name, hologram) = holograms[i]
+            val (name) = holograms[i]
             if (slot in listOf(17, 26, 35)) {
                 slot += 2
             }

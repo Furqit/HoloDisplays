@@ -2,8 +2,8 @@ package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.utils.GuiItems
-import dev.furq.holodisplays.utils.Utils
 import eu.pb4.sgui.api.gui.SimpleGui
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
@@ -12,6 +12,8 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 object BlockDisplayEditor {
+    private val displayManager = DisplayManager()
+
     fun open(
         player: ServerPlayerEntity,
         name: String,
@@ -46,7 +48,7 @@ object BlockDisplayEditor {
                 title = "Enter Block ID",
                 defaultText = display.id,
                 onSubmit = { blockId ->
-                    Utils.updateDisplayBlock(name, blockId, player.commandSource)
+                    displayManager.updateBlockId(name, blockId, player.commandSource)
                     open(player, name)
                 },
                 onCancel = { open(player, name) }

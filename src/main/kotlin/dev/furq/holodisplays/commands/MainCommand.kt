@@ -3,6 +3,8 @@ package dev.furq.holodisplays.commands
 import com.mojang.brigadier.CommandDispatcher
 import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.gui.MainMenu
+import dev.furq.holodisplays.managers.FeedbackManager
+import dev.furq.holodisplays.utils.FeedbackType
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
 
@@ -19,15 +21,31 @@ object MainCommand {
                 CommandManager.literal(alias)
                     .requires { it.hasPermissionLevel(2) }
                     .executes { context ->
+                        if (context.source.player == null) {
+                            FeedbackManager.send(context.source, FeedbackType.PLAYER_ONLY)
+                            return@executes 0
+                        }
                         MainMenu.openMainMenu(context.source.player!!)
                         1
                     }
                     .then(CreateCommand.register())
-                    .then(LineCommand.register())
-                    .then(ListCommand.register())
-                    .then(MoveCommand.register())
-                    .then(DeleteCommand.register())
-                    .then(EditCommand.register())
+
+                    .then(DisplayEditCommand.register())
+                    .then(
+                        CommandManager.literal("display")
+                            .then(CommandManager.literal("list").executes(ListCommand::executeDisplays))
+                            .then(CommandManager.literal("delete").then(DeleteCommand.registerDisplay()))
+                    )
+
+                    .then(HologramEditCommand.register())
+                    .then(
+                        CommandManager.literal("hologram")
+                            .then(CommandManager.literal("list").executes(ListCommand::executeHolograms))
+                            .then(CommandManager.literal("delete").then(DeleteCommand.registerHologram()))
+                            .then(CommandManager.literal("move").then(MoveCommand.register()))
+                            .then(LineCommand.register())
+                    )
+
                     .then(ReloadCommand.register())
             )
         }

@@ -1,7 +1,8 @@
 package dev.furq.holodisplays.gui
 
+import dev.furq.holodisplays.managers.DisplayManager
+import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiItems
-import dev.furq.holodisplays.utils.Utils
 import eu.pb4.sgui.api.gui.SimpleGui
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
@@ -10,6 +11,9 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 object CreateDisplay {
+    private val hologramManager = HologramManager()
+    private val displayManager = DisplayManager()
+
     fun open(player: ServerPlayerEntity, hologramName: String? = null) {
         val gui = SimpleGui(ScreenHandlerType.GENERIC_3X3, player, false)
         gui.title = Text.literal("Create Display")
@@ -41,9 +45,9 @@ object CreateDisplay {
                         title = "Enter Text",
                         defaultText = "Hello World!",
                         onSubmit = { text ->
-                            if (Utils.createTextDisplay(name, text, player.commandSource)) {
+                            if (displayManager.createTextDisplay(name, text, player.commandSource)) {
                                 if (hologramName != null) {
-                                    Utils.addDisplayToHologram(hologramName, name, player.commandSource)
+                                    hologramManager.addDisplayToHologram(hologramName, name, player.commandSource)
                                     DisplayEdit.open(player, name) {
                                         HologramDisplays.open(player, hologramName)
                                     }
@@ -80,9 +84,9 @@ object CreateDisplay {
                         title = "Enter Item ID",
                         defaultText = "minecraft:diamond_sword",
                         onSubmit = { itemId ->
-                            if (Utils.createItemDisplay(name, itemId, player.commandSource)) {
+                            if (displayManager.createItemDisplay(name, itemId, player.commandSource)) {
                                 if (hologramName != null) {
-                                    Utils.addDisplayToHologram(hologramName, name, player.commandSource)
+                                    hologramManager.addDisplayToHologram(hologramName, name, player.commandSource)
                                     DisplayEdit.open(player, name) {
                                         HologramDisplays.open(player, hologramName)
                                     }
@@ -119,9 +123,9 @@ object CreateDisplay {
                         title = "Enter Block ID",
                         defaultText = "minecraft:grass_block",
                         onSubmit = { blockId ->
-                            if (Utils.createBlockDisplay(name, blockId, player.commandSource)) {
+                            if (displayManager.createBlockDisplay(name, blockId, player.commandSource)) {
                                 if (hologramName != null) {
-                                    Utils.addDisplayToHologram(hologramName, name, player.commandSource)
+                                    hologramManager.addDisplayToHologram(hologramName, name, player.commandSource)
                                     DisplayEdit.open(player, name) {
                                         HologramDisplays.open(player, hologramName)
                                     }

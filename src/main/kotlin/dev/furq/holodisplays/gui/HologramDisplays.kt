@@ -6,8 +6,8 @@ import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.HologramHandler
+import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiItems
-import dev.furq.holodisplays.utils.Utils
 import eu.pb4.sgui.api.gui.SimpleGui
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
@@ -17,6 +17,7 @@ import net.minecraft.util.Formatting
 import org.joml.Vector3f
 
 object HologramDisplays {
+    private val hologramManager = HologramManager()
     private const val ITEMS_PER_PAGE = 21
 
     fun open(player: ServerPlayerEntity, hologramName: String, page: Int = 0) {
@@ -84,7 +85,7 @@ object HologramDisplays {
                         open(player, hologramName, currentPage)
                     }
                 } else if (type.isRight) {
-                    if (Utils.removeLineFromHologram(hologramName, i, player.commandSource)) {
+                    if (hologramManager.removeDisplayFromHologram(hologramName, display.displayId, player.commandSource)) {
                         open(player, hologramName, currentPage)
                     }
                 } else {
@@ -172,7 +173,7 @@ object HologramDisplays {
                     selectionMode = true,
                     hologramName = hologramName,
                     onSelect = { displayName ->
-                        if (Utils.addDisplayToHologram(hologramName, displayName, player.commandSource)) {
+                        if (hologramManager.addDisplayToHologram(hologramName, displayName, player.commandSource)) {
                             open(player, hologramName, currentPage)
                         }
                     }

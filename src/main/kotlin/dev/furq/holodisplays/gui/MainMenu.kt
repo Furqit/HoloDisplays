@@ -1,7 +1,7 @@
 package dev.furq.holodisplays.gui
 
+import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiItems
-import dev.furq.holodisplays.utils.Utils
 import eu.pb4.sgui.api.gui.SimpleGui
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
@@ -10,6 +10,8 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 object MainMenu {
+    private val hologramManager = HologramManager()
+
     fun openMainMenu(player: ServerPlayerEntity) {
         val gui = SimpleGui(ScreenHandlerType.GENERIC_3X3, player, false)
         gui.title = Text.literal("HoloDisplays")
@@ -36,7 +38,7 @@ object MainMenu {
                 title = "Enter Hologram Name",
                 defaultText = "hologram",
                 onSubmit = { name ->
-                    Utils.createHologram(name, player)
+                    hologramManager.createHologram(name, player)
                     HologramEdit.open(player, name)
                 },
                 onCancel = { openMainMenu(player) }

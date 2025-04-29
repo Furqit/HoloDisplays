@@ -3,6 +3,8 @@ package dev.furq.holodisplays.gui
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.DisplayHandler
+import dev.furq.holodisplays.managers.FeedbackManager
+import dev.furq.holodisplays.utils.FeedbackType
 import dev.furq.holodisplays.utils.GuiItems
 import eu.pb4.sgui.api.gui.SimpleGui
 import net.minecraft.item.Items
@@ -68,6 +70,7 @@ object TextLineEditor {
                                 displayName,
                                 DisplayHandler.DisplayProperty.TextLines(lines)
                             )
+                            FeedbackManager.send(player.commandSource, FeedbackType.TEXT_UPDATED, "text" to newText)
                             open(player, displayName, currentPage)
                         },
                         onCancel = { open(player, displayName, currentPage) }
@@ -76,6 +79,7 @@ object TextLineEditor {
                     val lines = display.lines.toMutableList()
                     lines.removeAt(i)
                     DisplayHandler.updateDisplayProperty(displayName, DisplayHandler.DisplayProperty.TextLines(lines))
+                    FeedbackManager.send(player.commandSource, FeedbackType.TEXT_UPDATED, "text" to "line removed")
                     open(player, displayName, currentPage)
                 }
             }
@@ -137,6 +141,7 @@ object TextLineEditor {
                     val lines = display.lines.toMutableList()
                     lines.add(text)
                     DisplayHandler.updateDisplayProperty(displayName, DisplayHandler.DisplayProperty.TextLines(lines))
+                    FeedbackManager.send(player.commandSource, FeedbackType.TEXT_UPDATED, "text" to text)
                     open(player, displayName, currentPage)
                 },
                 onCancel = { open(player, displayName, currentPage) }

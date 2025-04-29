@@ -1,17 +1,21 @@
 package dev.furq.holodisplays.commands
 
 import com.mojang.brigadier.arguments.StringArgumentType
-import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import dev.furq.holodisplays.gui.DisplayEdit
 import dev.furq.holodisplays.gui.HologramEdit
+import dev.furq.holodisplays.managers.DisplayManager
+import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.CommandUtils
-import dev.furq.holodisplays.utils.Utils
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
 
 object CreateCommand {
-    fun register(): LiteralArgumentBuilder<ServerCommandSource> = CommandManager.literal("create")
+    private val displayManager = DisplayManager()
+    private val hologramManager = HologramManager()
+
+    fun register(): ArgumentBuilder<ServerCommandSource, *> = CommandManager.literal("create")
         .then(
             CommandManager.literal("hologram")
                 .then(CommandManager.argument("name", StringArgumentType.word())
@@ -85,8 +89,9 @@ object CreateCommand {
 
     private fun executeHologram(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
-        Utils.createHologram(name, context.source.player ?: return 0)
-        HologramEdit.open(context.source.player!!, name)
+        val player = context.source.player ?: return 0
+        hologramManager.createHologram(name, player)
+        HologramEdit.open(player, name)
         return 1
     }
 
@@ -94,47 +99,41 @@ object CreateCommand {
         val name = StringArgumentType.getString(context, "name")
         val content = StringArgumentType.getString(context, "content")
 
-        if (Utils.createTextDisplay(name, content, context.source)) {
-            if (hologramName != null) {
-                Utils.addDisplayToHologram(hologramName, name, context.source)
-                HologramEdit.open(context.source.player!!, hologramName)
-            } else {
-                DisplayEdit.open(context.source.player!!, name)
-            }
-            return 1
+        displayManager.createTextDisplay(name, content, context.source)
+        if (hologramName != null) {
+            hologramManager.addDisplayToHologram(hologramName, name, context.source)
+            HologramEdit.open(context.source.player!!, hologramName)
+        } else {
+            DisplayEdit.open(context.source.player!!, name)
         }
-        return 0
+        return 1
     }
 
     private fun executeItem(context: CommandContext<ServerCommandSource>, hologramName: String?): Int {
         val name = StringArgumentType.getString(context, "name")
         val itemId = StringArgumentType.getString(context, "itemId")
 
-        if (Utils.createItemDisplay(name, itemId, context.source)) {
-            if (hologramName != null) {
-                Utils.addDisplayToHologram(hologramName, name, context.source)
-                HologramEdit.open(context.source.player!!, hologramName)
-            } else {
-                DisplayEdit.open(context.source.player!!, name)
-            }
-            return 1
+        displayManager.createItemDisplay(name, itemId, context.source)
+        if (hologramName != null) {
+            hologramManager.addDisplayToHologram(hologramName, name, context.source)
+            HologramEdit.open(context.source.player!!, hologramName)
+        } else {
+            DisplayEdit.open(context.source.player!!, name)
         }
-        return 0
+        return 1
     }
 
     private fun executeBlock(context: CommandContext<ServerCommandSource>, hologramName: String?): Int {
         val name = StringArgumentType.getString(context, "name")
         val blockId = StringArgumentType.getString(context, "blockId")
 
-        if (Utils.createBlockDisplay(name, blockId, context.source)) {
-            if (hologramName != null) {
-                Utils.addDisplayToHologram(hologramName, name, context.source)
-                HologramEdit.open(context.source.player!!, hologramName)
-            } else {
-                DisplayEdit.open(context.source.player!!, name)
-            }
-            return 1
+        displayManager.createBlockDisplay(name, blockId, context.source)
+        if (hologramName != null) {
+            hologramManager.addDisplayToHologram(hologramName, name, context.source)
+            HologramEdit.open(context.source.player!!, hologramName)
+        } else {
+            DisplayEdit.open(context.source.player!!, name)
         }
-        return 0
+        return 1
     }
 }

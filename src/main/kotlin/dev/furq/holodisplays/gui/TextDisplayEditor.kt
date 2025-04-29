@@ -3,8 +3,8 @@ package dev.furq.holodisplays.gui
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.DisplayHandler
+import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.utils.GuiItems
-import dev.furq.holodisplays.utils.Utils
 import eu.pb4.sgui.api.gui.SimpleGui
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
@@ -13,6 +13,8 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 object TextDisplayEditor {
+    private val displayManager = DisplayManager()
+
     fun open(
         player: ServerPlayerEntity,
         name: String,
@@ -92,7 +94,7 @@ object TextDisplayEditor {
         ) { _, _, _, _ ->
             AnvilInput.open(player, "Enter Line Width (1-200)", display.lineWidth.toString(),
                 onSubmit = { width ->
-                    Utils.updateDisplayLineWidth(name, width.toInt(), player.commandSource)
+                    displayManager.updateLineWidth(name, width.toInt(), player.commandSource)
                     open(player, name)
                 },
                 onCancel = { open(player, name) }
@@ -121,7 +123,7 @@ object TextDisplayEditor {
                     onSubmit = { color ->
                         AnvilInput.open(player, "Enter Opacity (1-100)", "100",
                             onSubmit = { opacity ->
-                                Utils.updateDisplayBackground(name, color, opacity.toInt(), player.commandSource)
+                                displayManager.updateBackground(name, color, opacity.toInt(), player.commandSource)
                                 open(player, name)
                             },
                             onCancel = { open(player, name) }
@@ -130,7 +132,7 @@ object TextDisplayEditor {
                     onCancel = { open(player, name) }
                 )
             } else if (type.isRight) {
-                Utils.resetDisplayBackground(name, player.commandSource)
+                displayManager.resetBackground(name, player.commandSource)
                 open(player, name)
             }
         }
@@ -151,7 +153,7 @@ object TextDisplayEditor {
         ) { _, _, _, _ ->
             AnvilInput.open(player, "Enter Opacity (1-100)", display.textOpacity.toString(),
                 onSubmit = { opacity ->
-                    Utils.updateDisplayTextOpacity(name, opacity.toInt(), player.commandSource)
+                    displayManager.updateTextOpacity(name, opacity.toInt(), player.commandSource)
                     open(player, name)
                 },
                 onCancel = { open(player, name) }
@@ -173,7 +175,7 @@ object TextDisplayEditor {
             )
         ) { _, _, _, _ ->
             val currentValue = display.shadow ?: false
-            Utils.updateDisplayShadow(name, !currentValue, player.commandSource)
+            displayManager.updateShadow(name, !currentValue, player.commandSource)
             open(player, name)
         }
 
@@ -192,7 +194,7 @@ object TextDisplayEditor {
             )
         ) { _, _, _, _ ->
             val currentValue = display.seeThrough ?: false
-            Utils.updateDisplaySeeThrough(name, !currentValue, player.commandSource)
+            displayManager.updateSeeThrough(name, !currentValue, player.commandSource)
             open(player, name)
         }
 
@@ -219,7 +221,7 @@ object TextDisplayEditor {
             val currentMode = display.alignment?.name?.lowercase() ?: "center"
             val currentIndex = modes.indexOf(currentMode)
             val nextMode = modes[(currentIndex + 1) % modes.size]
-            Utils.updateDisplayAlignment(name, nextMode, player.commandSource)
+            displayManager.updateAlignment(name, nextMode, player.commandSource)
             open(player, name)
         }
 

@@ -1,7 +1,8 @@
 package dev.furq.holodisplays.gui
 
+import dev.furq.holodisplays.managers.DisplayManager
+import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiItems
-import dev.furq.holodisplays.utils.Utils
 import eu.pb4.sgui.api.gui.SimpleGui
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
@@ -10,6 +11,9 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 object DeleteConfirmation {
+    private val hologramManager = HologramManager()
+    private val displayManager = DisplayManager()
+
     fun open(player: ServerPlayerEntity, name: String, type: String, returnGui: () -> Unit) {
         val gui = SimpleGui(ScreenHandlerType.GENERIC_9X3, player, false)
         gui.title = Text.literal("Confirm Deletion")
@@ -38,8 +42,8 @@ object DeleteConfirmation {
             )
         ) { _, _, _, _ ->
             when (type) {
-                "hologram" -> Utils.deleteHologram(name, player.commandSource)
-                "display" -> Utils.deleteDisplay(name, player.commandSource)
+                "hologram" -> hologramManager.deleteHologram(name, player.commandSource)
+                "display" -> displayManager.deleteDisplay(name, player.commandSource)
             }
             returnGui()
         }

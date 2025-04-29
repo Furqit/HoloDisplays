@@ -4,8 +4,8 @@ import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
+import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.utils.GuiItems
-import dev.furq.holodisplays.utils.Utils
 import eu.pb4.sgui.api.gui.SimpleGui
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
@@ -15,6 +15,8 @@ import net.minecraft.util.Formatting
 import org.joml.Vector3f
 
 object DisplayEdit {
+    private val displayManager = DisplayManager()
+
     fun open(player: ServerPlayerEntity, name: String, returnCallback: () -> Unit = { DisplayList.open(player) }) {
         val display = DisplayConfig.getDisplay(name) ?: return
         val gui = SimpleGui(ScreenHandlerType.GENERIC_9X5, player, false)
@@ -47,7 +49,7 @@ object DisplayEdit {
             )
         ) { _, type, _, _ ->
             if (type.isRight) {
-                Utils.resetDisplayScale(name, player.commandSource)
+                displayManager.resetScale(name, player.commandSource)
                 open(player, name, returnCallback)
             } else {
                 AnvilInput.open(player, "Enter X Scale", display.display.scale?.x?.toString() ?: "1.0",
@@ -56,7 +58,7 @@ object DisplayEdit {
                             onSubmit = { y ->
                                 AnvilInput.open(player, "Enter Z Scale", display.display.scale?.z?.toString() ?: "1.0",
                                     onSubmit = { z ->
-                                        Utils.updateDisplayScale(
+                                        displayManager.updateScale(
                                             name,
                                             Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
                                             player.commandSource
@@ -98,14 +100,14 @@ object DisplayEdit {
             )
         ) { _, type, _, _ ->
             if (type.isRight) {
-                Utils.resetDisplayBillboard(name, player.commandSource)
+                displayManager.resetBillboard(name, player.commandSource)
                 open(player, name, returnCallback)
             } else {
                 val modes = listOf("HORIZONTAL", "VERTICAL", "CENTER", "FIXED")
                 val currentMode = display.display.billboardMode?.name ?: "FIXED"
                 val currentIndex = modes.indexOf(currentMode)
                 val nextMode = modes[(currentIndex + 1) % modes.size]
-                Utils.updateDisplayBillboard(name, nextMode.lowercase(), player.commandSource)
+                displayManager.updateBillboard(name, nextMode.lowercase(), player.commandSource)
                 open(player, name, returnCallback)
             }
         }
@@ -131,7 +133,7 @@ object DisplayEdit {
             )
         ) { _, type, _, _ ->
             if (type.isRight) {
-                Utils.resetDisplayRotation(name, player.commandSource)
+                displayManager.resetRotation(name, player.commandSource)
                 open(player, name, returnCallback)
             } else {
                 AnvilInput.open(player, "Enter Pitch", display.display.rotation?.x?.toString() ?: "0",
@@ -140,7 +142,7 @@ object DisplayEdit {
                             onSubmit = { yaw ->
                                 AnvilInput.open(player, "Enter Roll", display.display.rotation?.z?.toString() ?: "0",
                                     onSubmit = { roll ->
-                                        Utils.updateDisplayRotation(
+                                        displayManager.updateRotation(
                                             name,
                                             pitch.toFloat(),
                                             yaw.toFloat(),
@@ -196,7 +198,7 @@ object DisplayEdit {
                                     defaultText = "Furq_",
                                     onSubmit = { target ->
                                         val condition = "$placeholder $operator $target"
-                                        Utils.updateDisplayCondition(name, condition, player.commandSource)
+                                        displayManager.updateCondition(name, condition, player.commandSource)
                                         open(player, name, returnCallback)
                                     },
                                     onCancel = { open(player, name, returnCallback) }
@@ -208,7 +210,7 @@ object DisplayEdit {
                     onCancel = { open(player, name, returnCallback) }
                 )
             } else if (type.isRight) {
-                Utils.updateDisplayCondition(name, null, player.commandSource)
+                displayManager.updateCondition(name, null, player.commandSource)
                 open(player, name, returnCallback)
             }
         }

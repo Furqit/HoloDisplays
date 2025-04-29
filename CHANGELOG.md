@@ -1,3 +1,5 @@
 ### Updates & Improvements:
-- Adds support for 1.21.4 and 1.21.5
-- Fix a error for europeans (they use comma instead of period as decimal point) 
+- Completely rebuilt command system
+- Split huge Utils file into manager classes:
+  - HologramManager, DisplayManager, FeedbackManager
+- Better error messages and feedback

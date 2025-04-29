@@ -2,8 +2,8 @@ package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.data.display.ItemDisplay
+import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.utils.GuiItems
-import dev.furq.holodisplays.utils.Utils
 import eu.pb4.sgui.api.gui.SimpleGui
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
@@ -12,6 +12,8 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 object ItemDisplayEditor {
+    private val displayManager = DisplayManager()
+
     fun open(
         player: ServerPlayerEntity,
         name: String,
@@ -46,7 +48,7 @@ object ItemDisplayEditor {
                 title = "Enter Item ID",
                 defaultText = display.id,
                 onSubmit = { itemId ->
-                    Utils.updateDisplayItem(name, itemId, player.commandSource)
+                    displayManager.updateItemId(name, itemId, player.commandSource)
                     open(player, name)
                 },
                 onCancel = { open(player, name) }
@@ -88,7 +90,7 @@ object ItemDisplayEditor {
             )
             val currentIndex = modes.indexOf(display.itemDisplayType.lowercase())
             val nextMode = modes[(currentIndex + 1) % modes.size]
-            Utils.updateItemDisplayType(name, nextMode, player.commandSource)
+            displayManager.updateItemDisplayType(name, nextMode, player.commandSource)
             open(player, name)
         }
 
@@ -119,14 +121,14 @@ object ItemDisplayEditor {
                     onSubmit = { input ->
                         val cmd = input.toIntOrNull()
                         if (cmd != null && cmd > 0) {
-                            Utils.updateItemCustomModelData(name, cmd, player.commandSource)
+                            displayManager.updateCustomModelData(name, cmd, player.commandSource)
                         }
                         open(player, name)
                     },
                     onCancel = { open(player, name) }
                 )
             } else if (type.isRight) {
-                Utils.updateItemCustomModelData(name, null, player.commandSource)
+                displayManager.updateCustomModelData(name, null, player.commandSource)
                 open(player, name)
             }
         }
