@@ -1,5 +1,6 @@
 package dev.furq.holodisplays.config
 
+import dev.furq.holodisplays.api.HoloDisplaysAPI
 import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.display.BaseDisplay
 import dev.furq.holodisplays.data.display.BlockDisplay
@@ -226,5 +227,9 @@ object DisplayConfig : Config {
             throw ConfigException("Failed to delete display config file for $name")
         }
         displays.remove(name)
+    }
+
+    fun getDisplayOrAPI(id: String): DisplayData? {
+        return displays[id] ?: HoloDisplaysAPI.get().getDisplay(id)
     }
 }

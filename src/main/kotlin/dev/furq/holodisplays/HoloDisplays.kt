@@ -1,5 +1,6 @@
 package dev.furq.holodisplays
 
+import dev.furq.holodisplays.api.HoloDisplaysAPI
 import dev.furq.holodisplays.commands.MainCommand
 import dev.furq.holodisplays.config.ConfigManager
 import dev.furq.holodisplays.config.HologramConfig
@@ -52,6 +53,10 @@ class HoloDisplays : ModInitializer {
         }
         ServerPlayConnectionEvents.DISCONNECT.register { handler, _ ->
             ViewerHandler.clearViewers(handler.player)
+        }
+
+        ServerLifecycleEvents.SERVER_STOPPING.register {
+            HoloDisplaysAPI.get().clearAll()
         }
     }
 

@@ -94,7 +94,7 @@ object ViewerHandler {
             }
 
             hologram.displays.forEachIndexed { index, entity ->
-                val display = DisplayConfig.getDisplay(entity.displayId)
+                val display = DisplayConfig.getDisplayOrAPI(entity.displayId)
                     ?: throw HologramException("Display ${entity.displayId} not found")
 
                 if (!ConditionEvaluator.evaluate(display.display.conditionalPlaceholder, player)) {
@@ -133,7 +133,7 @@ object ViewerHandler {
         }
 
         hologram.displays.forEachIndexed { index, entity ->
-            DisplayConfig.getDisplay(entity.displayId)?.let { display ->
+            DisplayConfig.getDisplayOrAPI(entity.displayId)?.let { display ->
                 if (!ConditionEvaluator.evaluate(display.display.conditionalPlaceholder, player)) {
                     return@let
                 }
