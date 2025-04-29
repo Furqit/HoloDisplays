@@ -29,20 +29,18 @@ object MainCommand {
                         1
                     }
                     .then(CreateCommand.register())
-
-                    .then(DisplayEditCommand.register())
                     .then(
                         CommandManager.literal("display")
-                            .then(CommandManager.literal("list").executes(ListCommand::executeDisplays))
-                            .then(CommandManager.literal("delete").then(DeleteCommand.registerDisplay()))
+                            .then(ListCommand.registerDisplays())
+                            .then(DeleteCommand.registerDisplay())
+                            .then(DisplayEditCommand.register())
                     )
-
-                    .then(HologramEditCommand.register())
                     .then(
                         CommandManager.literal("hologram")
-                            .then(CommandManager.literal("list").executes(ListCommand::executeHolograms))
-                            .then(CommandManager.literal("delete").then(DeleteCommand.registerHologram()))
-                            .then(CommandManager.literal("move").then(MoveCommand.register()))
+                            .then(ListCommand.registerHolograms())
+                            .then(DeleteCommand.registerHologram())
+                            .then(MoveCommand.register())
+                            .then(HologramEditCommand.register())
                             .then(LineCommand.register())
                     )
 

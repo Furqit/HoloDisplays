@@ -15,14 +15,16 @@ import net.minecraft.server.command.ServerCommandSource
 
 object DeleteCommand {
     fun registerDisplay(): ArgumentBuilder<ServerCommandSource, *> = CommandManager
-        .argument("name", StringArgumentType.word())
-        .suggests { _, builder -> CommandUtils.suggestDisplays(builder) }
-        .executes { context -> executeDisplay(context) }
+        .literal("delete")
+        .then(CommandManager.argument("name", StringArgumentType.word())
+            .suggests { _, builder -> CommandUtils.suggestDisplays(builder) }
+            .executes { context -> executeDisplay(context) })
 
     fun registerHologram(): ArgumentBuilder<ServerCommandSource, *> = CommandManager
-        .argument("name", StringArgumentType.word())
-        .suggests { _, builder -> CommandUtils.suggestHolograms(builder) }
-        .executes { context -> executeHologram(context) }
+        .literal("delete")
+        .then(CommandManager.argument("name", StringArgumentType.word())
+            .suggests { _, builder -> CommandUtils.suggestHolograms(builder) }
+            .executes { context -> executeHologram(context) })
 
     private fun executeHologram(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
