@@ -1,6 +1,7 @@
 package dev.furq.holodisplays.handlers
 
 import dev.furq.holodisplays.HoloDisplays
+import dev.furq.holodisplays.api.HoloDisplaysAPIImpl
 import dev.furq.holodisplays.config.AnimationConfig
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
@@ -36,7 +37,7 @@ object TickHandler {
 
     private fun shouldProcessTick(): Boolean {
         return HoloDisplays.SERVER?.playerManager?.playerList?.isNotEmpty() == true &&
-                HologramConfig.getHolograms().isNotEmpty()
+                (HologramConfig.getHolograms().isNotEmpty() || HoloDisplaysAPIImpl.INSTANCE.apiHolograms.isNotEmpty())
     }
 
     private fun processHolograms() {
@@ -44,11 +45,16 @@ object TickHandler {
             if (ViewerHandler.getObserverCount(name) == 0) return@forEach
             processHologramDisplays(name, hologram)
         }
+
+        HoloDisplaysAPIImpl.INSTANCE.apiHolograms.forEach { (name, hologram) ->
+            if (ViewerHandler.getObserverCount(name) == 0) return@forEach
+            processHologramDisplays(name, hologram)
+        }
     }
 
     private fun processHologramDisplays(name: String, hologram: HologramData) {
         hologram.displays.forEachIndexed { index, displayLine ->
-            val display = DisplayConfig.getDisplay(displayLine.displayId)?.display as? TextDisplay
+            val display = DisplayConfig.getDisplayOrAPI(displayLine.displayId)?.display as? TextDisplay
                 ?: return@forEachIndexed
 
             val text = display.lines.joinToString("\n")
@@ -121,4 +127,4 @@ object TickHandler {
         val processedAnimations = processAnimations(text)
         return processPlaceholders(processedAnimations, player)
     }
-} 
+}

@@ -1,13 +1,13 @@
 package dev.furq.holodisplays.commands
 
-import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.builder.ArgumentBuilder
+import com.mojang.brigadier.context.CommandContext
 import dev.furq.holodisplays.gui.DisplayList
 import dev.furq.holodisplays.gui.HologramList
 import dev.furq.holodisplays.managers.FeedbackManager
 import dev.furq.holodisplays.utils.FeedbackType
-import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.command.CommandManager
+import net.minecraft.server.command.ServerCommandSource
 
 object ListCommand {
 

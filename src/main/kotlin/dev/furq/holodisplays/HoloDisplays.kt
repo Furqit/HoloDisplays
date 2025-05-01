@@ -1,6 +1,7 @@
 package dev.furq.holodisplays
 
 import dev.furq.holodisplays.api.HoloDisplaysAPI
+import dev.furq.holodisplays.api.HoloDisplaysAPIImpl
 import dev.furq.holodisplays.commands.MainCommand
 import dev.furq.holodisplays.config.ConfigManager
 import dev.furq.holodisplays.config.HologramConfig
@@ -21,7 +22,7 @@ import org.slf4j.LoggerFactory
 class HoloDisplays : ModInitializer {
     companion object {
         const val MOD_ID = "HoloDisplays"
-        const val VERSION = "0.3.0"
+        const val VERSION = "0.3.1"
         val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
 
         var SERVER: MinecraftServer? = null
@@ -37,9 +38,13 @@ class HoloDisplays : ModInitializer {
 
     private fun handleServerTick(server: MinecraftServer) {
         TickHandler.tick()
-        if (server.playerManager.playerList.isNotEmpty() && HologramConfig.getHolograms().isNotEmpty()) {
-            server.playerManager.playerList.forEach { player ->
-                ViewerHandler.updatePlayerVisibility(player)
+        if (server.playerManager.playerList.isNotEmpty()) {
+            val hasConfigHolograms = HologramConfig.getHolograms().isNotEmpty()
+            val hasApiHolograms = HoloDisplaysAPIImpl.INSTANCE.apiHolograms.isNotEmpty()
+            if (hasConfigHolograms || hasApiHolograms) {
+                server.playerManager.playerList.forEach { player ->
+                    ViewerHandler.updatePlayerVisibility(player)
+                }
             }
         }
     }

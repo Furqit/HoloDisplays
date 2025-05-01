@@ -1,6 +1,2 @@
 ### Updates & Improvements:
-- Completely rebuilt command system
-- Split huge Utils file into manager classes:
-  - HologramManager, DisplayManager, FeedbackManager
-- Better error messages and feedback
-- Added public API
+- Fixes updateRate and viewRange options not working as intended in the API

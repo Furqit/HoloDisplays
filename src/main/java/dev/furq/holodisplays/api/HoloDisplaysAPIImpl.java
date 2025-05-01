@@ -16,30 +16,13 @@ import org.joml.Vector3f;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * Java implementation of the HoloDisplaysAPI interface.
- */
 public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
-    /**
-     * Singleton instance of the API
-     */
+
     public static final HoloDisplaysAPIImpl INSTANCE = new HoloDisplaysAPIImpl();
-
-    /**
-     * Map of API-registered holograms that are not saved to config
-     */
-    private final Map<String, HologramData> apiHolograms = new HashMap<>();
-
-    /**
-     * Map of API-registered displays that are not saved to config
-     */
+    public final Map<String, HologramData> apiHolograms = new HashMap<>();
     private final Map<String, DisplayData> apiDisplays = new HashMap<>();
 
-    /**
-     * Private constructor to enforce singleton pattern
-     */
     private HoloDisplaysAPIImpl() {
-        // Private constructor
     }
 
     @Override
@@ -189,21 +172,11 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
         return hologramsToRemove.size();
     }
 
-    /**
-     * Gets a registered display by ID, checking only API displays.
-     *
-     * @param id The display ID to get
-     * @return The display data, or null if not found in API-registered displays
-     */
     @Override
     public DisplayData getDisplay(String id) {
         return apiDisplays.get(id);
     }
 
-    /**
-     * Clears all API-registered holograms and displays.
-     * This is called when the server shuts down or the mod is reloaded.
-     */
     @Override
     public void clearAll() {
         List<String> hologramIds = new ArrayList<>(apiHolograms.keySet());
@@ -215,14 +188,6 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
         apiDisplays.clear();
     }
 
-    /**
-     * Validates that the provided ID has a valid namespace.
-     * If the ID is not valid, an IllegalArgumentException is thrown.
-     *
-     * @param id The ID to validate
-     * @return The validated ID as a string
-     * @throws IllegalArgumentException if the ID is not valid
-     */
     private String validateId(String id) {
         if (id == null) {
             throw new IllegalArgumentException("ID cannot be null");
@@ -240,12 +205,6 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
         return id;
     }
 
-    /**
-     * Converts a string billboard mode to the corresponding BillboardMode enum value.
-     *
-     * @param mode The billboard mode as a string
-     * @return The corresponding BillboardMode enum value
-     */
     private BillboardMode parseBillboardMode(String mode) {
         if (mode == null) {
             return BillboardMode.CENTER;
@@ -259,9 +218,6 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
         };
     }
 
-    /**
-     * Base implementation for display builders with common functionality
-     */
     private abstract static class BaseDisplayBuilder<T extends BaseDisplay.Builder<?>> {
         protected final T builder;
 
@@ -286,9 +242,6 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
         }
     }
 
-    /**
-     * Implementation of the TextDisplayBuilder interface.
-     */
     private static class TextDisplayBuilderImpl extends BaseDisplayBuilder<TextDisplay.Builder> implements TextDisplayBuilder {
         public TextDisplayBuilderImpl() {
             super(new TextDisplay.Builder());
@@ -338,9 +291,6 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
         }
     }
 
-    /**
-     * Implementation of the ItemDisplayBuilder interface.
-     */
     private static class ItemDisplayBuilderImpl extends BaseDisplayBuilder<ItemDisplay.Builder> implements ItemDisplayBuilder {
         public ItemDisplayBuilderImpl() {
             super(new ItemDisplay.Builder());
@@ -356,9 +306,6 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
         }
     }
 
-    /**
-     * Implementation of the BlockDisplayBuilder interface.
-     */
     private static class BlockDisplayBuilderImpl extends BaseDisplayBuilder<BlockDisplay.Builder> implements BlockDisplayBuilder {
         public BlockDisplayBuilderImpl() {
             super(new BlockDisplay.Builder());
@@ -374,9 +321,6 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
         }
     }
 
-    /**
-     * Implementation of the HologramBuilder interface.
-     */
     private static class HologramBuilderImpl implements HologramBuilder {
         private final List<HologramData.DisplayLine> displays = new ArrayList<>();
         private Vector3f position = new Vector3f();
