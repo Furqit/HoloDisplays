@@ -12,7 +12,7 @@
     "sources": "https://github.com/Furq07/HoloDisplays"
   },
   "license": "GPL-3.0",
-  "environment": "server",
+  "environment": "*",
   "entrypoints": {
     "main": [
       "dev.furq.holodisplays.HoloDisplays"
