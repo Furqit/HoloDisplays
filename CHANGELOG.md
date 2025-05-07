@@ -1,2 +1,2 @@
 ### Updates & Improvements:
-- Fixes updateRate and viewRange options not working as intended in the API
+- Fixes an issue where holograms are created with a initial bugged display, causing it to not work.
