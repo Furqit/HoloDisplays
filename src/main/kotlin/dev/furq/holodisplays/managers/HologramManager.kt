@@ -1,7 +1,10 @@
 package dev.furq.holodisplays.managers
 
+import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
+import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.handlers.HologramHandler.HologramProperty.*
 import dev.furq.holodisplays.utils.FeedbackType
@@ -19,6 +22,9 @@ class HologramManager {
         }
 
         val defaultDisplayName = "${name}_text"
+        val defaultDisplay = DisplayData(TextDisplay(mutableListOf("<gr #ffffff #008000>Hello, %player:name%</gr>")))
+        DisplayConfig.saveDisplay(defaultDisplayName, defaultDisplay)
+
         val pos = player.pos
         val hologram = HologramData(
             displays = mutableListOf(HologramData.DisplayLine(defaultDisplayName)),
