@@ -39,28 +39,20 @@ object FeedbackManager {
     ).toTypedArray()
 
     private fun playSuccessSound(source: ServerCommandSource) {
-        source.player?.let { player ->
-            player.world.playSound(
-                null,
-                player.blockPos,
-                SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
-                SoundCategory.MASTER,
-                0.5f,
-                1f
-            )
-        }
+        source.player?.playSoundToPlayer(
+            SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
+            SoundCategory.MASTER,
+            0.5f,
+            1f
+        )
     }
 
     private fun playErrorSound(source: ServerCommandSource) {
-        source.player?.let { player ->
-            player.world.playSound(
-                null,
-                player.blockPos,
-                SoundEvents.ENTITY_VILLAGER_NO,
-                SoundCategory.MASTER,
-                0.5f,
-                1f
-            )
-        }
+        source.player?.playSoundToPlayer(
+            SoundEvents.ENTITY_VILLAGER_NO,
+            SoundCategory.MASTER,
+            0.5f,
+            1f
+        )
     }
-} 
+}

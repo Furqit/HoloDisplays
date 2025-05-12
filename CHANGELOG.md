@@ -1,2 +1,2 @@
 ### Updates & Improvements:
-- Fixes an issue where holograms are created with a initial bugged display, causing it to not work.
+- Fixed a crash caused by error or success sound when using gui/commands.
