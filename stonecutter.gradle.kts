@@ -11,7 +11,7 @@ stonecutter registerChiseled tasks.register("chiseledBuild", stonecutter.chisele
 stonecutter parameters {
     swap("mod_version", "\"${property("mod.version")}\";")
     const("release", property("mod.id") != "holodisplays")
-    dependency("fapi", node!!.property("deps.fabric_api").toString())
+    dependency("fapi", node!!.project.property("deps.fabric_api").toString())
 }
 
 stonecutter registerChiseled tasks.register("chiseledPublishMods", stonecutter.chiseled) {
