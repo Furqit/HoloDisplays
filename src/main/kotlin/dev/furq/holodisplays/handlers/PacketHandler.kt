@@ -219,7 +219,7 @@ object PacketHandler {
             add(
                 createEntry(
                     TextDisplayEntityAccessor.getTextOpacity(),
-                    ((it.coerceIn(1, 100) / 100.0) * 255).toInt().toByte()
+                    (it.coerceIn(1, 100) / 100.0 * 255).toInt().toByte()
                 )
             )
         }

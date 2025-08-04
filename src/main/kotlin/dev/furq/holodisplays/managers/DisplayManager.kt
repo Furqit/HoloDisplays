@@ -187,7 +187,7 @@ class DisplayManager {
             return
         }
 
-        val opacityHex = ((opacity.coerceIn(1, 100) / 100.0 * 255).toInt())
+        val opacityHex = (opacity.coerceIn(1, 100) / 100.0 * 255).toInt()
             .toString(16)
             .padStart(2, '0')
             .uppercase()

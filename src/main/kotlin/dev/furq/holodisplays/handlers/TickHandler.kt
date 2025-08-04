@@ -83,7 +83,7 @@ object TickHandler {
         animationRegex.replace(text) { match ->
             val animationName = match.groupValues[1]
             val animation = AnimationConfig.getAnimation(animationName)
-            val cacheKey = animationName to (ticks / (animation?.interval ?: 1))
+            val cacheKey = animationName to ticks / (animation?.interval ?: 1)
 
             animationCache.getOrPut(cacheKey) {
                 getAnimationFrame(animationName, ticks)
@@ -95,7 +95,7 @@ object TickHandler {
         val animation = AnimationConfig.getAnimation(animationName) ?: return null
         if (animation.frames.isEmpty()) return null
 
-        val currentIndex = ((currentTick / animation.interval) % animation.frames.size)
+        val currentIndex = (currentTick / animation.interval) % animation.frames.size
         return animation.frames[currentIndex].text
     }
 
