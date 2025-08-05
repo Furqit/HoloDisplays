@@ -1,2 +1,2 @@
 ### Updates & Improvements:
-- Fixed a crash caused by error or success sound when using gui/commands.
+- Updated the mod to 1.21.8.
