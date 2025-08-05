@@ -20,8 +20,8 @@ object TickHandler {
     private val placeholderParser by lazy {
         NodeParser.merge(TagParser.DEFAULT, Placeholders.DEFAULT_PLACEHOLDER_PARSER)
     }
-    private const val ANIMATION_PATTERN = "<animation:([^>]+)>"
-    private val animationRegex = ANIMATION_PATTERN.toRegex()
+    private val animationRegex = "<animation:([^>]+)>".toRegex()
+    private val placeholderRegex = "%([^%:]+):([^%]+)%".toRegex()
 
     fun init() {
         animationCache.clear()
@@ -66,7 +66,7 @@ object TickHandler {
 
     private fun shouldUpdateDisplay(text: String, updateRate: Int): Boolean {
         val hasAnimation = animationRegex.containsMatchIn(text)
-        val hasPlaceholder = text.contains("%")
+        val hasPlaceholder = placeholderRegex.containsMatchIn(text)
 
         return when {
             hasAnimation -> {
@@ -74,7 +74,7 @@ object TickHandler {
                 intervals.any { interval -> ticks % interval == 0 }
             }
 
-            hasPlaceholder -> ticks % updateRate == 0
+            hasPlaceholder -> ticks % (if (updateRate <= 0) 20 else updateRate) == 0
             else -> false
         }
     }

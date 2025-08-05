@@ -1,2 +1,3 @@
 ### Updates & Improvements:
-- Updated the mod to 1.21.8.
+- Adds a check to prevent crash in case the updateRate is set to 0 or a negative number.
+- Better "hasPlaceholder" regex check.
