@@ -65,16 +65,12 @@ object TickHandler {
     }
 
     private fun shouldUpdateDisplay(text: String, updateRate: Int): Boolean {
-        val hasAnimation = animationRegex.containsMatchIn(text)
-        val hasPlaceholder = placeholderRegex.containsMatchIn(text)
+        val hasAnimation = animationRegex in text
+        val hasPlaceholder = placeholderRegex in text
 
         return when {
-            hasAnimation -> {
-                val intervals = findAnimationIntervals(text)
-                intervals.any { interval -> ticks % interval == 0 }
-            }
-
-            hasPlaceholder -> ticks % (if (updateRate <= 0) 20 else updateRate) == 0
+            hasAnimation -> findAnimationIntervals(text).any { interval -> ticks % interval == 0 }
+            hasPlaceholder -> ticks % updateRate.coerceAtLeast(1) == 0
             else -> false
         }
     }

@@ -9,16 +9,13 @@ import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.ConfigException
 import dev.furq.holodisplays.handlers.ErrorHandler
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
-import org.joml.Vector3f
 import org.quiltmc.parsers.json.JsonReader
 import org.quiltmc.parsers.json.JsonWriter
-import java.io.FileFilter
 import java.nio.file.Path
 
 object DisplayConfig : Config {
     override lateinit var configDir: Path
     private val displays = mutableMapOf<String, DisplayData>()
-    private val jsonFilter = FileFilter { it.extension == "json" }
 
     override fun init(baseDir: Path) {
         configDir = baseDir.resolve("displays")
@@ -27,14 +24,13 @@ object DisplayConfig : Config {
 
     override fun reload() = ErrorHandler.withCatch {
         displays.clear()
-        val files =
-            configDir.toFile().listFiles(jsonFilter) ?: throw ConfigException("Failed to list display config files")
-
-        files.forEach { file ->
-            JsonReader.json5(file.inputStream().reader()).use { json ->
-                displays[file.nameWithoutExtension] = parseDisplayData(json)
+        configDir.toFile().listFiles(JsonUtils.jsonFilter)
+            ?.forEach { file ->
+                JsonReader.json5(file.inputStream().reader()).use { json ->
+                    displays[file.nameWithoutExtension] = parseDisplayData(json)
+                }
             }
-        }
+            ?: throw ConfigException("Failed to list display config files")
     }
 
     private fun parseDisplayData(json: JsonReader): DisplayData = json.run {
@@ -65,9 +61,9 @@ object DisplayConfig : Config {
 
         while (hasNext()) {
             when (nextName()) {
-                "lines" -> builder.lines = parseStringArray().toMutableList()
-                "rotation" -> builder.rotation = parseRotationArray()
-                "scale" -> builder.scale = parseScaleArray()
+                "lines" -> builder.lines = JsonUtils.parseStringList(this).toMutableList()
+                "rotation" -> builder.rotation = JsonUtils.parseVector3f(this)
+                "scale" -> builder.scale = JsonUtils.parseVector3f(this)
                 "lineWidth" -> builder.lineWidth = nextInt()
                 "backgroundColor" -> builder.backgroundColor = nextString()
                 "textOpacity" -> builder.textOpacity = nextInt()
@@ -90,8 +86,8 @@ object DisplayConfig : Config {
             when (nextName()) {
                 "id" -> builder.id = nextString()
                 "displayType" -> builder.itemDisplayType = nextString().lowercase()
-                "rotation" -> builder.rotation = parseRotationArray()
-                "scale" -> builder.scale = parseScaleArray()
+                "rotation" -> builder.rotation = JsonUtils.parseVector3f(this)
+                "scale" -> builder.scale = JsonUtils.parseVector3f(this)
                 "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
                 "customModelData" -> builder.customModelData = nextInt()
                 "conditionalPlaceholder" -> builder.conditionalPlaceholder = nextString()
@@ -108,8 +104,8 @@ object DisplayConfig : Config {
         while (hasNext()) {
             when (nextName()) {
                 "id" -> builder.id = nextString()
-                "rotation" -> builder.rotation = parseRotationArray()
-                "scale" -> builder.scale = parseScaleArray()
+                "rotation" -> builder.rotation = JsonUtils.parseVector3f(this)
+                "scale" -> builder.scale = JsonUtils.parseVector3f(this)
                 "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
                 "conditionalPlaceholder" -> builder.conditionalPlaceholder = nextString()
                 else -> skipValue()
@@ -117,34 +113,6 @@ object DisplayConfig : Config {
         }
 
         return DisplayData(builder.build())
-    }
-
-    private fun JsonReader.parseRotationArray(): Vector3f {
-        beginArray()
-        val pitch = nextDouble().toFloat()
-        val yaw = nextDouble().toFloat()
-        val roll = nextDouble().toFloat()
-        endArray()
-        return Vector3f(pitch, yaw, roll)
-    }
-
-    private fun JsonReader.parseScaleArray(): Vector3f {
-        beginArray()
-        val x = nextDouble().toFloat()
-        val y = nextDouble().toFloat()
-        val z = nextDouble().toFloat()
-        endArray()
-        return Vector3f(x, y, z)
-    }
-
-    private fun JsonReader.parseStringArray(): List<String> {
-        val result = mutableListOf<String>()
-        beginArray()
-        while (hasNext()) {
-            result.add(nextString())
-        }
-        endArray()
-        return result
     }
 
     fun getDisplay(name: String): DisplayData? = displays[name]
@@ -161,59 +129,43 @@ object DisplayConfig : Config {
         }
     }
 
-    private fun writeDisplay(json: JsonWriter, displayData: DisplayData) {
-        json.beginObject()
+    private fun writeDisplay(json: JsonWriter, displayData: DisplayData) = json.run {
+        beginObject()
 
         when (val display = displayData.display) {
             is TextDisplay -> {
-                json.name("type").value("text")
-                json.name("lines").beginArray()
-                display.lines.forEach { json.value(it) }
-                json.endArray()
-                display.lineWidth?.let { json.name("lineWidth").value(it) }
-                display.backgroundColor?.let { json.name("backgroundColor").value(it) }
-                display.textOpacity?.let { json.name("textOpacity").value(it) }
-                display.shadow?.let { json.name("shadow").value(it) }
-                display.seeThrough?.let { json.name("seeThrough").value(it) }
-                display.alignment?.let { json.name("alignment").value(it.name) }
-                writeCommonProperties(json, display)
+                name("type").value("text")
+                JsonUtils.writeStringList(this, "lines", display.lines)
+                display.lineWidth?.let { name("lineWidth").value(it) }
+                display.backgroundColor?.let { name("backgroundColor").value(it) }
+                display.textOpacity?.let { name("textOpacity").value(it) }
+                display.shadow?.let { name("shadow").value(it) }
+                display.seeThrough?.let { name("seeThrough").value(it) }
+                display.alignment?.let { name("alignment").value(it.name) }
+                writeCommonProperties(this, display)
             }
 
             is ItemDisplay -> {
-                json.name("type").value("item")
-                json.name("id").value(display.id)
-                json.name("displayType").value(display.itemDisplayType)
-                display.customModelData?.let { json.name("customModelData").value(it) }
-                writeCommonProperties(json, display)
+                name("type").value("item")
+                name("id").value(display.id)
+                name("displayType").value(display.itemDisplayType)
+                display.customModelData?.let { name("customModelData").value(it) }
+                writeCommonProperties(this, display)
             }
 
             is BlockDisplay -> {
-                json.name("type").value("block")
-                json.name("id").value(display.id)
-                writeCommonProperties(json, display)
+                name("type").value("block")
+                name("id").value(display.id)
+                writeCommonProperties(this, display)
             }
         }
 
-        json.endObject()
+        endObject()
     }
 
     private fun writeCommonProperties(json: JsonWriter, display: BaseDisplay) {
-        display.rotation?.let { rotation ->
-            json.name("rotation").beginArray()
-            json.value(rotation.x)
-            json.value(rotation.y)
-            json.value(rotation.z)
-            json.endArray()
-        }
-
-        display.scale?.let { scale ->
-            json.name("scale").beginArray()
-            json.value(scale.x)
-            json.value(scale.y)
-            json.value(scale.z)
-            json.endArray()
-        }
-
+        display.rotation?.let { JsonUtils.writeVector3f(json, "rotation", it) }
+        display.scale?.let { JsonUtils.writeVector3f(json, "scale", it) }
         display.billboardMode?.let { json.name("billboardMode").value(it.name) }
         display.conditionalPlaceholder?.let { json.name("conditionalPlaceholder").value(it) }
     }

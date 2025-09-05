@@ -8,7 +8,7 @@ data class BlockDisplay(
     override val rotation: Vector3f? = null,
     override val scale: Vector3f? = null,
     override val billboardMode: BillboardMode? = null,
-    override var conditionalPlaceholder: String? = null
+    override val conditionalPlaceholder: String? = null
 ) : BaseDisplay() {
     class Builder : BaseDisplay.Builder<BlockDisplay> {
         var id: String = ""
@@ -17,6 +17,6 @@ data class BlockDisplay(
         override var billboardMode: BillboardMode? = null
         override var conditionalPlaceholder: String? = null
 
-        override fun build() = BlockDisplay(id, rotation, scale, billboardMode)
+        override fun build() = BlockDisplay(id, rotation, scale, billboardMode, conditionalPlaceholder)
     }
 }

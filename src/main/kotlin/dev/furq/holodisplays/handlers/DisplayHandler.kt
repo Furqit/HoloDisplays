@@ -63,50 +63,44 @@ object DisplayHandler {
             is TextDisplay -> updateTextDisplay(currentDisplay, property)
             is ItemDisplay -> updateItemDisplay(currentDisplay, property)
             is BlockDisplay -> updateBlockDisplay(currentDisplay, property)
-            else -> null
+            else -> return null
         } ?: return null
 
         return DisplayData(updatedDisplay)
     }
 
-    private fun updateTextDisplay(display: TextDisplay, property: DisplayProperty): TextDisplay? {
-        return when (property) {
-            is DisplayProperty.Scale -> display.copy(scale = property.value)
-            is DisplayProperty.BillboardMode -> display.copy(billboardMode = property.mode)
-            is DisplayProperty.Rotation -> display.copy(rotation = property.value)
-            is DisplayProperty.TextLines -> display.copy(lines = property.value.toMutableList())
-            is DisplayProperty.TextLineWidth -> display.copy(lineWidth = property.value)
-            is DisplayProperty.TextBackgroundColor -> display.copy(backgroundColor = property.value)
-            is DisplayProperty.TextOpacity -> display.copy(textOpacity = property.value)
-            is DisplayProperty.TextShadow -> display.copy(shadow = property.value)
-            is DisplayProperty.TextSeeThrough -> display.copy(seeThrough = property.value)
-            is DisplayProperty.TextAlignment -> display.copy(alignment = property.value)
-            is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
-            else -> null
-        }
+    private fun updateTextDisplay(display: TextDisplay, property: DisplayProperty): TextDisplay? = when (property) {
+        is DisplayProperty.Scale -> display.copy(scale = property.value)
+        is DisplayProperty.BillboardMode -> display.copy(billboardMode = property.mode)
+        is DisplayProperty.Rotation -> display.copy(rotation = property.value)
+        is DisplayProperty.TextLines -> display.copy(lines = property.value)
+        is DisplayProperty.TextLineWidth -> display.copy(lineWidth = property.value)
+        is DisplayProperty.TextBackgroundColor -> display.copy(backgroundColor = property.value)
+        is DisplayProperty.TextOpacity -> display.copy(textOpacity = property.value)
+        is DisplayProperty.TextShadow -> display.copy(shadow = property.value)
+        is DisplayProperty.TextSeeThrough -> display.copy(seeThrough = property.value)
+        is DisplayProperty.TextAlignment -> display.copy(alignment = property.value)
+        is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
+        else -> null
     }
 
-    private fun updateItemDisplay(display: ItemDisplay, property: DisplayProperty): ItemDisplay? {
-        return when (property) {
-            is DisplayProperty.Scale -> display.copy(scale = property.value)
-            is DisplayProperty.BillboardMode -> display.copy(billboardMode = property.mode)
-            is DisplayProperty.Rotation -> display.copy(rotation = property.value)
-            is DisplayProperty.ItemId -> display.copy(id = property.value)
-            is DisplayProperty.ItemDisplayType -> display.copy(itemDisplayType = property.value)
-            is DisplayProperty.ItemCustomModelData -> display.copy(customModelData = property.value)
-            is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
-            else -> null
-        }
+    private fun updateItemDisplay(display: ItemDisplay, property: DisplayProperty): ItemDisplay? = when (property) {
+        is DisplayProperty.Scale -> display.copy(scale = property.value)
+        is DisplayProperty.BillboardMode -> display.copy(billboardMode = property.mode)
+        is DisplayProperty.Rotation -> display.copy(rotation = property.value)
+        is DisplayProperty.ItemId -> display.copy(id = property.value)
+        is DisplayProperty.ItemDisplayType -> display.copy(itemDisplayType = property.value)
+        is DisplayProperty.ItemCustomModelData -> display.copy(customModelData = property.value)
+        is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
+        else -> null
     }
 
-    private fun updateBlockDisplay(display: BlockDisplay, property: DisplayProperty): BlockDisplay? {
-        return when (property) {
-            is DisplayProperty.Scale -> display.copy(scale = property.value)
-            is DisplayProperty.BillboardMode -> display.copy(billboardMode = property.mode)
-            is DisplayProperty.Rotation -> display.copy(rotation = property.value)
-            is DisplayProperty.BlockId -> display.copy(id = property.value)
-            is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
-            else -> null
-        }
+    private fun updateBlockDisplay(display: BlockDisplay, property: DisplayProperty): BlockDisplay? = when (property) {
+        is DisplayProperty.Scale -> display.copy(scale = property.value)
+        is DisplayProperty.BillboardMode -> display.copy(billboardMode = property.mode)
+        is DisplayProperty.Rotation -> display.copy(rotation = property.value)
+        is DisplayProperty.BlockId -> display.copy(id = property.value)
+        is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
+        else -> null
     }
 }

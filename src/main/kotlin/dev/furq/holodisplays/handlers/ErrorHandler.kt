@@ -6,12 +6,14 @@ import net.minecraft.text.Text
 
 object ErrorHandler {
     fun handle(exception: Exception, source: ServerCommandSource? = null) {
-        when (exception) {
-            is HoloDisplaysException -> HoloDisplays.LOGGER.error("[${exception::class.simpleName?.removeSuffix("Exception")} Error] ${exception.message}")
-            else -> HoloDisplays.LOGGER.error("[Unexpected Error] An unexpected error occurred", exception)
+        val errorType = when (exception) {
+            is HoloDisplaysException -> exception::class.simpleName?.removeSuffix("Exception") ?: "Error"
+            else -> "Unexpected"
         }
 
-        source?.player?.let {
+        HoloDisplays.LOGGER.error("[$errorType Error] ${exception.message}", exception.takeIf { it !is HoloDisplaysException })
+
+        source?.player?.let { player ->
             val errorMessage = when (exception) {
                 is HoloDisplaysException -> "§c${exception::class.simpleName?.removeSuffix("Exception") ?: "Error"}: ${exception.message}"
                 else -> "§cAn unexpected error occurred. Check console for details"
@@ -20,19 +22,10 @@ object ErrorHandler {
         }
     }
 
-    inline fun withCatch(source: ServerCommandSource? = null, block: () -> Unit) {
-        try {
-            block()
-        } catch (e: Exception) {
-            handle(e, source)
-        }
-    }
-
-    inline fun <T> withCatch(block: () -> T): T? = try {
+    inline fun withCatch(source: ServerCommandSource? = null, block: () -> Unit) = try {
         block()
     } catch (e: Exception) {
-        handle(e)
-        null
+        handle(e, source)
     }
 
     inline fun <T> withCatch(source: ServerCommandSource? = null, block: () -> T): T? = try {
@@ -41,7 +34,6 @@ object ErrorHandler {
         handle(e, source)
         null
     }
-
 }
 
 sealed class HoloDisplaysException(message: String) : Exception(message)

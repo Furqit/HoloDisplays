@@ -2,6 +2,8 @@ package dev.furq.holodisplays.handlers
 
 import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.config.DisplayConfig
+import dev.furq.holodisplays.config.HologramConfig
+import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.HologramData
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.utils.ConditionEvaluator
@@ -46,7 +48,7 @@ object ViewerHandler {
     }
 
     fun isViewing(player: ServerPlayerEntity, name: String): Boolean =
-        trackedHolograms[name]?.observers?.contains(player.uuid) == true
+        player.uuid in (trackedHolograms[name]?.observers ?: emptySet())
 
     fun clearViewers(player: ServerPlayerEntity) {
         trackedHolograms.values
@@ -69,91 +71,60 @@ object ViewerHandler {
 
     fun respawnForAllObservers(name: String) {
         trackedHolograms[name]?.let { tracked ->
+            val hologramData = HologramConfig.getHologram(name) ?: return@let
             HoloDisplays.SERVER?.playerManager?.playerList
                 ?.filter { tracked.observers.contains(it.uuid) }
                 ?.forEach { player ->
                     PacketHandler.destroyHologram(player, name)
-                    showHologramToPlayer(player, name, tracked.hologramData)
+                    showHologramToPlayer(player, name, hologramData)
                 }
         }
     }
 
     fun updateForAllObservers(name: String) = ErrorHandler.withCatch {
         val tracked = trackedHolograms[name] ?: throw HologramException("Hologram $name not found")
+        val hologramData = HologramConfig.getHologram(name) ?: throw HologramException("Hologram $name not found in config")
         HoloDisplays.SERVER?.playerManager?.playerList
             ?.filter { tracked.observers.contains(it.uuid) }
             ?.forEach { player ->
-                updateHologramForPlayer(player, name, tracked.hologramData)
+                updateHologramForPlayer(player, name, hologramData)
             }
     }
 
     private fun showHologramToPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) =
         ErrorHandler.withCatch {
-            if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) {
-                return@withCatch
-            }
+            if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) return@withCatch
 
             hologram.displays.forEachIndexed { index, entity ->
                 val display = DisplayConfig.getDisplayOrAPI(entity.displayId)
                     ?: throw HologramException("Display ${entity.displayId} not found")
 
-                if (!ConditionEvaluator.evaluate(display.display.conditionalPlaceholder, player)) {
-                    return@forEachIndexed
-                }
+                if (!ConditionEvaluator.evaluate(display.display.conditionalPlaceholder, player)) return@forEachIndexed
 
-                val processedDisplay = when (val displayType = display.display) {
-                    is TextDisplay -> display.copy(
-                        display = displayType.copy(
-                            lines = mutableListOf(displayType.lines.joinToString("\n"))
-                        )
-                    )
-
-                    else -> display
-                }
-
-                PacketHandler.spawnDisplayEntity(
-                    player,
-                    name,
-                    entity,
-                    processedDisplay,
-                    Vec3d(
-                        hologram.position.x.toDouble(),
-                        hologram.position.y.toDouble(),
-                        hologram.position.z.toDouble()
-                    ),
-                    index,
-                    hologram
-                )
+                PacketHandler.spawnDisplayEntity(player, name, entity, processDisplayForPlayer(display), hologramPosition(hologram), index, hologram)
             }
         }
 
+    private fun hologramPosition(hologram: HologramData) = Vec3d(
+        hologram.position.x.toDouble(),
+        hologram.position.y.toDouble(),
+        hologram.position.z.toDouble()
+    )
+
+    private fun processDisplayForPlayer(display: DisplayData): DisplayData = when (val displayType = display.display) {
+        is TextDisplay -> display.copy(display = displayType.copy(lines = mutableListOf(displayType.lines.joinToString("\n"))))
+        else -> display
+    }
+
     private fun updateHologramForPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) {
-        if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) {
-            return
-        }
+        if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) return
 
         hologram.displays.forEachIndexed { index, entity ->
             DisplayConfig.getDisplayOrAPI(entity.displayId)?.let { display ->
-                if (!ConditionEvaluator.evaluate(display.display.conditionalPlaceholder, player)) {
-                    return@let
-                }
+                if (!ConditionEvaluator.evaluate(display.display.conditionalPlaceholder, player)) return@let
 
-                val processedDisplay = when (val displayType = display.display) {
-                    is TextDisplay -> display.copy(
-                        display = displayType.copy(
-                            lines = mutableListOf(displayType.lines.joinToString("\n"))
-                        )
-                    )
-
-                    else -> display
-                }
                 PacketHandler.updateDisplayMetadata(
-                    player,
-                    name,
-                    entity.displayId,
-                    index,
-                    processedDisplay,
-                    hologram
+                    player, name, entity.displayId, index, processDisplayForPlayer(display), hologram
                 )
             }
         }
@@ -161,17 +132,11 @@ object ViewerHandler {
 
     fun updatePlayerVisibility(player: ServerPlayerEntity) {
         trackedHolograms.values.forEach { tracked ->
-            val isCurrentlyViewing = tracked.observers.contains(player.uuid)
-            val isInSameWorld = player.world.registryKey.value.toString() == tracked.hologramData.world
-            val meetsCondition = ConditionEvaluator.evaluate(tracked.hologramData.conditionalPlaceholder, player)
-            val isInRange = HologramHandler.isPlayerInRange(
-                player,
-                tracked.hologramData.world,
-                tracked.hologramData.position,
-                tracked.hologramData.viewRange
-            )
-
-            val shouldView = isInSameWorld && meetsCondition && isInRange
+            val isCurrentlyViewing = player.uuid in tracked.observers
+            val hologram = tracked.hologramData
+            val shouldView = player.world.registryKey.value.toString() == hologram.world &&
+                    ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player) &&
+                    HologramHandler.isPlayerInRange(player, hologram.world, hologram.position, hologram.viewRange)
 
             when {
                 shouldView && !isCurrentlyViewing -> addViewer(player, tracked.hologramName)

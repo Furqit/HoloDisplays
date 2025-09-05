@@ -7,55 +7,44 @@ import eu.pb4.placeholders.api.parsers.TagParser
 import net.minecraft.server.network.ServerPlayerEntity
 
 object ConditionEvaluator {
-    private val OPERATORS = listOf("=", "!=", ">", "<", ">=", "<=", "contains", "!contains", "startsWith", "endsWith")
+    private val operatorRegex = "\\s(=|!=|>|<|>=|<=|contains|!contains|startsWith|endsWith)\\s".toRegex()
     private val placeholderParser by lazy {
         NodeParser.merge(TagParser.DEFAULT, Placeholders.DEFAULT_PLACEHOLDER_PARSER)
     }
 
     fun evaluate(condition: String?, player: ServerPlayerEntity): Boolean {
-        if (condition == null) {
-            return true
-        }
-
-        val parts = parseCondition(condition) ?: return true
-        val (placeholder, operator, value) = parts
-        val resolvedPlaceholder = resolvePlaceholder(placeholder.trim(), player)
+        condition ?: return true
+        val (placeholder, operator, value) = parseCondition(condition) ?: return true
+        val resolvedValue = resolvePlaceholder(placeholder.trim(), player)
 
         return when (operator.trim()) {
-            "=" -> resolvedPlaceholder == value
-            "!=" -> resolvedPlaceholder != value
-            ">" -> resolvedPlaceholder.toDoubleOrNull()?.let {
-                it > (value.toDoubleOrNull() ?: return false)
-            } ?: false
-
-            "<" -> resolvedPlaceholder.toDoubleOrNull()
-                ?.let { it < (value.toDoubleOrNull() ?: return false) } ?: false
-
-            ">=" -> resolvedPlaceholder.toDoubleOrNull()
-                ?.let { it >= (value.toDoubleOrNull() ?: return false) } ?: false
-
-            "<=" -> resolvedPlaceholder.toDoubleOrNull()
-                ?.let { it <= (value.toDoubleOrNull() ?: return false) } ?: false
-
-            "contains" -> resolvedPlaceholder.contains(value)
-            "!contains" -> !resolvedPlaceholder.contains(value)
-            "startsWith" -> resolvedPlaceholder.startsWith(value)
-            "endsWith" -> resolvedPlaceholder.endsWith(value)
+            "=" -> resolvedValue == value
+            "!=" -> resolvedValue != value
+            ">" -> compareNumbers(resolvedValue, value) { a, b -> a > b }
+            "<" -> compareNumbers(resolvedValue, value) { a, b -> a < b }
+            ">=" -> compareNumbers(resolvedValue, value) { a, b -> a >= b }
+            "<=" -> compareNumbers(resolvedValue, value) { a, b -> a <= b }
+            "contains" -> value in resolvedValue
+            "!contains" -> value !in resolvedValue
+            "startsWith" -> resolvedValue.startsWith(value)
+            "endsWith" -> resolvedValue.endsWith(value)
             else -> true
         }
     }
 
-    private fun parseCondition(condition: String): Triple<String, String, String>? {
-        val operator = OPERATORS.find { condition.contains(" $it ") } ?: return null
-        val parts = condition.split(" $operator ")
-        if (parts.size != 2) {
-            return null
-        }
-        return Triple(parts[0], operator, parts[1])
+    private inline fun compareNumbers(left: String, right: String, comparator: (Double, Double) -> Boolean): Boolean {
+        val leftNum = left.toDoubleOrNull() ?: return false
+        val rightNum = right.toDoubleOrNull() ?: return false
+        return comparator(leftNum, rightNum)
     }
 
-    private fun resolvePlaceholder(placeholder: String, player: ServerPlayerEntity): String {
-        val node = placeholderParser.parseNode(placeholder)
-        return node.toText(PlaceholderContext.of(player)).string
+    private fun parseCondition(condition: String): Triple<String, String, String>? {
+        val match = operatorRegex.find(condition) ?: return null
+        val operator = match.groupValues[1]
+        val parts = condition.split(" $operator ")
+        return if (parts.size == 2) Triple(parts[0], operator, parts[1]) else null
     }
+
+    private fun resolvePlaceholder(placeholder: String, player: ServerPlayerEntity): String =
+        placeholderParser.parseNode(placeholder).toText(PlaceholderContext.of(player)).string
 }
