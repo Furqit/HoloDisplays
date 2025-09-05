@@ -15,12 +15,16 @@ object ReloadCommand {
     fun register(): ArgumentBuilder<ServerCommandSource, *> = CommandManager.literal("reload")
         .requires { it.hasPermissionLevel(2) }
         .executes { context ->
-            PacketHandler.resetEntityTracking()
-            ViewerHandler.resetHologramObservers()
-            TickHandler.init()
-            ConfigManager.reload()
-            HologramHandler.reinitialize()
-            FeedbackManager.send(context.source, FeedbackType.RELOAD_SUCCESS)
+            performReload(context.source)
             1
         }
+
+    private fun performReload(source: ServerCommandSource) {
+        PacketHandler.resetEntityTracking()
+        ViewerHandler.resetHologramObservers()
+        TickHandler.init()
+        ConfigManager.reload()
+        HologramHandler.reinitialize()
+        FeedbackManager.send(source, FeedbackType.RELOAD_SUCCESS)
+    }
 }
