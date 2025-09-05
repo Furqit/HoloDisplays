@@ -9,7 +9,6 @@ import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.server.network.ServerPlayerEntity
 
 object ItemDisplayEditor {
-    private val displayManager = DisplayManager()
 
     private val displayModes = listOf(
         "none", "thirdperson_lefthand", "thirdperson_righthand",
@@ -42,7 +41,7 @@ object ItemDisplayEditor {
                     title = "Enter Item ID",
                     defaultText = display.id,
                     onSubmit = { itemId ->
-                        displayManager.updateItemId(name, itemId, player.commandSource)
+                        DisplayManager.updateItemId(name, itemId, player.commandSource)
                         open(player, name, returnCallback)
                     },
                     onCancel = { open(player, name, returnCallback) }
@@ -65,7 +64,7 @@ object ItemDisplayEditor {
             )) { _, _, _, _ ->
                 val currentIndex = displayModes.indexOf(display.itemDisplayType.lowercase())
                 val nextMode = displayModes[(currentIndex + 1) % displayModes.size]
-                displayManager.updateItemDisplayType(name, nextMode, player.commandSource)
+                DisplayManager.updateItemDisplayType(name, nextMode, player.commandSource)
                 open(player, name, returnCallback)
             }
 
@@ -84,7 +83,7 @@ object ItemDisplayEditor {
                         defaultText = display.customModelData?.toString() ?: "1",
                         onSubmit = { input ->
                             input.toIntOrNull()?.takeIf { it > 0 }?.let { cmd ->
-                                displayManager.updateCustomModelData(name, cmd, player.commandSource)
+                                DisplayManager.updateCustomModelData(name, cmd, player.commandSource)
                             }
                             open(player, name, returnCallback)
                         },
@@ -92,7 +91,7 @@ object ItemDisplayEditor {
                     )
 
                     type.isRight -> {
-                        displayManager.updateCustomModelData(name, null, player.commandSource)
+                        DisplayManager.updateCustomModelData(name, null, player.commandSource)
                         open(player, name, returnCallback)
                     }
                 }

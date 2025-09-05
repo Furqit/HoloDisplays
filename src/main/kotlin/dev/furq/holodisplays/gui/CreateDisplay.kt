@@ -8,8 +8,6 @@ import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.server.network.ServerPlayerEntity
 
 object CreateDisplay {
-    private val hologramManager = HologramManager()
-    private val displayManager = DisplayManager()
 
     fun open(player: ServerPlayerEntity, hologramName: String? = null) {
         val gui = GuiUtils.createGui(
@@ -75,15 +73,15 @@ object CreateDisplay {
                     defaultText = default,
                     onSubmit = { value ->
                         val success = when (type) {
-                            "text" -> displayManager.createTextDisplay(name, value, player.commandSource)
-                            "item" -> displayManager.createItemDisplay(name, value, player.commandSource)
-                            "block" -> displayManager.createBlockDisplay(name, value, player.commandSource)
+                            "text" -> DisplayManager.createTextDisplay(name, value, player.commandSource)
+                            "item" -> DisplayManager.createItemDisplay(name, value, player.commandSource)
+                            "block" -> DisplayManager.createBlockDisplay(name, value, player.commandSource)
                             else -> false
                         }
 
                         if (success) {
                             if (hologramName != null) {
-                                hologramManager.addDisplayToHologram(hologramName, name, player.commandSource)
+                                HologramManager.addDisplayToHologram(hologramName, name, player.commandSource)
                                 DisplayEdit.open(player, name) {
                                     HologramDisplays.open(player, hologramName)
                                 }

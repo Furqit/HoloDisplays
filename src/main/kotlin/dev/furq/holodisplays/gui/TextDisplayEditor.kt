@@ -12,7 +12,6 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 object TextDisplayEditor {
-    private val displayManager = DisplayManager()
     private val alignmentModes = listOf("left", "center", "right")
 
     fun open(
@@ -54,7 +53,7 @@ object TextDisplayEditor {
             )) { _, _, _, _ ->
                 AnvilInput.open(player, "Enter Line Width (1-200)", display.lineWidth.toString(),
                     onSubmit = { width ->
-                        displayManager.updateLineWidth(name, width.toInt(), player.commandSource)
+                        DisplayManager.updateLineWidth(name, width.toInt(), player.commandSource)
                         open(player, name, returnCallback)
                     },
                     onCancel = { open(player, name, returnCallback) }
@@ -72,7 +71,7 @@ object TextDisplayEditor {
                 when {
                     type.isLeft -> editBackgroundColor(player, name, returnCallback)
                     type.isRight -> {
-                        displayManager.resetBackground(name, player.commandSource)
+                        DisplayManager.resetBackground(name, player.commandSource)
                         open(player, name, returnCallback)
                     }
                 }
@@ -85,7 +84,7 @@ object TextDisplayEditor {
             )) { _, _, _, _ ->
                 AnvilInput.open(player, "Enter Opacity (1-100)", display.textOpacity.toString(),
                     onSubmit = { opacity ->
-                        displayManager.updateTextOpacity(name, opacity.toInt(), player.commandSource)
+                        DisplayManager.updateTextOpacity(name, opacity.toInt(), player.commandSource)
                         open(player, name, returnCallback)
                     },
                     onCancel = { open(player, name, returnCallback) }
@@ -98,7 +97,7 @@ object TextDisplayEditor {
                 lore = GuiUtils.createCombinedLore("Current" to (display.shadow ?: false).toString(), "Click to toggle")
             )) { _, _, _, _ ->
                 val currentValue = display.shadow ?: false
-                displayManager.updateShadow(name, !currentValue, player.commandSource)
+                DisplayManager.updateShadow(name, !currentValue, player.commandSource)
                 open(player, name, returnCallback)
             }
 
@@ -109,7 +108,7 @@ object TextDisplayEditor {
                     ?: false).toString(), "Click to toggle")
             )) { _, _, _, _ ->
                 val currentValue = display.seeThrough ?: false
-                displayManager.updateSeeThrough(name, !currentValue, player.commandSource)
+                DisplayManager.updateSeeThrough(name, !currentValue, player.commandSource)
                 open(player, name, returnCallback)
             }
 
@@ -125,7 +124,7 @@ object TextDisplayEditor {
                 val currentMode = display.alignment?.name?.lowercase() ?: "center"
                 val currentIndex = alignmentModes.indexOf(currentMode)
                 val nextMode = alignmentModes[(currentIndex + 1) % alignmentModes.size]
-                displayManager.updateAlignment(name, nextMode, player.commandSource)
+                DisplayManager.updateAlignment(name, nextMode, player.commandSource)
                 open(player, name, returnCallback)
             }
 
@@ -154,7 +153,7 @@ object TextDisplayEditor {
             onSubmit = { color ->
                 AnvilInput.open(player, "Enter Opacity (1-100)", "100",
                     onSubmit = { opacity ->
-                        displayManager.updateBackground(name, color, opacity.toInt(), player.commandSource)
+                        DisplayManager.updateBackground(name, color, opacity.toInt(), player.commandSource)
                         open(player, name, returnCallback)
                     },
                     onCancel = { open(player, name, returnCallback) }

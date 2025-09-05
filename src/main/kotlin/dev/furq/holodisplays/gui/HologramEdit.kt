@@ -6,10 +6,10 @@ import dev.furq.holodisplays.utils.GuiUtils
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.util.math.Vec3d
 import org.joml.Vector3f
 
 object HologramEdit {
-    private val hologramManager = HologramManager()
     private val billboardModes = listOf("HORIZONTAL", "VERTICAL", "CENTER", "FIXED")
 
     fun open(player: ServerPlayerEntity, name: String) {
@@ -44,7 +44,7 @@ object HologramEdit {
             )) { _, _, _, _ ->
                 AnvilInput.open(player, "Enter View Range", hologram.viewRange.toString(),
                     onSubmit = { range ->
-                        hologramManager.updateViewRange(name, range.toFloat(), player.commandSource)
+                        HologramManager.updateViewRange(name, range.toFloat(), player.commandSource)
                         open(player, name)
                     },
                     onCancel = { open(player, name) }
@@ -80,7 +80,7 @@ object HologramEdit {
             )) { _, _, _, _ ->
                 val currentIndex = billboardModes.indexOf(hologram.billboardMode.name)
                 val nextMode = billboardModes[(currentIndex + 1) % billboardModes.size]
-                hologramManager.updateBillboard(name, nextMode, player.commandSource)
+                HologramManager.updateBillboard(name, nextMode, player.commandSource)
                 open(player, name)
             }
 
@@ -91,7 +91,7 @@ object HologramEdit {
             )) { _, _, _, _ ->
                 AnvilInput.open(player, "Enter Update Rate (ticks)", hologram.updateRate.toString(),
                     onSubmit = { ticks ->
-                        hologramManager.updateUpdateRate(name, ticks.toInt(), player.commandSource)
+                        HologramManager.updateUpdateRate(name, ticks.toInt(), player.commandSource)
                         open(player, name)
                     },
                     onCancel = { open(player, name) }
@@ -115,7 +115,7 @@ object HologramEdit {
                 when {
                     type.isLeft -> editCondition(player, name)
                     type.isRight -> {
-                        hologramManager.updateCondition(name, null, player.commandSource)
+                        HologramManager.updateCondition(name, null, player.commandSource)
                         open(player, name)
                     }
                 }
@@ -133,9 +133,9 @@ object HologramEdit {
                     onSubmit = { y ->
                         AnvilInput.open(player, "Enter Z Position", currentPosition.z.toString(),
                             onSubmit = { z ->
-                                hologramManager.updatePosition(
+                                HologramManager.updatePosition(
                                     name,
-                                    Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
+                                    Vec3d(x.toDouble(), y.toDouble(), z.toDouble()),
                                     player.world.registryKey.value.toString(),
                                     player.commandSource
                                 )
@@ -152,9 +152,9 @@ object HologramEdit {
     }
 
     private fun setCurrentPosition(player: ServerPlayerEntity, name: String) {
-        hologramManager.updatePosition(
+        HologramManager.updatePosition(
             name,
-            Vector3f(player.x.toFloat(), player.y.toFloat(), player.z.toFloat()),
+            player.pos,
             player.world.registryKey.value.toString(),
             player.commandSource
         )
@@ -168,7 +168,7 @@ object HologramEdit {
                     onSubmit = { y ->
                         AnvilInput.open(player, "Enter Z Scale", currentScale.z.toString(),
                             onSubmit = { z ->
-                                hologramManager.updateScale(
+                                HologramManager.updateScale(
                                     name,
                                     Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
                                     player.commandSource
@@ -192,7 +192,7 @@ object HologramEdit {
                     onSubmit = { yaw ->
                         AnvilInput.open(player, "Enter Roll", currentRotation.z.toString(),
                             onSubmit = { roll ->
-                                hologramManager.updateRotation(
+                                HologramManager.updateRotation(
                                     name,
                                     pitch.toFloat(),
                                     yaw.toFloat(),
@@ -228,7 +228,7 @@ object HologramEdit {
                             defaultText = "Furq_",
                             onSubmit = { target ->
                                 val condition = "$placeholder $operator $target"
-                                hologramManager.updateCondition(name, condition, player.commandSource)
+                                HologramManager.updateCondition(name, condition, player.commandSource)
                                 open(player, name)
                             },
                             onCancel = { open(player, name) }

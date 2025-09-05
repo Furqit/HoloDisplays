@@ -9,7 +9,6 @@ import net.minecraft.server.network.ServerPlayerEntity
 import org.joml.Vector3f
 
 object DisplayEdit {
-    private val displayManager = DisplayManager()
     private val billboardModes = listOf("HORIZONTAL", "VERTICAL", "CENTER", "FIXED")
 
     fun open(player: ServerPlayerEntity, name: String, returnCallback: () -> Unit = { DisplayList.open(player) }) {
@@ -33,7 +32,7 @@ object DisplayEdit {
             )) { _, type, _, _ ->
                 when {
                     type.isRight -> {
-                        displayManager.resetScale(name, player.commandSource)
+                        DisplayManager.resetScale(name, player.commandSource)
                         open(player, name, returnCallback)
                     }
 
@@ -53,7 +52,7 @@ object DisplayEdit {
             )) { _, type, _, _ ->
                 when {
                     type.isRight -> {
-                        displayManager.resetBillboard(name, player.commandSource)
+                        DisplayManager.resetBillboard(name, player.commandSource)
                         open(player, name, returnCallback)
                     }
 
@@ -61,7 +60,7 @@ object DisplayEdit {
                         val currentMode = display.display.billboardMode?.name ?: "FIXED"
                         val currentIndex = billboardModes.indexOf(currentMode)
                         val nextMode = billboardModes[(currentIndex + 1) % billboardModes.size]
-                        displayManager.updateBillboard(name, nextMode.lowercase(), player.commandSource)
+                        DisplayManager.updateBillboard(name, nextMode.lowercase(), player.commandSource)
                         open(player, name, returnCallback)
                     }
                 }
@@ -77,7 +76,7 @@ object DisplayEdit {
             )) { _, type, _, _ ->
                 when {
                     type.isRight -> {
-                        displayManager.resetRotation(name, player.commandSource)
+                        DisplayManager.resetRotation(name, player.commandSource)
                         open(player, name, returnCallback)
                     }
 
@@ -96,7 +95,7 @@ object DisplayEdit {
                 when {
                     type.isLeft -> editCondition(player, name, returnCallback)
                     type.isRight -> {
-                        displayManager.updateCondition(name, null, player.commandSource)
+                        DisplayManager.updateCondition(name, null, player.commandSource)
                         open(player, name, returnCallback)
                     }
                 }
@@ -129,7 +128,7 @@ object DisplayEdit {
                     onSubmit = { y ->
                         AnvilInput.open(player, "Enter Z Scale", currentScale?.z?.toString() ?: "1.0",
                             onSubmit = { z ->
-                                displayManager.updateScale(
+                                DisplayManager.updateScale(
                                     name,
                                     Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
                                     player.commandSource
@@ -153,7 +152,7 @@ object DisplayEdit {
                     onSubmit = { yaw ->
                         AnvilInput.open(player, "Enter Roll", currentRotation?.z?.toString() ?: "0",
                             onSubmit = { roll ->
-                                displayManager.updateRotation(
+                                DisplayManager.updateRotation(
                                     name,
                                     pitch.toFloat(),
                                     yaw.toFloat(),
@@ -189,7 +188,7 @@ object DisplayEdit {
                             defaultText = "Furq_",
                             onSubmit = { target ->
                                 val condition = "$placeholder $operator $target"
-                                displayManager.updateCondition(name, condition, player.commandSource)
+                                DisplayManager.updateCondition(name, condition, player.commandSource)
                                 open(player, name, returnCallback)
                             },
                             onCancel = { open(player, name, returnCallback) }

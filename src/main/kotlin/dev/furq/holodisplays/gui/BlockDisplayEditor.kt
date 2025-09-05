@@ -9,7 +9,6 @@ import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.server.network.ServerPlayerEntity
 
 object BlockDisplayEditor {
-    private val displayManager = DisplayManager()
 
     fun open(
         player: ServerPlayerEntity,
@@ -36,7 +35,7 @@ object BlockDisplayEditor {
                     title = "Enter Block ID",
                     defaultText = display.id,
                     onSubmit = { blockId ->
-                        displayManager.updateBlockId(name, blockId, player.commandSource)
+                        DisplayManager.updateBlockId(name, blockId, player.commandSource)
                         open(player, name, returnCallback)
                     },
                     onCancel = { open(player, name, returnCallback) }

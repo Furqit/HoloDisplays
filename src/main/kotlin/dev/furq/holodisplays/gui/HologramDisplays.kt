@@ -11,7 +11,6 @@ import net.minecraft.server.network.ServerPlayerEntity
 import org.joml.Vector3f
 
 object HologramDisplays {
-    private val hologramManager = HologramManager()
     private const val ITEMS_PER_PAGE = 21
 
     fun open(player: ServerPlayerEntity, hologramName: String, page: Int = 0) {
@@ -68,7 +67,7 @@ object HologramDisplays {
                         }
 
                         type.isRight -> {
-                            if (hologramManager.removeDisplayFromHologram(hologramName, display.displayId, player.commandSource)) {
+                            if (HologramManager.removeDisplayFromHologram(hologramName, display.displayId, player.commandSource)) {
                                 open(player, hologramName, pageInfo.currentPage)
                             }
                         }
@@ -93,7 +92,7 @@ object HologramDisplays {
                         selectionMode = true,
                         hologramName = hologramName,
                         onSelect = { displayName ->
-                            if (hologramManager.addDisplayToHologram(hologramName, displayName, player.commandSource)) {
+                            if (HologramManager.addDisplayToHologram(hologramName, displayName, player.commandSource)) {
                                 open(player, hologramName, pageInfo.currentPage)
                             }
                         }

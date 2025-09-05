@@ -8,8 +8,6 @@ import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.server.network.ServerPlayerEntity
 
 object DeleteConfirmation {
-    private val hologramManager = HologramManager()
-    private val displayManager = DisplayManager()
 
     fun open(player: ServerPlayerEntity, name: String, type: String, returnGui: () -> Unit) {
         val gui = GuiUtils.createGui(
@@ -31,8 +29,8 @@ object DeleteConfirmation {
                 }
             )) { _, _, _, _ ->
                 when (type) {
-                    "hologram" -> hologramManager.deleteHologram(name, player.commandSource)
-                    "display" -> displayManager.deleteDisplay(name, player.commandSource)
+                    "hologram" -> HologramManager.deleteHologram(name, player.commandSource)
+                    "display" -> DisplayManager.deleteDisplay(name, player.commandSource)
                 }
                 returnGui()
             }

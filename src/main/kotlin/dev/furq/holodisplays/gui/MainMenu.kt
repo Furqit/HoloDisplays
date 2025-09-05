@@ -7,7 +7,6 @@ import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.server.network.ServerPlayerEntity
 
 object MainMenu {
-    private val hologramManager = HologramManager()
 
     fun openMainMenu(player: ServerPlayerEntity) {
         val gui = GuiUtils.createGui(
@@ -29,7 +28,7 @@ object MainMenu {
                     title = "Enter Hologram Name",
                     defaultText = "hologram",
                     onSubmit = { name ->
-                        hologramManager.createHologram(name, player)
+                        HologramManager.createHologram(name, player)
                         HologramEdit.open(player, name)
                     },
                     onCancel = { openMainMenu(player) }
