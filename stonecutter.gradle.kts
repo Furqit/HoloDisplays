@@ -3,18 +3,26 @@ plugins {
 }
 stonecutter active "1.20.6" /* [SC] DO NOT EDIT */
 
-stonecutter registerChiseled tasks.register("chiseledBuild", stonecutter.chiseled) {
+tasks.register("chiseledBuild") {
     group = "project"
-    ofTask("buildAndCollect")
+    dependsOn(stonecutter.tasks.named("buildAndCollect"))
 }
 
-stonecutter parameters {
-    swap("mod_version", "\"${property("mod.version")}\";")
-    const("release", property("mod.id") != "holodisplays")
-    dependency("fapi", node!!.project.property("deps.fabric_api").toString())
+tasks.register("publishAll") {
+    group = "publishing"
+    dependsOn(stonecutter.tasks.named("publishMods"))
 }
 
-stonecutter registerChiseled tasks.register("chiseledPublishMods", stonecutter.chiseled) {
-    group = "project"
-    ofTask("publishMods")
+tasks.register("publishModrinthAll") {
+    group = "publishing"
+    dependsOn(stonecutter.tasks.named("publishModrinth"))
+}
+
+tasks.register("publishCurseforgeAll") {
+    group = "publishing"
+    dependsOn(stonecutter.tasks.named("publishCurseforge"))
+}
+
+stonecutter.tasks {
+    order("publishMods")
 }

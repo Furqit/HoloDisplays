@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
 
 plugins {
-    kotlin("jvm") version "2.0.+"
-    id("fabric-loom") version "1.10.+"
+    kotlin("jvm") version "2.2.+"
+    id("fabric-loom") version "1.11.+"
     id("me.modmuss50.mod-publish-plugin") version "0.8.+"
 }
 
@@ -40,14 +40,10 @@ repositories {
 }
 
 dependencies {
-    fun fapi(vararg modules: String) {
-        modules.forEach { fabricApi.module(it, deps["fapi"]) }
-    }
-
     minecraft("com.mojang:minecraft:${mcVersion}")
     mappings("net.fabricmc:yarn:${mcVersion}+build.${deps["yarn_build"]}:v2")
     modImplementation("net.fabricmc:fabric-loader:${deps["fabric_loader"]}")
-    modImplementation("net.fabricmc:fabric-language-kotlin:1.12.3+kotlin.2.0.21")
+    modImplementation("net.fabricmc:fabric-language-kotlin:${deps["kotlin_version"]}")
     modImplementation("net.fabricmc.fabric-api:fabric-api:${deps["fabric_api"]}")
 
     modImplementation("eu.pb4", "placeholder-api", deps["placeholder-api"])
@@ -67,7 +63,6 @@ loom {
 
     runConfigs.all {
         ideConfigGenerated(stonecutter.current.isActive)
-        vmArgs("-Dmixin.debug.export=true")
         runDir = "../../run"
     }
 }
@@ -79,11 +74,11 @@ tasks.withType<KotlinCompile> {
 }
 
 java {
-    withSourcesJar()
     val javaVersion = JavaVersion.VERSION_21
     targetCompatibility = javaVersion
     sourceCompatibility = javaVersion
 }
+
 tasks.processResources {
     inputs.property("id", mod.id)
     inputs.property("name", mod.name)
@@ -114,47 +109,34 @@ publishMods {
     changelog = rootProject.file("CHANGELOG.md").readText()
     type = STABLE
     modLoaders.add("fabric")
-
-    val versions = listOf("1.20.5", "1.20.6", "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8")
-        .filter { ver ->
-            mcDep.split(" ")
-                .all { constraint ->
-                    when {
-                        constraint.startsWith(">=") -> stonecutter.evalLenient(ver, constraint)
-                        constraint.startsWith("<=") -> stonecutter.evalLenient(ver, constraint)
-                        else -> true
-                    }
-                }
-        }
+    val lower = """>=\s*([0-9.]+)""".toRegex().find(mcDep)?.groupValues?.get(1)
+    val upper = """<=\s*([0-9.]+)""".toRegex().find(mcDep)?.groupValues?.get(1)
 
     modrinth {
         projectId = "WdbPWi13"
         accessToken = localProperties.getProperty("MODRINTH_TOKEN")
-        versions.forEach { minecraftVersions.add(it) }
-
+        minecraftVersionRange {
+            start = lower ?: "latest"
+            end = upper ?: "latest"
+        }
         requires {
             slug = "fabric-api"
-        }
-        requires {
             slug = "placeholder-api"
-        }
-        requires {
             slug = "fabric-language-kotlin"
         }
     }
 
     curseforge {
         projectId = "1150354"
+        projectSlug = "holodisplays"
         accessToken = localProperties.getProperty("CURSEFORGE_TOKEN")
-        versions.forEach { minecraftVersions.add(it) }
-
+        minecraftVersionRange {
+            start = lower ?: "latest"
+            end = upper ?: "latest"
+        }
         requires {
             slug = "fabric-api"
-        }
-        requires {
-            slug = "text-placeholder-api"
-        }
-        requires {
+            slug = "placeholder-api"
             slug = "fabric-language-kotlin"
         }
     }
