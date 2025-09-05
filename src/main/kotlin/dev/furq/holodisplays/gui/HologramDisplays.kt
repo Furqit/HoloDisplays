@@ -2,18 +2,12 @@ package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
-import dev.furq.holodisplays.data.display.BlockDisplay
-import dev.furq.holodisplays.data.display.ItemDisplay
-import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.managers.HologramManager
-import dev.furq.holodisplays.utils.GuiItems
-import eu.pb4.sgui.api.gui.SimpleGui
+import dev.furq.holodisplays.utils.GuiUtils
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.text.Text
-import net.minecraft.util.Formatting
 import org.joml.Vector3f
 
 object HologramDisplays {
@@ -22,167 +16,120 @@ object HologramDisplays {
 
     fun open(player: ServerPlayerEntity, hologramName: String, page: Int = 0) {
         val hologram = HologramConfig.getHologram(hologramName) ?: return
-        val maxPages = (hologram.displays.size - 1) / ITEMS_PER_PAGE
-        val currentPage = page.coerceIn(0, maxPages)
+        val pageInfo = GuiUtils.calculatePageInfo(hologram.displays.size, page, ITEMS_PER_PAGE)
 
-        val gui = SimpleGui(ScreenHandlerType.GENERIC_9X5, player, false)
-        gui.title = Text.literal("Manage Lines (${currentPage + 1}/${maxPages + 1})")
+        val gui = GuiUtils.createGui(
+            type = ScreenHandlerType.GENERIC_9X5,
+            player = player,
+            title = GuiUtils.createPagedTitle("Manage Lines", pageInfo),
+            size = 45,
+            borderSlots = (10..16) + (19..25) + (28..34)
+        )
 
-        for (i in 0..44) {
-            if (i !in 10..16 && i !in 19..25 && i !in 28..34) {
-                gui.setSlot(i, GuiItems.createBorderItem())
-            }
-        }
+        gui.apply {
+            GuiUtils.setupPaginationButtons(
+                gui = this,
+                pageInfo = pageInfo,
+                onPrevious = { open(player, hologramName, pageInfo.currentPage - 1) },
+                onNext = { open(player, hologramName, pageInfo.currentPage + 1) }
+            )
 
-        var slot = 10
-        val startIndex = currentPage * ITEMS_PER_PAGE
-        val endIndex = minOf(startIndex + ITEMS_PER_PAGE, hologram.displays.size)
+            GuiUtils.setupBackButton(this, 40) { HologramEdit.open(player, hologramName) }
 
-        for (i in startIndex until endIndex) {
-            val display = hologram.displays[i]
-            if (slot in listOf(17, 26, 35)) {
-                slot += 2
-            }
+            var slot = 10
+            val startIndex = pageInfo.currentPage * ITEMS_PER_PAGE
+            val endIndex = minOf(startIndex + ITEMS_PER_PAGE, hologram.displays.size)
 
-            val displayConfig = DisplayConfig.getDisplay(display.displayId)
-            val icon = when (displayConfig?.display) {
-                is TextDisplay -> Items.PAPER
-                is ItemDisplay -> Items.ITEM_FRAME
-                is BlockDisplay -> Items.GRASS_BLOCK
-                else -> Items.BARRIER
-            }
+            for (i in startIndex until endIndex) {
+                if (slot in listOf(17, 26, 35)) slot += 2
 
-            gui.setSlot(
-                slot, GuiItems.createGuiItem(
+                val display = hologram.displays[i]
+                val displayConfig = DisplayConfig.getDisplay(display.displayId)
+                val icon = GuiUtils.getDisplayIcon(displayConfig?.display)
+
+                val lore = buildList {
+                    addAll(GuiUtils.createCurrentValueLore("Display", display.displayId))
+                    addAll(GuiUtils.createCurrentValueLore("Offset", "${display.offset.x}, ${display.offset.y}, ${display.offset.z}"))
+                    addAll(GuiUtils.createActionLore(
+                        "Left-Click to edit offset",
+                        "Right-Click to remove",
+                        "Middle-Click to edit display"
+                    ))
+                }
+
+                setSlot(slot, GuiUtils.createGuiItem(
                     name = "Line ${i + 1}",
                     item = icon,
-                    lore = listOf(
-                        Text.empty()
-                            .append(Text.literal("Display: ").formatted(Formatting.GRAY))
-                            .append(Text.literal(display.displayId).formatted(Formatting.WHITE)),
-                        Text.empty()
-                            .append(Text.literal("Offset: ").formatted(Formatting.GRAY))
-                            .append(
-                                Text.literal("${display.offset.x}, ${display.offset.y}, ${display.offset.z}")
-                                    .formatted(Formatting.WHITE)
-                            ),
-                        Text.empty(),
-                        Text.empty()
-                            .append(Text.literal("→").formatted(Formatting.YELLOW))
-                            .append(Text.literal(" Left-Click to edit offset").formatted(Formatting.GRAY)),
-                        Text.empty()
-                            .append(Text.literal("→").formatted(Formatting.YELLOW))
-                            .append(Text.literal(" Right-Click to remove").formatted(Formatting.GRAY)),
-                        Text.empty(),
-                        Text.empty()
-                            .append(Text.literal("→").formatted(Formatting.YELLOW))
-                            .append(Text.literal(" Middle-Click to edit display").formatted(Formatting.GRAY))
-                    )
-                )
-            ) { _, type, _, _ ->
-                if (type.isMiddle) {
-                    DisplayEdit.open(player, display.displayId) {
-                        open(player, hologramName, currentPage)
+                    lore = lore
+                )) { _, type, _, _ ->
+                    when {
+                        type.isMiddle -> DisplayEdit.open(player, display.displayId) {
+                            open(player, hologramName, pageInfo.currentPage)
+                        }
+
+                        type.isRight -> {
+                            if (hologramManager.removeDisplayFromHologram(hologramName, display.displayId, player.commandSource)) {
+                                open(player, hologramName, pageInfo.currentPage)
+                            }
+                        }
+
+                        else -> editOffset(player, hologramName, i, display.offset, pageInfo.currentPage)
                     }
-                } else if (type.isRight) {
-                    if (hologramManager.removeDisplayFromHologram(hologramName, display.displayId, player.commandSource)) {
-                        open(player, hologramName, currentPage)
-                    }
-                } else {
-                    AnvilInput.open(player, "Enter X Offset", display.offset.x.toString(),
-                        onSubmit = { x ->
-                            AnvilInput.open(player, "Enter Y Offset", display.offset.y.toString(),
-                                onSubmit = { y ->
-                                    AnvilInput.open(player, "Enter Z Offset", display.offset.z.toString(),
-                                        onSubmit = { z ->
-                                            HologramHandler.updateHologramProperty(
-                                                hologramName,
-                                                HologramHandler.HologramProperty.LineOffset(
-                                                    i,
-                                                    Vector3f(x.toFloat(), y.toFloat(), z.toFloat())
-                                                )
-                                            )
-                                            open(player, hologramName, currentPage)
-                                        },
-                                        onCancel = { open(player, hologramName, currentPage) }
-                                    )
-                                },
-                                onCancel = { open(player, hologramName, currentPage) }
-                            )
-                        },
-                        onCancel = { open(player, hologramName, currentPage) }
-                    )
                 }
+                slot++
             }
-            slot++
-        }
 
-        if (currentPage > 0) {
-            gui.setSlot(
-                39, GuiItems.createGuiItem(
-                    item = Items.ARROW,
-                    name = "Previous Page",
-                    lore = listOf(
-                        Text.empty()
-                            .append(Text.literal("→").formatted(Formatting.YELLOW))
-                            .append(Text.literal(" Click to go to page $currentPage").formatted(Formatting.GRAY))
-                    )
-                )
-            ) { _, _, _, _ ->
-                open(player, hologramName, currentPage - 1)
-            }
-        }
-
-        gui.setSlot(40, GuiItems.createBackItem()) { _, _, _, _ ->
-            HologramEdit.open(player, hologramName)
-        }
-
-        if (currentPage < maxPages) {
-            gui.setSlot(
-                41, GuiItems.createGuiItem(
-                    item = Items.ARROW,
-                    name = "Next Page",
-                    lore = listOf(
-                        Text.empty()
-                            .append(Text.literal("→").formatted(Formatting.YELLOW))
-                            .append(Text.literal(" Click to go to page ${currentPage + 2}").formatted(Formatting.GRAY))
-                    )
-                )
-            ) { _, _, _, _ ->
-                open(player, hologramName, currentPage + 1)
-            }
-        }
-
-        gui.setSlot(
-            43, GuiItems.createGuiItem(
+            setSlot(43, GuiUtils.createGuiItem(
                 name = "Add Line",
                 item = Items.EMERALD,
-                lore = listOf(
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Left-Click to create new display").formatted(Formatting.GRAY)),
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Right-Click to use existing display").formatted(Formatting.GRAY))
+                lore = GuiUtils.createActionLore(
+                    "Left-Click to create new display",
+                    "Right-Click to use existing display"
                 )
-            )
-        ) { _, type, _, _ ->
-            if (type.isRight) {
-                DisplayList.open(
-                    player = player,
-                    selectionMode = true,
-                    hologramName = hologramName,
-                    onSelect = { displayName ->
-                        if (hologramManager.addDisplayToHologram(hologramName, displayName, player.commandSource)) {
-                            open(player, hologramName, currentPage)
+            )) { _, type, _, _ ->
+                when {
+                    type.isRight -> DisplayList.open(
+                        player = player,
+                        selectionMode = true,
+                        hologramName = hologramName,
+                        onSelect = { displayName ->
+                            if (hologramManager.addDisplayToHologram(hologramName, displayName, player.commandSource)) {
+                                open(player, hologramName, pageInfo.currentPage)
+                            }
                         }
-                    }
-                )
-            } else {
-                CreateDisplay.open(player, hologramName)
-            }
-        }
+                    )
 
-        gui.open()
+                    else -> CreateDisplay.open(player, hologramName)
+                }
+            }
+
+            open()
+        }
+    }
+
+    private fun editOffset(player: ServerPlayerEntity, hologramName: String, lineIndex: Int, currentOffset: Vector3f, currentPage: Int) {
+        AnvilInput.open(player, "Enter X Offset", currentOffset.x.toString(),
+            onSubmit = { x ->
+                AnvilInput.open(player, "Enter Y Offset", currentOffset.y.toString(),
+                    onSubmit = { y ->
+                        AnvilInput.open(player, "Enter Z Offset", currentOffset.z.toString(),
+                            onSubmit = { z ->
+                                HologramHandler.updateHologramProperty(
+                                    hologramName,
+                                    HologramHandler.HologramProperty.LineOffset(
+                                        lineIndex,
+                                        Vector3f(x.toFloat(), y.toFloat(), z.toFloat())
+                                    )
+                                )
+                                open(player, hologramName, currentPage)
+                            },
+                            onCancel = { open(player, hologramName, currentPage) }
+                        )
+                    },
+                    onCancel = { open(player, hologramName, currentPage) }
+                )
+            },
+            onCancel = { open(player, hologramName, currentPage) }
+        )
     }
 }

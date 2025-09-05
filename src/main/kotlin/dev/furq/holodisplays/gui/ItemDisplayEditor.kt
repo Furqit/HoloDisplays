@@ -3,16 +3,19 @@ package dev.furq.holodisplays.gui
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.managers.DisplayManager
-import dev.furq.holodisplays.utils.GuiItems
-import eu.pb4.sgui.api.gui.SimpleGui
+import dev.furq.holodisplays.utils.GuiUtils
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.text.Text
-import net.minecraft.util.Formatting
 
 object ItemDisplayEditor {
     private val displayManager = DisplayManager()
+
+    private val displayModes = listOf(
+        "none", "thirdperson_lefthand", "thirdperson_righthand",
+        "firstperson_lefthand", "firstperson_righthand",
+        "head", "gui", "ground", "fixed"
+    )
 
     fun open(
         player: ServerPlayerEntity,
@@ -20,123 +23,83 @@ object ItemDisplayEditor {
         returnCallback: () -> Unit = { DisplayEdit.open(player, name) }
     ) {
         val display = DisplayConfig.getDisplay(name)?.display as? ItemDisplay ?: return
-        val gui = SimpleGui(ScreenHandlerType.GENERIC_3X3, player, false)
-        gui.title = Text.literal("Edit Item Display")
+        val gui = GuiUtils.createGui(
+            type = ScreenHandlerType.GENERIC_3X3,
+            player = player,
+            title = "Edit Item Display",
+            size = 9,
+            borderSlots = listOf(1, 3, 5, 6)
+        )
 
-        for (i in 0..8) {
-            if (i !in listOf(1, 3, 5, 6)) {
-                gui.setSlot(i, GuiItems.createBorderItem())
-            }
-        }
-
-        gui.setSlot(
-            1, GuiItems.createGuiItem(
+        gui.apply {
+            setSlot(1, GuiUtils.createGuiItem(
                 name = "Item",
                 item = Items.ITEM_FRAME,
-                lore = listOf(
-                    Text.empty()
-                        .append(Text.literal("Current: ").formatted(Formatting.GRAY))
-                        .append(Text.literal(display.id).formatted(Formatting.WHITE)),
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY))
-                )
-            )
-        ) { _, _, _, _ ->
-            AnvilInput.open(
-                player = player,
-                title = "Enter Item ID",
-                defaultText = display.id,
-                onSubmit = { itemId ->
-                    displayManager.updateItemId(name, itemId, player.commandSource)
-                    open(player, name)
-                },
-                onCancel = { open(player, name) }
-            )
-        }
-
-        gui.setSlot(
-            3, GuiItems.createGuiItem(
-                name = "Display Type",
-                item = Items.ARMOR_STAND,
-                lore = listOf(
-                    Text.empty()
-                        .append(Text.literal("Current: ").formatted(Formatting.GRAY))
-                        .append(Text.literal(display.itemDisplayType.uppercase()).formatted(Formatting.WHITE)),
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to cycle through modes").formatted(Formatting.GRAY)),
-                    Text.empty()
-                        .append(Text.literal("Available modes: ").formatted(Formatting.GRAY)),
-                    Text.empty()
-                        .append(Text.literal("NONE, HEAD, GUI, GROUND, FIXED").formatted(Formatting.WHITE)),
-                    Text.empty()
-                        .append(Text.literal("THIRDPERSON (LEFT/RIGHT)").formatted(Formatting.WHITE)),
-                    Text.empty()
-                        .append(Text.literal("FIRSTPERSON (LEFT/RIGHT)").formatted(Formatting.WHITE))
-                )
-            )
-        ) { _, _, _, _ ->
-            val modes = listOf(
-                "none",
-                "thirdperson_lefthand",
-                "thirdperson_righthand",
-                "firstperson_lefthand",
-                "firstperson_righthand",
-                "head",
-                "gui",
-                "ground",
-                "fixed"
-            )
-            val currentIndex = modes.indexOf(display.itemDisplayType.lowercase())
-            val nextMode = modes[(currentIndex + 1) % modes.size]
-            displayManager.updateItemDisplayType(name, nextMode, player.commandSource)
-            open(player, name)
-        }
-
-        gui.setSlot(
-            5, GuiItems.createGuiItem(
-                name = "Custom Model Data",
-                item = Items.COMMAND_BLOCK,
-                lore = listOf(
-                    Text.empty()
-                        .append(Text.literal("Current: ").formatted(Formatting.GRAY))
-                        .append(
-                            Text.literal(display.customModelData?.toString() ?: "none").formatted(Formatting.WHITE)
-                        ),
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to change").formatted(Formatting.GRAY)),
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Right-click to remove").formatted(Formatting.GRAY))
-                )
-            )
-        ) { _, type, _, _ ->
-            if (type.isLeft) {
+                lore = GuiUtils.createCombinedLore("Current" to display.id, "Click to change")
+            )) { _, _, _, _ ->
                 AnvilInput.open(
                     player = player,
-                    title = "Enter Custom Model Data",
-                    defaultText = display.customModelData?.toString() ?: "1",
-                    onSubmit = { input ->
-                        val cmd = input.toIntOrNull()
-                        if (cmd != null && cmd > 0) {
-                            displayManager.updateCustomModelData(name, cmd, player.commandSource)
-                        }
-                        open(player, name)
+                    title = "Enter Item ID",
+                    defaultText = display.id,
+                    onSubmit = { itemId ->
+                        displayManager.updateItemId(name, itemId, player.commandSource)
+                        open(player, name, returnCallback)
                     },
-                    onCancel = { open(player, name) }
+                    onCancel = { open(player, name, returnCallback) }
                 )
-            } else if (type.isRight) {
-                displayManager.updateCustomModelData(name, null, player.commandSource)
-                open(player, name)
             }
-        }
 
-        gui.setSlot(6, GuiItems.createBackItem()) { _, _, _, _ ->
-            DisplayEdit.open(player, name, returnCallback)
-        }
+            setSlot(3, GuiUtils.createGuiItem(
+                name = "Display Type",
+                item = Items.ARMOR_STAND,
+                lore = buildList {
+                    addAll(GuiUtils.createCurrentValueLore("Current", display.itemDisplayType.uppercase()))
+                    addAll(GuiUtils.createActionLore("Click to cycle through modes"))
+                    addAll(GuiUtils.createLore(
+                        "Available modes:",
+                        "NONE, HEAD, GUI, GROUND, FIXED",
+                        "THIRDPERSON (LEFT/RIGHT)",
+                        "FIRSTPERSON (LEFT/RIGHT)"
+                    ))
+                }
+            )) { _, _, _, _ ->
+                val currentIndex = displayModes.indexOf(display.itemDisplayType.lowercase())
+                val nextMode = displayModes[(currentIndex + 1) % displayModes.size]
+                displayManager.updateItemDisplayType(name, nextMode, player.commandSource)
+                open(player, name, returnCallback)
+            }
 
-        gui.open()
+            setSlot(5, GuiUtils.createGuiItem(
+                name = "Custom Model Data",
+                item = Items.COMMAND_BLOCK,
+                lore = GuiUtils.createCombinedLore(
+                    "Current" to (display.customModelData?.toString() ?: "none"),
+                    "Click to change", "Right-click to remove"
+                )
+            )) { _, type, _, _ ->
+                when {
+                    type.isLeft -> AnvilInput.open(
+                        player = player,
+                        title = "Enter Custom Model Data",
+                        defaultText = display.customModelData?.toString() ?: "1",
+                        onSubmit = { input ->
+                            input.toIntOrNull()?.takeIf { it > 0 }?.let { cmd ->
+                                displayManager.updateCustomModelData(name, cmd, player.commandSource)
+                            }
+                            open(player, name, returnCallback)
+                        },
+                        onCancel = { open(player, name, returnCallback) }
+                    )
+
+                    type.isRight -> {
+                        displayManager.updateCustomModelData(name, null, player.commandSource)
+                        open(player, name, returnCallback)
+                    }
+                }
+            }
+
+            GuiUtils.setupBackButton(this, 6) { returnCallback() }
+            open()
+        }
     }
 }

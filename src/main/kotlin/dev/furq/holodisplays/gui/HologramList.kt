@@ -1,103 +1,62 @@
 package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.HologramConfig
-import dev.furq.holodisplays.utils.GuiItems
+import dev.furq.holodisplays.utils.GuiUtils
 import eu.pb4.sgui.api.elements.GuiElement
-import eu.pb4.sgui.api.gui.SimpleGui
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.text.Text
-import net.minecraft.util.Formatting
 
 object HologramList {
     private const val ITEMS_PER_PAGE = 21
 
     fun open(player: ServerPlayerEntity, page: Int = 0) {
         val holograms = HologramConfig.getHolograms().toList()
-        val maxPages = (holograms.size - 1) / ITEMS_PER_PAGE
-        val currentPage = page.coerceIn(0, maxPages)
+        val pageInfo = GuiUtils.calculatePageInfo(holograms.size, page, ITEMS_PER_PAGE)
 
-        val gui = SimpleGui(ScreenHandlerType.GENERIC_9X5, player, false)
-        gui.title = Text.literal("Holograms (${currentPage + 1}/${maxPages + 1})")
+        val gui = GuiUtils.createGui(
+            type = ScreenHandlerType.GENERIC_9X5,
+            player = player,
+            title = GuiUtils.createPagedTitle("Holograms", pageInfo),
+            size = 45,
+            borderSlots = (10..16) + (19..25) + (28..34)
+        )
 
-        for (i in 0..44) {
-            if (i !in 10..16 && i !in 19..25 && i !in 28..34) {
-                gui.setSlot(i, GuiItems.createBorderItem())
-            }
-        }
+        gui.apply {
+            GuiUtils.setupPaginationButtons(
+                gui = this,
+                pageInfo = pageInfo,
+                onPrevious = { open(player, pageInfo.currentPage - 1) },
+                onNext = { open(player, pageInfo.currentPage + 1) }
+            )
 
-        if (currentPage > 0) {
-            gui.setSlot(
-                39, GuiItems.createGuiItem(
-                    item = Items.ARROW,
-                    name = "Previous Page",
-                    lore = listOf(
-                        Text.empty()
-                            .append(Text.literal("→").formatted(Formatting.YELLOW))
-                            .append(Text.literal(" Click to go to page $currentPage").formatted(Formatting.GRAY))
-                    )
-                )
-            ) { _, _, _, _ ->
-                open(player, currentPage - 1)
-            }
-        }
+            GuiUtils.setupBackButton(this, 40) { MainMenu.openMainMenu(player) }
 
-        gui.setSlot(40, GuiItems.createBackItem()) { _, _, _, _ ->
-            MainMenu.openMainMenu(player)
-        }
+            var slot = 10
+            val startIndex = pageInfo.currentPage * ITEMS_PER_PAGE
+            val endIndex = minOf(startIndex + ITEMS_PER_PAGE, holograms.size)
 
-        if (currentPage < maxPages) {
-            gui.setSlot(
-                41, GuiItems.createGuiItem(
-                    item = Items.ARROW,
-                    name = "Next Page",
-                    lore = listOf(
-                        Text.empty()
-                            .append(Text.literal("→").formatted(Formatting.YELLOW))
-                            .append(Text.literal(" Click to go to page ${currentPage + 2}").formatted(Formatting.GRAY))
-                    )
-                )
-            ) { _, _, _, _ ->
-                open(player, currentPage + 1)
-            }
-        }
+            for (i in startIndex until endIndex) {
+                if (slot in listOf(17, 26, 35)) slot += 2
 
-        var slot = 10
-        val startIndex = currentPage * ITEMS_PER_PAGE
-        val endIndex = minOf(startIndex + ITEMS_PER_PAGE, holograms.size)
+                val (name) = holograms[i]
+                val lore = GuiUtils.createActionLore("Left-Click to edit", "Right-Click to delete")
 
-        for (i in startIndex until endIndex) {
-            val (name) = holograms[i]
-            if (slot in listOf(17, 26, 35)) {
-                slot += 2
-            }
+                setSlot(slot, GuiElement(
+                    GuiUtils.createGuiItem(item = Items.BOOK, name = name, lore = lore)
+                ) { _, type, _, _ ->
+                    when {
+                        type.isRight -> DeleteConfirmation.open(player, name, "hologram") {
+                            open(player, pageInfo.currentPage)
+                        }
 
-            gui.setSlot(slot, GuiElement(
-                GuiItems.createGuiItem(
-                    item = Items.BOOK,
-                    name = name,
-                    lore = listOf(
-                        Text.empty()
-                            .append(Text.literal("→").formatted(Formatting.YELLOW))
-                            .append(Text.literal(" Left-Click to edit").formatted(Formatting.GRAY)),
-                        Text.empty()
-                            .append(Text.literal("→").formatted(Formatting.YELLOW))
-                            .append(Text.literal(" Right-Click to delete").formatted(Formatting.GRAY))
-                    )
-                )
-            ) { _, type, _, _ ->
-                if (type.isRight) {
-                    DeleteConfirmation.open(player, name, "hologram") {
-                        open(player, currentPage)
+                        else -> HologramEdit.open(player, name)
                     }
-                } else {
-                    HologramEdit.open(player, name)
-                }
-            })
-            slot++
-        }
+                })
+                slot++
+            }
 
-        gui.open()
+            open()
+        }
     }
 }
