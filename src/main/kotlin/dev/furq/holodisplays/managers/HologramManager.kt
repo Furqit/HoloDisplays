@@ -7,6 +7,7 @@ import dev.furq.holodisplays.data.HologramData
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.handlers.HologramHandler.HologramProperty.*
+import dev.furq.holodisplays.utils.ConditionEvaluator
 import dev.furq.holodisplays.utils.FeedbackType
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import net.minecraft.server.command.ServerCommandSource
@@ -124,12 +125,22 @@ object HologramManager {
     fun updateRotation(name: String, pitch: Float, yaw: Float, roll: Float, source: ServerCommandSource) {
         if (!validateHologramExists(name, source)) return
 
+        if (pitch < -180f || pitch > 180f || yaw < -180f || yaw > 180f || roll < -180f || roll > 180f) {
+            FeedbackManager.send(source, FeedbackType.INVALID_ROTATION)
+            return
+        }
+
         HologramHandler.updateHologramProperty(name, Rotation(Vector3f(pitch, yaw, roll)))
         FeedbackManager.send(source, FeedbackType.ROTATION_UPDATED, *FeedbackManager.formatRotation(pitch, yaw, roll))
     }
 
     fun updateCondition(name: String, condition: String?, source: ServerCommandSource) {
         if (!validateHologramExists(name, source)) return
+
+        if (condition != null && ConditionEvaluator.parseCondition(condition) == null) {
+            FeedbackManager.send(source, FeedbackType.INVALID_CONDITION)
+            return
+        }
 
         HologramHandler.updateHologramProperty(name, ConditionalPlaceholder(condition))
         FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "condition set to ${condition ?: "none"}")

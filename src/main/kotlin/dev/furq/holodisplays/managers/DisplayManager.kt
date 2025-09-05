@@ -10,6 +10,7 @@ import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.DisplayHandler
 import dev.furq.holodisplays.handlers.DisplayHandler.DisplayProperty.*
 import dev.furq.holodisplays.handlers.HologramHandler
+import dev.furq.holodisplays.utils.ConditionEvaluator
 import dev.furq.holodisplays.utils.FeedbackType
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import net.minecraft.registry.Registries
@@ -127,6 +128,11 @@ object DisplayManager {
     fun updateRotation(name: String, pitch: Float, yaw: Float, roll: Float, source: ServerCommandSource) {
         if (!validateDisplayExists(name, source)) return
 
+        if (pitch < -180f || pitch > 180f || yaw < -180f || yaw > 180f || roll < -180f || roll > 180f) {
+            FeedbackManager.send(source, FeedbackType.INVALID_ROTATION)
+            return
+        }
+
         DisplayHandler.updateDisplayProperty(name, Rotation(Vector3f(pitch, yaw, roll)))
         FeedbackManager.send(source, FeedbackType.ROTATION_UPDATED, *FeedbackManager.formatRotation(pitch, yaw, roll))
     }
@@ -211,6 +217,11 @@ object DisplayManager {
 
     fun updateCondition(name: String, condition: String?, source: ServerCommandSource) {
         if (!validateDisplayExists(name, source)) return
+
+        if (condition != null && ConditionEvaluator.parseCondition(condition) == null) {
+            FeedbackManager.send(source, FeedbackType.INVALID_CONDITION)
+            return
+        }
 
         DisplayHandler.updateDisplayProperty(name, ConditionalPlaceholder(condition))
         FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "condition set to ${condition ?: "none"}")
