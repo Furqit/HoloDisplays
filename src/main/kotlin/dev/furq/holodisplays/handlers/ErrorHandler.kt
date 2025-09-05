@@ -3,29 +3,24 @@ package dev.furq.holodisplays.handlers
 import dev.furq.holodisplays.HoloDisplays
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.text.Text
-import net.minecraft.util.Formatting
 
 object ErrorHandler {
-    private fun handle(exception: Exception, source: ServerCommandSource? = null) {
+    fun handle(exception: Exception, source: ServerCommandSource? = null) {
         when (exception) {
-            is HoloDisplaysException -> handleHoloDisplaysException(exception)
-            else -> handleGenericException(exception)
+            is HoloDisplaysException -> HoloDisplays.LOGGER.error("[${exception::class.simpleName?.removeSuffix("Exception")} Error] ${exception.message}")
+            else -> HoloDisplays.LOGGER.error("[Unexpected Error] An unexpected error occurred", exception)
         }
 
-        if (source?.player != null) {
-            source.sendError(Text.literal("An error occurred. Check console for details.").formatted(Formatting.RED))
+        source?.player?.let {
+            val errorMessage = when (exception) {
+                is HoloDisplaysException -> "§c${exception::class.simpleName?.removeSuffix("Exception") ?: "Error"}: ${exception.message}"
+                else -> "§cAn unexpected error occurred. Check console for details"
+            }
+            source.sendError(Text.literal(errorMessage))
         }
     }
 
-    private fun handleHoloDisplaysException(exception: HoloDisplaysException) {
-        HoloDisplays.LOGGER.error("[${exception.javaClass.simpleName.removeSuffix("Exception")} Error] ${exception.message}")
-    }
-
-    private fun handleGenericException(exception: Exception) {
-        HoloDisplays.LOGGER.error("[Unexpected Error] An unexpected error occurred", exception)
-    }
-
-    fun withCatch(source: ServerCommandSource? = null, block: () -> Unit) {
+    inline fun withCatch(source: ServerCommandSource? = null, block: () -> Unit) {
         try {
             block()
         } catch (e: Exception) {
@@ -33,31 +28,20 @@ object ErrorHandler {
         }
     }
 
-    fun <T> withCatch(block: () -> T): T? {
-        return try {
-            block()
-        } catch (e: Exception) {
-            handle(e)
-            null
-        }
+    inline fun <T> withCatch(block: () -> T): T? = try {
+        block()
+    } catch (e: Exception) {
+        handle(e)
+        null
     }
 
-    fun <T> withCatch(source: ServerCommandSource? = null, block: () -> T): T? {
-        return try {
-            block()
-        } catch (e: Exception) {
-            handle(e, source)
-            null
-        }
+    inline fun <T> withCatch(source: ServerCommandSource? = null, block: () -> T): T? = try {
+        block()
+    } catch (e: Exception) {
+        handle(e, source)
+        null
     }
 
-    suspend fun withCatchSuspend(source: ServerCommandSource? = null, block: suspend () -> Unit) {
-        try {
-            block()
-        } catch (e: Exception) {
-            handle(e, source)
-        }
-    }
 }
 
 sealed class HoloDisplaysException(message: String) : Exception(message)

@@ -13,30 +13,37 @@ object FeedbackManager {
 
     fun send(source: ServerCommandSource, type: FeedbackType, vararg params: Pair<String, Any>) {
         val message = type.format(*params)
-        val text = Text.literal(PREFIX + message).formatted(
-            if (type.isError) Formatting.RED else Formatting.GREEN
-        )
+        val formattedMessage = formatMessage(type, message)
 
-        if (type.isError) {
-            source.sendError(text)
-            playErrorSound(source)
-        } else {
-            source.sendFeedback({ text }, false)
-            playSuccessSound(source)
+        when {
+            type.isError -> {
+                source.sendError(formattedMessage)
+                playErrorSound(source)
+            }
+
+            else -> {
+                source.sendFeedback({ formattedMessage }, false)
+                playSuccessSound(source)
+            }
         }
     }
 
-    fun formatVector3f(vector: Vector3f): Array<Pair<String, String>> = listOf(
-        "x" to String.format("%.2f", vector.x),
-        "y" to String.format("%.2f", vector.y),
-        "z" to String.format("%.2f", vector.z)
-    ).toTypedArray()
+    private fun formatMessage(type: FeedbackType, message: String): Text {
+        val color = if (type.isError) Formatting.RED else Formatting.GREEN
+        return Text.literal(PREFIX + message).formatted(color)
+    }
 
-    fun formatRotation(pitch: Float, yaw: Float, roll: Float): Array<Pair<String, String>> = listOf(
-        "pitch" to String.format("%.2f", pitch),
-        "yaw" to String.format("%.2f", yaw),
-        "roll" to String.format("%.2f", roll)
-    ).toTypedArray()
+    fun formatVector3f(vector: Vector3f): Array<Pair<String, Any>> = arrayOf(
+        "x" to "%.2f".format(vector.x),
+        "y" to "%.2f".format(vector.y),
+        "z" to "%.2f".format(vector.z)
+    )
+
+    fun formatRotation(pitch: Float, yaw: Float, roll: Float): Array<Pair<String, Any>> = arrayOf(
+        "pitch" to "%.2f".format(pitch),
+        "yaw" to "%.2f".format(yaw),
+        "roll" to "%.2f".format(roll)
+    )
 
     private fun playSuccessSound(source: ServerCommandSource) {
         source.player?.playSoundToPlayer(

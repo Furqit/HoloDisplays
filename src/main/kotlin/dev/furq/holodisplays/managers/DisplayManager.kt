@@ -3,6 +3,7 @@ package dev.furq.holodisplays.managers
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.data.DisplayData
+import dev.furq.holodisplays.data.display.BaseDisplay
 import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
@@ -16,101 +17,75 @@ import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.util.Identifier
 import org.joml.Vector3f
 
-class DisplayManager {
-    fun createTextDisplay(name: String, text: String, source: ServerCommandSource): Boolean {
-        if (DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_EXISTS, "name" to name)
-            return false
+object DisplayManager {
+    private fun validateDisplayName(name: String, source: ServerCommandSource): Boolean =
+        DisplayConfig.exists(name).also { exists ->
+            if (exists) FeedbackManager.send(source, FeedbackType.DISPLAY_EXISTS, "name" to name)
+        }.not()
+
+    private fun validateDisplayExists(name: String, source: ServerCommandSource): Boolean =
+        DisplayConfig.exists(name).also { exists ->
+            if (!exists) FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
         }
 
-        val display = DisplayData(
-            display = TextDisplay(
-                lines = mutableListOf(text)
-            )
-        )
+    private fun createDisplay(name: String, display: BaseDisplay, type: String, source: ServerCommandSource): Boolean {
+        if (!validateDisplayName(name, source)) return false
 
-        DisplayConfig.saveDisplay(name, display)
-        FeedbackManager.send(source, FeedbackType.DISPLAY_CREATED, "type" to "text", "name" to name)
+        DisplayConfig.saveDisplay(name, DisplayData(display))
+        FeedbackManager.send(source, FeedbackType.DISPLAY_CREATED, "type" to type, "name" to name)
         return true
     }
 
+    fun createTextDisplay(name: String, text: String, source: ServerCommandSource): Boolean =
+        createDisplay(name, TextDisplay(mutableListOf(text)), "text", source)
+
     fun createItemDisplay(name: String, itemId: String, source: ServerCommandSource): Boolean {
-        if (DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_EXISTS, "name" to name)
-            return false
-        }
+        if (!validateDisplayName(name, source)) return false
 
         val fullItemId = if (!itemId.contains(":")) "minecraft:$itemId" else itemId
         val itemIdentifier = Identifier.tryParse(fullItemId)
 
-        if (itemIdentifier == null || !Registries.ITEM.containsId(itemIdentifier)) {
+        return if (itemIdentifier == null || !Registries.ITEM.containsId(itemIdentifier)) {
             FeedbackManager.send(source, FeedbackType.INVALID_ITEM)
-            return false
+            false
+        } else {
+            createDisplay(name, ItemDisplay(id = fullItemId), "item", source)
         }
-
-        val display = DisplayData(
-            display = ItemDisplay(
-                id = fullItemId
-            )
-        )
-
-        DisplayConfig.saveDisplay(name, display)
-        FeedbackManager.send(source, FeedbackType.DISPLAY_CREATED, "type" to "item", "name" to name)
-        return true
     }
 
     fun createBlockDisplay(name: String, blockId: String, source: ServerCommandSource): Boolean {
-        if (DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_EXISTS, "name" to name)
-            return false
-        }
+        if (!validateDisplayName(name, source)) return false
 
         val fullBlockId = if (!blockId.contains(":")) "minecraft:$blockId" else blockId
         val blockIdentifier = Identifier.tryParse(fullBlockId)
 
-        if (blockIdentifier == null || !Registries.BLOCK.containsId(blockIdentifier)) {
+        return if (blockIdentifier == null || !Registries.BLOCK.containsId(blockIdentifier)) {
             FeedbackManager.send(source, FeedbackType.INVALID_BLOCK)
-            return false
+            false
+        } else {
+            createDisplay(name, BlockDisplay(id = fullBlockId), "block", source)
         }
-
-        val display = DisplayData(
-            display = BlockDisplay(
-                id = fullBlockId
-            )
-        )
-
-        DisplayConfig.saveDisplay(name, display)
-        FeedbackManager.send(source, FeedbackType.DISPLAY_CREATED, "type" to "block", "name" to name)
-        return true
     }
 
     fun deleteDisplay(name: String, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
-        val affectedHolograms = HologramConfig.getHolograms()
-            .filter { (_, hologram) ->
-                hologram.displays.any { it.displayId == name }
+        HologramConfig.getHolograms()
+            .filterValues { hologram -> hologram.displays.any { it.displayId == name } }
+            .forEach { (hologramName, hologram) ->
+                hologram.displays.removeAll { it.displayId == name }
+                HologramHandler.updateHologramProperty(hologramName, HologramHandler.HologramProperty.RemoveLine(0))
             }
-
-        affectedHolograms.forEach { (hologramName, hologram) ->
-            hologram.displays.removeAll { it.displayId == name }
-            HologramHandler.updateHologramProperty(hologramName, HologramHandler.HologramProperty.RemoveLine(0))
-        }
 
         DisplayConfig.deleteDisplay(name)
         FeedbackManager.send(source, FeedbackType.DISPLAY_DELETED, "name" to name)
     }
 
     fun updateScale(name: String, scale: Vector3f, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
-        if (scale.x < 0.1f || scale.y < 0.1f || scale.z < 0.1f) {
+        val validScale = (scale.x >= 0.1f && scale.y >= 0.1f && scale.z >= 0.1f)
+        if (!validScale) {
             FeedbackManager.send(source, FeedbackType.INVALID_SCALE)
             return
         }
@@ -120,24 +95,18 @@ class DisplayManager {
     }
 
     fun resetScale(name: String, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
         DisplayHandler.updateDisplayProperty(name, Scale(Vector3f(1f)))
         FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "scale reset to default")
     }
 
     fun updateBillboard(name: String, mode: String, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
         val newMode = try {
             BillboardMode.valueOf(mode.uppercase())
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             FeedbackManager.send(source, FeedbackType.INVALID_BILLBOARD)
             return
         }
@@ -147,40 +116,28 @@ class DisplayManager {
     }
 
     fun resetBillboard(name: String, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
         DisplayHandler.updateDisplayProperty(name, BillboardMode(BillboardMode.CENTER))
         FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "billboard mode reset to center")
     }
 
     fun updateRotation(name: String, pitch: Float, yaw: Float, roll: Float, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
         DisplayHandler.updateDisplayProperty(name, Rotation(Vector3f(pitch, yaw, roll)))
         FeedbackManager.send(source, FeedbackType.ROTATION_UPDATED, *FeedbackManager.formatRotation(pitch, yaw, roll))
     }
 
     fun resetRotation(name: String, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
         DisplayHandler.updateDisplayProperty(name, Rotation(Vector3f()))
         FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "rotation reset to default")
     }
 
     fun updateBackground(name: String, color: String, opacity: Int, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
         if (!color.matches(Regex("^[0-9A-Fa-f]{6}$"))) {
             FeedbackManager.send(source, FeedbackType.INVALID_COLOR)
@@ -192,28 +149,19 @@ class DisplayManager {
             .padStart(2, '0')
             .uppercase()
 
-        DisplayHandler.updateDisplayProperty(
-            name,
-            TextBackgroundColor("$opacityHex$color")
-        )
+        DisplayHandler.updateDisplayProperty(name, TextBackgroundColor("$opacityHex$color"))
         FeedbackManager.send(source, FeedbackType.BACKGROUND_UPDATED, "color" to color, "opacity" to opacity)
     }
 
     fun resetBackground(name: String, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
         DisplayHandler.updateDisplayProperty(name, TextBackgroundColor(null))
         FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "background reset to default")
     }
 
     fun updateTextOpacity(name: String, opacity: Int, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
         if (opacity !in 1..100) {
             FeedbackManager.send(source, FeedbackType.INVALID_TEXT_OPACITY)
@@ -225,24 +173,18 @@ class DisplayManager {
     }
 
     fun updateShadow(name: String, shadow: Boolean, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
         DisplayHandler.updateDisplayProperty(name, TextShadow(shadow))
         FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "shadow ${if (shadow) "enabled" else "disabled"}")
     }
 
     fun updateAlignment(name: String, alignment: String, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
         val textAlignment = try {
             TextDisplay.TextAlignment.valueOf(alignment.uppercase())
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             FeedbackManager.send(source, FeedbackType.INVALID_ALIGNMENT)
             return
         }
@@ -252,51 +194,28 @@ class DisplayManager {
     }
 
     fun updateItemDisplayType(name: String, type: String, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
         DisplayHandler.updateDisplayProperty(name, ItemDisplayType(type))
         FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "item display type set to $type")
     }
 
     fun updateCustomModelData(name: String, customModelData: Int?, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
         DisplayHandler.updateDisplayProperty(name, ItemCustomModelData(customModelData))
-        FeedbackManager.send(
-            source,
-            FeedbackType.DISPLAY_UPDATED,
-            "detail" to "custom model data set to ${customModelData ?: "none"}"
-        )
+        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "custom model data set to ${customModelData ?: "none"}")
     }
 
     fun updateCondition(name: String, condition: String?, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return
-        }
+        if (!validateDisplayExists(name, source)) return
 
-        DisplayHandler.updateDisplayProperty(
-            name,
-            ConditionalPlaceholder(condition)
-        )
-        FeedbackManager.send(
-            source,
-            FeedbackType.DISPLAY_UPDATED,
-            "detail" to "condition set to ${condition ?: "none"}"
-        )
+        DisplayHandler.updateDisplayProperty(name, ConditionalPlaceholder(condition))
+        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "condition set to ${condition ?: "none"}")
     }
 
     fun updateLineWidth(displayName: String, width: Int, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(displayName)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to displayName)
-            return
-        }
+        if (!validateDisplayExists(displayName, source)) return
 
         val display = DisplayConfig.getDisplay(displayName)
         if (display?.display !is TextDisplay) {
@@ -309,10 +228,7 @@ class DisplayManager {
     }
 
     fun updateSeeThrough(displayName: String, seeThrough: Boolean, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(displayName)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to displayName)
-            return
-        }
+        if (!validateDisplayExists(displayName, source)) return
 
         val display = DisplayConfig.getDisplay(displayName)
         if (display?.display !is TextDisplay) {
@@ -325,10 +241,7 @@ class DisplayManager {
     }
 
     fun updateItemId(displayName: String, itemId: String, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(displayName)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to displayName)
-            return
-        }
+        if (!validateDisplayExists(displayName, source)) return
 
         val display = DisplayConfig.getDisplay(displayName)
         if (display?.display !is ItemDisplay) {
@@ -341,10 +254,7 @@ class DisplayManager {
     }
 
     fun updateBlockId(displayName: String, blockId: String, source: ServerCommandSource) {
-        if (!DisplayConfig.exists(displayName)) {
-            FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to displayName)
-            return
-        }
+        if (!validateDisplayExists(displayName, source)) return
 
         val display = DisplayConfig.getDisplay(displayName)
         if (display?.display !is BlockDisplay) {
