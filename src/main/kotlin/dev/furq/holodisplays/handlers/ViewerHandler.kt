@@ -160,18 +160,22 @@ object ViewerHandler {
     }
 
     fun updatePlayerVisibility(player: ServerPlayerEntity) {
-        trackedHolograms.values.forEach { tracked ->
-            val isCurrentlyViewing = tracked.observers.contains(player.uuid)
-            val isInSameWorld = player.world.registryKey.value.toString() == tracked.hologramData.world
-            val meetsCondition = ConditionEvaluator.evaluate(tracked.hologramData.conditionalPlaceholder, player)
-            val isInRange = HologramHandler.isPlayerInRange(
-                player,
-                tracked.hologramData.world,
-                tracked.hologramData.position,
-                tracked.hologramData.viewRange
-            )
+        val playerWorld = player.world.registryKey.value.toString()
 
-            val shouldView = isInSameWorld && meetsCondition && isInRange
+        trackedHolograms.values.forEach { tracked ->
+            val hologram = tracked.hologramData
+            val isCurrentlyViewing = tracked.observers.contains(player.uuid)
+
+            if (hologram.world != playerWorld) {
+                if (isCurrentlyViewing) {
+                    removeViewer(player, tracked.hologramName)
+                }
+                return@forEach
+            }
+
+            val shouldView =
+                ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player) &&
+                        HologramHandler.isPlayerInRange(player, hologram.world, hologram.position, hologram.viewRange)
 
             when {
                 shouldView && !isCurrentlyViewing -> addViewer(player, tracked.hologramName)
@@ -179,6 +183,7 @@ object ViewerHandler {
             }
         }
     }
+
 
     fun getObserverCount(name: String): Int = trackedHolograms[name]?.observers?.size ?: 0
 }

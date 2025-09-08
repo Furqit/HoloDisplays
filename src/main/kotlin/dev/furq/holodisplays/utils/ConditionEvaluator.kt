@@ -13,37 +13,36 @@ object ConditionEvaluator {
     }
 
     fun evaluate(condition: String?, player: ServerPlayerEntity): Boolean {
-        if (condition == null) {
-            return true
-        }
+        if (condition.isNullOrBlank()) return true
 
         val parts = parseCondition(condition) ?: return true
-        val (placeholder, operator, value) = parts
-        val resolvedPlaceholder = resolvePlaceholder(placeholder.trim(), player)
+        val (rawPlaceholder, rawOperator, rawValue) = parts
 
-        return when (operator.trim()) {
-            "=" -> resolvedPlaceholder == value
-            "!=" -> resolvedPlaceholder != value
-            ">" -> resolvedPlaceholder.toDoubleOrNull()?.let {
-                it > (value.toDoubleOrNull() ?: return false)
-            } ?: false
+        val placeholder = rawPlaceholder.trim()
+        val operator = rawOperator.trim()
+        val value = rawValue.trim()
 
-            "<" -> resolvedPlaceholder.toDoubleOrNull()
-                ?.let { it < (value.toDoubleOrNull() ?: return false) } ?: false
+        val resolved = resolvePlaceholder(placeholder, player)
 
-            ">=" -> resolvedPlaceholder.toDoubleOrNull()
-                ?.let { it >= (value.toDoubleOrNull() ?: return false) } ?: false
+        // Parse numéricos solo una vez
+        val resolvedNum = resolved.toDoubleOrNull()
+        val valueNum = value.toDoubleOrNull()
 
-            "<=" -> resolvedPlaceholder.toDoubleOrNull()
-                ?.let { it <= (value.toDoubleOrNull() ?: return false) } ?: false
-
-            "contains" -> resolvedPlaceholder.contains(value)
-            "!contains" -> !resolvedPlaceholder.contains(value)
-            "startsWith" -> resolvedPlaceholder.startsWith(value)
-            "endsWith" -> resolvedPlaceholder.endsWith(value)
+        return when (operator) {
+            "="  -> resolved == value
+            "!=" -> resolved != value
+            ">"  -> resolvedNum != null && valueNum != null && resolvedNum > valueNum
+            "<"  -> resolvedNum != null && valueNum != null && resolvedNum < valueNum
+            ">=" -> resolvedNum != null && valueNum != null && resolvedNum >= valueNum
+            "<=" -> resolvedNum != null && valueNum != null && resolvedNum <= valueNum
+            "contains"    -> resolved.contains(value)
+            "!contains"   -> !resolved.contains(value)
+            "startsWith"  -> resolved.startsWith(value)
+            "endsWith"    -> resolved.endsWith(value)
             else -> true
         }
     }
+
 
     private fun parseCondition(condition: String): Triple<String, String, String>? {
         val operator = OPERATORS.find { condition.contains(" $it ") } ?: return null

@@ -1,10 +1,12 @@
 package dev.furq.holodisplays
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import dev.furq.holodisplays.api.HoloDisplaysAPI
 import dev.furq.holodisplays.api.HoloDisplaysAPIImpl
 import dev.furq.holodisplays.commands.MainCommand
 import dev.furq.holodisplays.config.ConfigManager
 import dev.furq.holodisplays.config.HologramConfig
+import dev.furq.holodisplays.data.HologramData
 import dev.furq.holodisplays.handlers.ErrorHandler
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.handlers.TickHandler
@@ -18,6 +20,9 @@ import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.server.MinecraftServer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 
 class HoloDisplays : ModInitializer {
     companion object {
@@ -27,6 +32,12 @@ class HoloDisplays : ModInitializer {
 
         var SERVER: MinecraftServer? = null
             private set
+        var EXECUTOR_HOLODISPLAYS: Executor = Executors.newFixedThreadPool(1,
+            ThreadFactoryBuilder()
+                .setNameFormat("HoloDisplays-Executor-%d")
+                .setDaemon(true)
+                .build()
+        )
     }
 
     override fun onInitialize() = ErrorHandler.withCatch {
@@ -51,7 +62,12 @@ class HoloDisplays : ModInitializer {
 
     private fun registerServerEvents() = ErrorHandler.withCatch {
         ServerLifecycleEvents.SERVER_STARTING.register { SERVER = it }
-        ServerTickEvents.END_SERVER_TICK.register(::handleServerTick)
+        ServerTickEvents.END_SERVER_TICK.register { server ->
+            CompletableFuture.runAsync({
+                handleServerTick(server)
+            }, EXECUTOR_HOLODISPLAYS)
+        }
+
 
         ServerPlayConnectionEvents.JOIN.register { handler, _, _ ->
             ViewerHandler.updatePlayerVisibility(handler.player)
