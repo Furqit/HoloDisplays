@@ -91,8 +91,7 @@ object PacketHandler {
         player.networkHandler.sendPacket(EntityTrackerUpdateS2CPacket(entityId, metadata))
     }
 
-    private fun getNextEntityId(): Int =
-        recycledIds.firstOrNull()?.also { recycledIds.remove(it) } ?: --nextEntityId
+    private fun getNextEntityId(): Int = recycledIds.firstOrNull()?.also(recycledIds::remove) ?: --nextEntityId
 
     fun updateTextMetadata(
         player: ServerPlayerEntity,
@@ -107,29 +106,20 @@ object PacketHandler {
         updateEntityMetadata(player, name, displayRef, lineIndex, entries)
     }
 
-    private fun createSpawnPacket(
-        entityId: Int,
-        position: Vec3d,
-        display: BaseDisplay,
-    ): EntitySpawnS2CPacket = ErrorHandler.withCatch<EntitySpawnS2CPacket> {
-        val entityType = when (display) {
-            is TextDisplay -> EntityType.TEXT_DISPLAY
-            is ItemDisplay -> EntityType.ITEM_DISPLAY
-            is BlockDisplay -> EntityType.BLOCK_DISPLAY
-            else -> throw DisplayException("Unknown display type")
-        }
+    private fun createSpawnPacket(entityId: Int, position: Vec3d, display: BaseDisplay): EntitySpawnS2CPacket =
+        ErrorHandler.withCatch<EntitySpawnS2CPacket> {
+            val entityType = when (display) {
+                is TextDisplay -> EntityType.TEXT_DISPLAY
+                is ItemDisplay -> EntityType.ITEM_DISPLAY
+                is BlockDisplay -> EntityType.BLOCK_DISPLAY
+                else -> throw DisplayException("Unknown display type")
+            }
 
-        EntitySpawnS2CPacket(
-            entityId,
-            UUID.randomUUID(),
-            position.x, position.y, position.z,
-            0f, 0f,
-            entityType,
-            0,
-            Vec3d.ZERO,
-            0.0
-        )
-    } ?: throw DisplayException("Failed to create spawn packet")
+            EntitySpawnS2CPacket(
+                entityId, UUID.randomUUID(), position.x, position.y, position.z,
+                0f, 0f, entityType, 0, Vec3d.ZERO, 0.0
+            )
+        } ?: throw DisplayException("Failed to create spawn packet")
 
     private fun sendDisplayMetadata(
         player: ServerPlayerEntity,
@@ -181,20 +171,10 @@ object PacketHandler {
         add(createEntry(DisplayEntityAccessor.getTranslation(), translation))
     }
 
-    private fun calculateTranslation(
-        display: BaseDisplay,
-        offset: Vector3f,
-        scale: Vector3f,
-    ): Vector3f {
-        val baseOffset = Vector3f(offset)
-        return if (display is BlockDisplay) {
-            baseOffset.add(
-                -0.5f * scale.x,
-                -0.5f * scale.y,
-                -0.5f * scale.z
-            )
-        } else baseOffset
-    }
+    private fun calculateTranslation(display: BaseDisplay, offset: Vector3f, scale: Vector3f): Vector3f =
+        Vector3f(offset).apply {
+            if (display is BlockDisplay) add(-0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z)
+        }
 
     private val HEX_COLOR_REGEX = Regex("^[0-9A-Fa-f]{2}[0-9A-Fa-f]{6}$")
 

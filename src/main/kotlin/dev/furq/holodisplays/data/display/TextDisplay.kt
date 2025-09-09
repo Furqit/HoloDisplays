@@ -4,7 +4,7 @@ import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import org.joml.Vector3f
 
 data class TextDisplay(
-    val lines: MutableList<String>,
+    val lines: List<String>,
     val lineWidth: Int? = null,
     val backgroundColor: String? = null,
     val textOpacity: Int? = null,
@@ -14,7 +14,7 @@ data class TextDisplay(
     override val rotation: Vector3f? = null,
     override val scale: Vector3f? = null,
     override val billboardMode: BillboardMode? = null,
-    override var conditionalPlaceholder: String? = null
+    override val conditionalPlaceholder: String? = null
 ) : BaseDisplay() {
 
     enum class TextAlignment {
@@ -47,8 +47,8 @@ data class TextDisplay(
         override var conditionalPlaceholder: String? = null
 
         override fun build() = TextDisplay(
-            lines, lineWidth, backgroundColor, textOpacity,
-            shadow, seeThrough, alignment, rotation, scale, billboardMode
+            lines.toList(), lineWidth, backgroundColor, textOpacity,
+            shadow, seeThrough, alignment, rotation, scale, billboardMode, conditionalPlaceholder
         )
     }
 }

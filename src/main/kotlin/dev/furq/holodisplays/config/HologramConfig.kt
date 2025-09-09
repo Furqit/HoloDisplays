@@ -7,13 +7,11 @@ import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import org.joml.Vector3f
 import org.quiltmc.parsers.json.JsonReader
 import org.quiltmc.parsers.json.JsonWriter
-import java.io.FileFilter
 import java.nio.file.Path
 
 object HologramConfig : Config {
     override lateinit var configDir: Path
     private val holograms = mutableMapOf<String, HologramData>()
-    private val jsonFilter = FileFilter { it.extension == "json" }
 
     override fun init(baseDir: Path) {
         configDir = baseDir.resolve("holograms")
@@ -22,14 +20,13 @@ object HologramConfig : Config {
 
     override fun reload() = ErrorHandler.withCatch {
         holograms.clear()
-        val files =
-            configDir.toFile().listFiles(jsonFilter) ?: throw ConfigException("Failed to list hologram config files")
-
-        files.forEach { file ->
-            JsonReader.json5(file.inputStream().reader()).use { json ->
-                holograms[file.nameWithoutExtension] = parseHologramData(json)
+        configDir.toFile().listFiles(JsonUtils.jsonFilter)
+            ?.forEach { file ->
+                JsonReader.json5(file.inputStream().reader()).use { json ->
+                    holograms[file.nameWithoutExtension] = parseHologramData(json)
+                }
             }
-        }
+            ?: throw ConfigException("Failed to list hologram config files")
     }
 
     private fun parseHologramData(json: JsonReader): HologramData = json.run {
@@ -39,14 +36,13 @@ object HologramConfig : Config {
         while (hasNext()) {
             when (nextName()) {
                 "displays" -> builder.displays = parseDisplayLines()
-                "position" -> {
-                    val (world, position) = parsePosition()
+                "position" -> parsePosition().let { (world, position) ->
                     builder.world = world
                     builder.position = position
                 }
 
-                "rotation" -> builder.rotation = parseRotationArray()
-                "scale" -> builder.scale = parseScaleArray()
+                "rotation" -> builder.rotation = JsonUtils.parseVector3f(this)
+                "scale" -> builder.scale = JsonUtils.parseVector3f(this)
                 "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
                 "updateRate" -> builder.updateRate = nextInt()
                 "viewRange" -> builder.viewRange = nextDouble()
@@ -70,65 +66,36 @@ object HologramConfig : Config {
             while (hasNext()) {
                 when (nextName()) {
                     "name" -> name = nextString()
-                    "offset" -> offset = parseOffsetArray()
+                    "offset" -> offset = JsonUtils.parseVector3f(this)
                     else -> skipValue()
                 }
             }
             endObject()
 
-            if (name.isNotEmpty()) {
-                lines.add(HologramData.DisplayLine(name, offset))
+            name.takeIf { it.isNotEmpty() }?.let {
+                lines.add(HologramData.DisplayLine(it, offset))
             }
         }
         endArray()
         return lines
     }
 
-    private fun JsonReader.parseOffsetArray(): Vector3f {
-        beginArray()
-        val x = nextDouble().toFloat()
-        val y = nextDouble().toFloat()
-        val z = nextDouble().toFloat()
-        endArray()
-        return Vector3f(x, y, z)
-    }
-
     private fun JsonReader.parsePosition(): Pair<String, Vector3f> {
         var world = "minecraft:overworld"
-        var x = 0f
-        var y = 0f
-        var z = 0f
+        var position = Vector3f()
 
         beginObject()
         while (hasNext()) {
             when (nextName()) {
                 "world" -> world = nextString()
-                "x" -> x = nextDouble().toFloat()
-                "y" -> y = nextDouble().toFloat()
-                "z" -> z = nextDouble().toFloat()
+                "x" -> position.x = nextDouble().toFloat()
+                "y" -> position.y = nextDouble().toFloat()
+                "z" -> position.z = nextDouble().toFloat()
                 else -> skipValue()
             }
         }
         endObject()
-        return world to Vector3f(x, y, z)
-    }
-
-    private fun JsonReader.parseRotationArray(): Vector3f {
-        beginArray()
-        val pitch = nextDouble().toFloat()
-        val yaw = nextDouble().toFloat()
-        val roll = nextDouble().toFloat()
-        endArray()
-        return Vector3f(pitch, yaw, roll)
-    }
-
-    private fun JsonReader.parseScaleArray(): Vector3f {
-        beginArray()
-        val x = nextDouble().toFloat()
-        val y = nextDouble().toFloat()
-        val z = nextDouble().toFloat()
-        endArray()
-        return Vector3f(x, y, z)
+        return world to position
     }
 
     fun getHologram(name: String): HologramData? = holograms[name]
@@ -152,11 +119,7 @@ object HologramConfig : Config {
         hologram.displays.forEach { line ->
             beginObject()
             name("name").value(line.displayId)
-            name("offset").beginArray()
-            value(line.offset.x)
-            value(line.offset.y)
-            value(line.offset.z)
-            endArray()
+            JsonUtils.writeVector3f(this, "offset", line.offset)
             endObject()
         }
         endArray()
@@ -168,17 +131,8 @@ object HologramConfig : Config {
         name("z").value(hologram.position.z)
         endObject()
 
-        name("rotation").beginArray()
-        value(hologram.rotation.x)
-        value(hologram.rotation.y)
-        value(hologram.rotation.z)
-        endArray()
-
-        name("scale").beginArray()
-        value(hologram.scale.x)
-        value(hologram.scale.y)
-        value(hologram.scale.z)
-        endArray()
+        JsonUtils.writeVector3f(this, "rotation", hologram.rotation)
+        JsonUtils.writeVector3f(this, "scale", hologram.scale)
 
         name("billboardMode").value(hologram.billboardMode.name)
         name("updateRate").value(hologram.updateRate)

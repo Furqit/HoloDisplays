@@ -2,153 +2,98 @@ package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.managers.HologramManager
-import dev.furq.holodisplays.utils.GuiItems
-import eu.pb4.sgui.api.gui.SimpleGui
+import dev.furq.holodisplays.utils.GuiUtils
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.text.Text
-import net.minecraft.util.Formatting
 
 object CreateDisplay {
-    private val hologramManager = HologramManager()
-    private val displayManager = DisplayManager()
 
     fun open(player: ServerPlayerEntity, hologramName: String? = null) {
-        val gui = SimpleGui(ScreenHandlerType.GENERIC_3X3, player, false)
-        gui.title = Text.literal("Create Display")
+        val gui = GuiUtils.createGui(
+            type = ScreenHandlerType.GENERIC_3X3,
+            player = player,
+            title = "Create Display",
+            size = 9,
+            borderSlots = listOf(3, 4, 5, 6)
+        )
 
-        for (i in 0..8) {
-            if (i !in listOf(3, 4, 5, 6)) {
-                gui.setSlot(i, GuiItems.createBorderItem())
-            }
-        }
-
-        gui.setSlot(
-            3, GuiItems.createGuiItem(
+        gui.apply {
+            setSlot(3, GuiUtils.createGuiItem(
                 name = "Text Display",
                 item = Items.PAPER,
-                lore = listOf(
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to create a new text display").formatted(Formatting.GRAY))
-                )
-            )
-        ) { _, _, _, _ ->
-            AnvilInput.open(
-                player = player,
-                title = "Enter Display Name",
-                defaultText = "text_display",
-                onSubmit = { name ->
-                    AnvilInput.open(
-                        player = player,
-                        title = "Enter Text",
-                        defaultText = "Hello World!",
-                        onSubmit = { text ->
-                            if (displayManager.createTextDisplay(name, text, player.commandSource)) {
-                                if (hologramName != null) {
-                                    hologramManager.addDisplayToHologram(hologramName, name, player.commandSource)
-                                    DisplayEdit.open(player, name) {
-                                        HologramDisplays.open(player, hologramName)
-                                    }
-                                } else {
-                                    DisplayEdit.open(player, name)
-                                }
-                            }
-                        },
-                        onCancel = { open(player, hologramName) }
-                    )
-                },
-                onCancel = { open(player, hologramName) }
-            )
-        }
+                lore = GuiUtils.createActionLore("Click to create a new text display")
+            )) { _, _, _, _ ->
+                createDisplay(player, hologramName, "text", "text_display", "Hello World!")
+            }
 
-        gui.setSlot(
-            4, GuiItems.createGuiItem(
+            setSlot(4, GuiUtils.createGuiItem(
                 name = "Item Display",
                 item = Items.ITEM_FRAME,
-                lore = listOf(
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to create a new item display").formatted(Formatting.GRAY))
-                )
-            )
-        ) { _, _, _, _ ->
-            AnvilInput.open(
-                player = player,
-                title = "Enter Display Name",
-                defaultText = "item_display",
-                onSubmit = { name ->
-                    AnvilInput.open(
-                        player = player,
-                        title = "Enter Item ID",
-                        defaultText = "minecraft:diamond_sword",
-                        onSubmit = { itemId ->
-                            if (displayManager.createItemDisplay(name, itemId, player.commandSource)) {
-                                if (hologramName != null) {
-                                    hologramManager.addDisplayToHologram(hologramName, name, player.commandSource)
-                                    DisplayEdit.open(player, name) {
-                                        HologramDisplays.open(player, hologramName)
-                                    }
-                                } else {
-                                    DisplayEdit.open(player, name)
-                                }
-                            }
-                        },
-                        onCancel = { open(player, hologramName) }
-                    )
-                },
-                onCancel = { open(player, hologramName) }
-            )
-        }
+                lore = GuiUtils.createActionLore("Click to create a new item display")
+            )) { _, _, _, _ ->
+                createDisplay(player, hologramName, "item", "item_display", "minecraft:diamond_sword")
+            }
 
-        gui.setSlot(
-            5, GuiItems.createGuiItem(
+            setSlot(5, GuiUtils.createGuiItem(
                 name = "Block Display",
                 item = Items.GRASS_BLOCK,
-                lore = listOf(
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to create a new block display").formatted(Formatting.GRAY))
-                )
-            )
-        ) { _, _, _, _ ->
-            AnvilInput.open(
-                player = player,
-                title = "Enter Display Name",
-                defaultText = "block_display",
-                onSubmit = { name ->
-                    AnvilInput.open(
-                        player = player,
-                        title = "Enter Block ID",
-                        defaultText = "minecraft:grass_block",
-                        onSubmit = { blockId ->
-                            if (displayManager.createBlockDisplay(name, blockId, player.commandSource)) {
-                                if (hologramName != null) {
-                                    hologramManager.addDisplayToHologram(hologramName, name, player.commandSource)
-                                    DisplayEdit.open(player, name) {
-                                        HologramDisplays.open(player, hologramName)
-                                    }
-                                } else {
-                                    DisplayEdit.open(player, name)
-                                }
-                            }
-                        },
-                        onCancel = { open(player, hologramName) }
-                    )
-                },
-                onCancel = { open(player, hologramName) }
-            )
-        }
-
-        gui.setSlot(6, GuiItems.createBackItem()) { _, _, _, _ ->
-            if (hologramName != null) {
-                HologramEdit.open(player, hologramName)
-            } else {
-                MainMenu.openMainMenu(player)
+                lore = GuiUtils.createActionLore("Click to create a new block display")
+            )) { _, _, _, _ ->
+                createDisplay(player, hologramName, "block", "block_display", "minecraft:grass_block")
             }
-        }
 
-        gui.open()
+            GuiUtils.setupBackButton(this, 6) {
+                when (hologramName) {
+                    null -> MainMenu.openMainMenu(player)
+                    else -> HologramEdit.open(player, hologramName)
+                }
+            }
+
+            open()
+        }
+    }
+
+    private fun createDisplay(player: ServerPlayerEntity, hologramName: String?, type: String, defaultName: String, defaultValue: String) {
+        AnvilInput.open(
+            player = player,
+            title = "Enter Display Name",
+            defaultText = defaultName,
+            onSubmit = { name ->
+                val (title, default) = when (type) {
+                    "text" -> "Enter Text" to defaultValue
+                    "item" -> "Enter Item ID" to defaultValue
+                    "block" -> "Enter Block ID" to defaultValue
+                    else -> "Enter Value" to defaultValue
+                }
+
+                AnvilInput.open(
+                    player = player,
+                    title = title,
+                    defaultText = default,
+                    onSubmit = { value ->
+                        val success = when (type) {
+                            "text" -> DisplayManager.createTextDisplay(name, value, player.commandSource)
+                            "item" -> DisplayManager.createItemDisplay(name, value, player.commandSource)
+                            "block" -> DisplayManager.createBlockDisplay(name, value, player.commandSource)
+                            else -> false
+                        }
+
+                        if (success) {
+                            if (hologramName != null) {
+                                HologramManager.addDisplayToHologram(hologramName, name, player.commandSource)
+                                DisplayEdit.open(player, name) {
+                                    HologramDisplays.open(player, hologramName)
+                                }
+                            } else {
+                                DisplayEdit.open(player, name)
+                            }
+                        }
+                    },
+                    onCancel = { open(player, hologramName) }
+                )
+            },
+            onCancel = { open(player, hologramName) }
+        )
     }
 }

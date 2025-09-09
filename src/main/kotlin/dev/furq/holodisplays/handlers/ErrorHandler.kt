@@ -3,60 +3,36 @@ package dev.furq.holodisplays.handlers
 import dev.furq.holodisplays.HoloDisplays
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.text.Text
-import net.minecraft.util.Formatting
 
 object ErrorHandler {
-    private fun handle(exception: Exception, source: ServerCommandSource? = null) {
-        when (exception) {
-            is HoloDisplaysException -> handleHoloDisplaysException(exception)
-            else -> handleGenericException(exception)
+    fun handle(exception: Exception, source: ServerCommandSource? = null) {
+        val errorType = when (exception) {
+            is HoloDisplaysException -> exception::class.simpleName?.removeSuffix("Exception") ?: "Error"
+            else -> "Unexpected"
         }
 
-        if (source?.player != null) {
-            source.sendError(Text.literal("An error occurred. Check console for details.").formatted(Formatting.RED))
-        }
-    }
+        HoloDisplays.LOGGER.error("[$errorType Error] ${exception.message}", exception.takeIf { it !is HoloDisplaysException })
 
-    private fun handleHoloDisplaysException(exception: HoloDisplaysException) {
-        HoloDisplays.LOGGER.error("[${exception.javaClass.simpleName.removeSuffix("Exception")} Error] ${exception.message}")
-    }
-
-    private fun handleGenericException(exception: Exception) {
-        HoloDisplays.LOGGER.error("[Unexpected Error] An unexpected error occurred", exception)
-    }
-
-    fun withCatch(source: ServerCommandSource? = null, block: () -> Unit) {
-        try {
-            block()
-        } catch (e: Exception) {
-            handle(e, source)
+        source?.player?.let { player ->
+            val errorMessage = when (exception) {
+                is HoloDisplaysException -> "§c${exception::class.simpleName?.removeSuffix("Exception") ?: "Error"}: ${exception.message}"
+                else -> "§cAn unexpected error occurred. Check console for details"
+            }
+            source.sendError(Text.literal(errorMessage))
         }
     }
 
-    fun <T> withCatch(block: () -> T): T? {
-        return try {
-            block()
-        } catch (e: Exception) {
-            handle(e)
-            null
-        }
+    inline fun withCatch(source: ServerCommandSource? = null, block: () -> Unit) = try {
+        block()
+    } catch (e: Exception) {
+        handle(e, source)
     }
 
-    fun <T> withCatch(source: ServerCommandSource? = null, block: () -> T): T? {
-        return try {
-            block()
-        } catch (e: Exception) {
-            handle(e, source)
-            null
-        }
-    }
-
-    suspend fun withCatchSuspend(source: ServerCommandSource? = null, block: suspend () -> Unit) {
-        try {
-            block()
-        } catch (e: Exception) {
-            handle(e, source)
-        }
+    inline fun <T> withCatch(source: ServerCommandSource? = null, block: () -> T): T? = try {
+        block()
+    } catch (e: Exception) {
+        handle(e, source)
+        null
     }
 }
 

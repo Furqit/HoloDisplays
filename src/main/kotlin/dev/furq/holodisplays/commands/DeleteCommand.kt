@@ -3,13 +3,10 @@ package dev.furq.holodisplays.commands
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
-import dev.furq.holodisplays.config.DisplayConfig
-import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.gui.DeleteConfirmation
 import dev.furq.holodisplays.gui.MainMenu
-import dev.furq.holodisplays.managers.FeedbackManager
 import dev.furq.holodisplays.utils.CommandUtils
-import dev.furq.holodisplays.utils.FeedbackType
+import dev.furq.holodisplays.utils.CommandUtils.requirePlayer
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
 
@@ -28,37 +25,21 @@ object DeleteCommand {
 
     private fun executeHologram(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
-        val player = context.source.player ?: run {
-            FeedbackManager.send(context.source, FeedbackType.PLAYER_ONLY)
-            return 0
-        }
-
-        if (!HologramConfig.exists(name)) {
-            FeedbackManager.send(context.source, FeedbackType.HOLOGRAM_NOT_FOUND, "name" to name)
-            return 0
-        }
-
-        DeleteConfirmation.open(player, name, "hologram") {
-            MainMenu.openMainMenu(player)
-        }
-        return 1
+        return requirePlayer(context)?.let { player ->
+            DeleteConfirmation.open(player, name, "hologram") {
+                MainMenu.openMainMenu(player)
+            }
+            1
+        } ?: 0
     }
 
     private fun executeDisplay(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
-        val player = context.source.player ?: run {
-            FeedbackManager.send(context.source, FeedbackType.PLAYER_ONLY)
-            return 0
-        }
-
-        if (!DisplayConfig.exists(name)) {
-            FeedbackManager.send(context.source, FeedbackType.DISPLAY_NOT_FOUND, "name" to name)
-            return 0
-        }
-
-        DeleteConfirmation.open(player, name, "display") {
-            MainMenu.openMainMenu(player)
-        }
-        return 1
+        return requirePlayer(context)?.let { player ->
+            DeleteConfirmation.open(player, name, "display") {
+                MainMenu.openMainMenu(player)
+            }
+            1
+        } ?: 0
     }
 }

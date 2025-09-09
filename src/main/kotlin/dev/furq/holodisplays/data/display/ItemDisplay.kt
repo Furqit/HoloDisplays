@@ -10,7 +10,7 @@ data class ItemDisplay(
     override val rotation: Vector3f? = null,
     override val scale: Vector3f? = null,
     override val billboardMode: BillboardMode? = null,
-    override var conditionalPlaceholder: String? = null
+    override val conditionalPlaceholder: String? = null
 ) : BaseDisplay() {
     class Builder : BaseDisplay.Builder<ItemDisplay> {
         var id: String = ""
@@ -21,6 +21,6 @@ data class ItemDisplay(
         override var billboardMode: BillboardMode? = null
         override var conditionalPlaceholder: String? = null
 
-        override fun build() = ItemDisplay(id, itemDisplayType, customModelData, rotation, scale, billboardMode)
+        override fun build() = ItemDisplay(id, itemDisplayType, customModelData, rotation, scale, billboardMode, conditionalPlaceholder)
     }
 }

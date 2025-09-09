@@ -5,13 +5,11 @@ import dev.furq.holodisplays.handlers.ConfigException
 import dev.furq.holodisplays.handlers.ErrorHandler
 import org.quiltmc.parsers.json.JsonReader
 import org.quiltmc.parsers.json.JsonWriter
-import java.io.FileFilter
 import java.nio.file.Path
 
 object AnimationConfig : Config {
     override lateinit var configDir: Path
     private val animations = mutableMapOf<String, AnimationData>()
-    private val jsonFilter = FileFilter { it.extension == "json" }
 
     override fun init(baseDir: Path) {
         configDir = baseDir.resolve("animations")
@@ -20,14 +18,13 @@ object AnimationConfig : Config {
 
     override fun reload() = ErrorHandler.withCatch {
         animations.clear()
-        val files =
-            configDir.toFile().listFiles(jsonFilter) ?: throw ConfigException("Failed to list animation config files")
-
-        files.forEach { file ->
-            JsonReader.json5(file.inputStream().reader()).use { json ->
-                animations[file.nameWithoutExtension] = parseAnimationData(json)
+        configDir.toFile().listFiles(JsonUtils.jsonFilter)
+            ?.forEach { file ->
+                JsonReader.json5(file.inputStream().reader()).use { json ->
+                    animations[file.nameWithoutExtension] = parseAnimationData(json)
+                }
             }
-        }
+            ?: throw ConfigException("Failed to list animation config files")
     }
 
     private fun parseAnimationData(json: JsonReader): AnimationData = json.run {
@@ -49,7 +46,6 @@ object AnimationConfig : Config {
             }
         }
         endObject()
-
         builder.build()
     }
 
@@ -68,9 +64,7 @@ object AnimationConfig : Config {
 
     private fun writeAnimation(json: JsonWriter, animation: AnimationData) = json.run {
         beginObject()
-        name("frames").beginArray()
-        animation.frames.forEach { value(it.text) }
-        endArray()
+        JsonUtils.writeStringList(this, "frames", animation.frames.map { it.text })
         name("interval").value(animation.interval)
         endObject()
     }

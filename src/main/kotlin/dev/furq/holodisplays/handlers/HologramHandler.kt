@@ -58,8 +58,8 @@ object HologramHandler {
         val hologram = HologramConfig.getHologram(name)
             ?: throw HologramException("Hologram $name not found")
 
-        updateHologramData(hologram, property)
-        HologramConfig.saveHologram(name, hologram)
+        val updatedHologram = updateHologramData(hologram, property)
+        HologramConfig.saveHologram(name, updatedHologram)
 
         val needsRespawn = when (property) {
             is HologramProperty.Position,
@@ -79,47 +79,34 @@ object HologramHandler {
         }
     }
 
-    private fun updateHologramData(hologram: HologramData, property: HologramProperty) {
-        when (property) {
-            is HologramProperty.Scale -> hologram.scale = property.value ?: Vector3f(1f)
-            is HologramProperty.BillboardMode -> hologram.billboardMode = property.mode ?: MinecraftBillboardMode.CENTER
-            is HologramProperty.ViewRange -> hologram.viewRange = property.value ?: 48.0
-            is HologramProperty.UpdateRate -> hologram.updateRate = property.value ?: 20
-            is HologramProperty.ConditionalPlaceholder -> hologram.conditionalPlaceholder = property.value
-            is HologramProperty.Position -> {
-                hologram.position = property.position
-                hologram.world = property.world
-            }
-
-            is HologramProperty.Rotation -> hologram.rotation = property.value ?: Vector3f()
-            is HologramProperty.LineOffset -> {
-                if (property.index !in hologram.displays.indices) {
-                    throw HologramException("Invalid line index: ${property.index}")
-                }
-                updateLineOffset(hologram, property)
-            }
-
-            is HologramProperty.AddLine -> hologram.displays.add(
-                HologramData.DisplayLine(
-                    property.displayId,
-                    property.offset
-                )
-            )
-
-            is HologramProperty.RemoveLine -> {
-                if (property.index in hologram.displays.indices) {
-                    hologram.displays.removeAt(property.index)
-                }
+    private fun updateHologramData(hologram: HologramData, property: HologramProperty): HologramData = when (property) {
+        is HologramProperty.Scale -> hologram.copy(scale = property.value ?: Vector3f(1f))
+        is HologramProperty.BillboardMode -> hologram.copy(billboardMode = property.mode ?: MinecraftBillboardMode.CENTER)
+        is HologramProperty.ViewRange -> hologram.copy(viewRange = property.value ?: 48.0)
+        is HologramProperty.UpdateRate -> hologram.copy(updateRate = property.value ?: 20)
+        is HologramProperty.ConditionalPlaceholder -> hologram.copy(conditionalPlaceholder = property.value)
+        is HologramProperty.Position -> hologram.copy(position = property.position, world = property.world)
+        is HologramProperty.Rotation -> hologram.copy(rotation = property.value ?: Vector3f())
+        is HologramProperty.LineOffset -> updateLineOffset(hologram, property)
+        is HologramProperty.AddLine -> hologram.copy(
+            displays = hologram.displays + HologramData.DisplayLine(property.displayId, property.offset)
+        )
+        is HologramProperty.RemoveLine -> hologram.copy(
+            displays = hologram.displays.filterIndexed { index, _ -> index != property.index }
+        ).also {
+            if (property.index !in hologram.displays.indices) {
+                throw HologramException("Invalid line index: ${property.index}")
             }
         }
     }
 
-    private fun updateLineOffset(hologram: HologramData, property: HologramProperty.LineOffset) {
-        if (property.index in hologram.displays.indices) {
-            hologram.displays[property.index] = hologram.displays[property.index].copy(
-                offset = property.offset
-            )
-        }
+    private fun updateLineOffset(hologram: HologramData, property: HologramProperty.LineOffset): HologramData {
+        require(property.index in hologram.displays.indices) { "Invalid line index: ${property.index}" }
+        return hologram.copy(
+            displays = hologram.displays.mapIndexed { index, displayLine ->
+                if (index == property.index) displayLine.copy(offset = property.offset) else displayLine
+            }
+        )
     }
 
     fun deleteHologram(name: String) = ErrorHandler.withCatch {

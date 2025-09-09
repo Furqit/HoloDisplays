@@ -2,66 +2,46 @@ package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.managers.HologramManager
-import dev.furq.holodisplays.utils.GuiItems
-import eu.pb4.sgui.api.gui.SimpleGui
+import dev.furq.holodisplays.utils.GuiUtils
 import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.text.Text
-import net.minecraft.util.Formatting
 
 object DeleteConfirmation {
-    private val hologramManager = HologramManager()
-    private val displayManager = DisplayManager()
 
     fun open(player: ServerPlayerEntity, name: String, type: String, returnGui: () -> Unit) {
-        val gui = SimpleGui(ScreenHandlerType.GENERIC_9X3, player, false)
-        gui.title = Text.literal("Confirm Deletion")
+        val gui = GuiUtils.createGui(
+            type = ScreenHandlerType.GENERIC_9X3,
+            player = player,
+            title = "Confirm Deletion",
+            size = 27,
+            borderSlots = listOf(11, 15)
+        )
 
-        for (i in 0..26) {
-            if (i !in listOf(11, 15)) {
-                gui.setSlot(i, GuiItems.createBorderItem())
-            }
-        }
-
-        gui.setSlot(
-            11, GuiItems.createGuiItem(
+        gui.apply {
+            setSlot(11, GuiUtils.createGuiItem(
                 name = "Confirm",
                 item = Items.LIME_CONCRETE,
-                lore = listOf(
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to delete").formatted(Formatting.GRAY)),
-                    Text.empty()
-                        .append(Text.literal("Type: ").formatted(Formatting.GRAY))
-                        .append(Text.literal(type).formatted(Formatting.WHITE)),
-                    Text.empty()
-                        .append(Text.literal("Name: ").formatted(Formatting.GRAY))
-                        .append(Text.literal(name).formatted(Formatting.WHITE))
-                )
-            )
-        ) { _, _, _, _ ->
-            when (type) {
-                "hologram" -> hologramManager.deleteHologram(name, player.commandSource)
-                "display" -> displayManager.deleteDisplay(name, player.commandSource)
+                lore = buildList {
+                    addAll(GuiUtils.createActionLore("Click to delete"))
+                    addAll(GuiUtils.createCurrentValueLore("Type", type))
+                    addAll(GuiUtils.createCurrentValueLore("Name", name))
+                }
+            )) { _, _, _, _ ->
+                when (type) {
+                    "hologram" -> HologramManager.deleteHologram(name, player.commandSource)
+                    "display" -> DisplayManager.deleteDisplay(name, player.commandSource)
+                }
+                returnGui()
             }
-            returnGui()
-        }
 
-        gui.setSlot(
-            15, GuiItems.createGuiItem(
+            setSlot(15, GuiUtils.createGuiItem(
                 name = "Cancel",
                 item = Items.RED_CONCRETE,
-                lore = listOf(
-                    Text.empty()
-                        .append(Text.literal("→").formatted(Formatting.YELLOW))
-                        .append(Text.literal(" Click to cancel").formatted(Formatting.GRAY))
-                )
-            )
-        ) { _, _, _, _ ->
-            returnGui()
-        }
+                lore = GuiUtils.createActionLore("Click to cancel")
+            )) { _, _, _, _ -> returnGui() }
 
-        gui.open()
+            open()
+        }
     }
 }

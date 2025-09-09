@@ -86,7 +86,6 @@ object TickHandler {
             type.hasPlaceholder -> {
                 ticks % (if (updateRate <= 0) 20 else updateRate) == 0
             }
-
             else -> false
         }
     }
