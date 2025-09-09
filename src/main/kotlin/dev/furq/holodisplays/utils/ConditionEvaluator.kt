@@ -14,6 +14,7 @@ object ConditionEvaluator {
 
     fun evaluate(condition: String?, player: ServerPlayerEntity): Boolean {
         condition ?: return true
+
         val (placeholder, operator, value) = parseCondition(condition) ?: return true
         val resolvedValue = resolvePlaceholder(placeholder.trim(), player)
 

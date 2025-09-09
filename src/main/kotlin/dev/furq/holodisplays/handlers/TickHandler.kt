@@ -22,6 +22,13 @@ object TickHandler {
     }
     private val animationRegex = "<animation:([^>]+)>".toRegex()
     private val placeholderRegex = "%([^%:]+):([^%]+)%".toRegex()
+    private val textCache = mutableMapOf<String, CachedTextInfo>()
+
+    data class CachedTextInfo(
+        val hasAnimation: Boolean,
+        val hasPlaceholder: Boolean,
+        val animationIntervals: List<Int>? = null
+    )
 
     fun init() {
         animationCache.clear()
@@ -57,7 +64,7 @@ object TickHandler {
             val display = DisplayConfig.getDisplayOrAPI(displayLine.displayId)?.display as? TextDisplay
                 ?: return@forEachIndexed
 
-            val text = display.lines.joinToString("\n")
+            val text = display.getText()
             if (!shouldUpdateDisplay(text, hologram.updateRate)) return@forEachIndexed
 
             updateDisplayForViewers(name, displayLine.displayId, index, text)
@@ -65,12 +72,17 @@ object TickHandler {
     }
 
     private fun shouldUpdateDisplay(text: String, updateRate: Int): Boolean {
-        val hasAnimation = animationRegex in text
-        val hasPlaceholder = placeholderRegex in text
+        val info = textCache.getOrPut(text) {
+            val hasAnimation = animationRegex.containsMatchIn(text)
+            val hasPlaceholder = placeholderRegex.containsMatchIn(text)
+            val intervals = if (hasAnimation) findAnimationIntervals(text) else null
+            CachedTextInfo(hasAnimation, hasPlaceholder, intervals)
+        }
 
         return when {
-            hasAnimation -> findAnimationIntervals(text).any { interval -> ticks % interval == 0 }
-            hasPlaceholder -> ticks % updateRate.coerceAtLeast(1) == 0
+            info.hasAnimation -> info.animationIntervals?.any { interval -> ticks % interval == 0 } ?: false
+            info.hasPlaceholder -> ticks % (if (updateRate <= 0) 20 else updateRate) == 0
+
             else -> false
         }
     }

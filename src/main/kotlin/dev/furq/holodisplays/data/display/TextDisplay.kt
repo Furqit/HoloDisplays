@@ -16,9 +16,13 @@ data class TextDisplay(
     override val billboardMode: BillboardMode? = null,
     override val conditionalPlaceholder: String? = null
 ) : BaseDisplay() {
+
     enum class TextAlignment {
         LEFT, CENTER, RIGHT
     }
+
+    private val cachedText by lazy { lines.joinToString("\n") }
+    fun getText(): String = cachedText
 
     class Builder : BaseDisplay.Builder<TextDisplay> {
         var lines = mutableListOf<String>()

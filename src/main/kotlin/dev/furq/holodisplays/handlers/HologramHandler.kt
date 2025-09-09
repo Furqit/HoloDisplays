@@ -9,9 +9,12 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.Identifier
 import net.minecraft.world.World
 import org.joml.Vector3f
+import java.util.concurrent.ConcurrentHashMap
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode as MinecraftBillboardMode
 
 object HologramHandler {
+    private val worldCache = ConcurrentHashMap<String, World>()
+
     sealed class HologramProperty {
         data class Scale(val value: Vector3f?) : HologramProperty()
         data class BillboardMode(val mode: MinecraftBillboardMode?) : HologramProperty()
@@ -141,10 +144,12 @@ object HologramHandler {
     }
 
     private fun getWorld(world: String): World {
-        val worldId = Identifier.tryParse(world)
-            ?: throw HologramException("Invalid world identifier: $world")
+        return worldCache.computeIfAbsent(world) { w ->
+            val worldId = Identifier.tryParse(w)
+                ?: throw HologramException("Invalid world identifier: $w")
 
-        return HoloDisplays.SERVER?.getWorld(RegistryKey.of(RegistryKeys.WORLD, worldId))
-            ?: throw HologramException("World not found: $world")
+            HoloDisplays.SERVER?.getWorld(RegistryKey.of(RegistryKeys.WORLD, worldId))
+                ?: throw HologramException("World not found: $w")
+        }
     }
 }

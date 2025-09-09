@@ -99,7 +99,7 @@ object HologramConfig : Config {
     }
 
     fun getHologram(name: String): HologramData? = holograms[name]
-    fun getHolograms(): Map<String, HologramData> = holograms.toMap()
+    fun getHolograms(): Map<String, HologramData> = holograms
     fun exists(name: String): Boolean = holograms.containsKey(name)
 
     fun saveHologram(name: String, hologram: HologramData) = ErrorHandler.withCatch {
