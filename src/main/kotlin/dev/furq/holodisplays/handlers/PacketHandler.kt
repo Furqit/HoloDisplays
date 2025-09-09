@@ -196,11 +196,14 @@ object PacketHandler {
         } else baseOffset
     }
 
+    private val HEX_COLOR_REGEX = Regex("^[0-9A-Fa-f]{2}[0-9A-Fa-f]{6}$")
+
+
     private fun MutableList<DataTracker.SerializedEntry<*>>.addTextProperties(
         display: TextDisplay,
         player: ServerPlayerEntity,
     ) {
-        val processedText = Text.literal(display.lines.joinToString("\n")).let { text ->
+        val processedText = Text.literal(display.getText()).let { text ->
             TickHandler.processText(text.string, player)
         }
         add(createEntry(TextDisplayEntityAccessor.getText(), processedText))
@@ -208,7 +211,7 @@ object PacketHandler {
         display.lineWidth?.let { add(createEntry(TextDisplayEntityAccessor.getLineWidth(), it)) }
 
         display.backgroundColor?.let { bgColor ->
-            if (bgColor.matches(Regex("^[0-9A-Fa-f]{2}[0-9A-Fa-f]{6}$"))) {
+            if (bgColor.matches(HEX_COLOR_REGEX)) {
                 val finalColor = bgColor.substring(0, 2).toInt(16).shl(24) or
                         bgColor.substring(2).toInt(16)
                 add(createEntry(TextDisplayEntityAccessor.getBackground(), finalColor))

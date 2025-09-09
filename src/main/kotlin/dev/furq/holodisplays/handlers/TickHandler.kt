@@ -57,27 +57,41 @@ object TickHandler {
             val display = DisplayConfig.getDisplayOrAPI(displayLine.displayId)?.display as? TextDisplay
                 ?: return@forEachIndexed
 
-            val text = display.lines.joinToString("\n")
+            val text = display.getText()
             if (!shouldUpdateDisplay(text, hologram.updateRate)) return@forEachIndexed
 
             updateDisplayForViewers(name, displayLine.displayId, index, text)
         }
     }
 
+    data class TextType(val hasAnimation: Boolean, val hasPlaceholder: Boolean)
+
+    private val textCache = mutableMapOf<String, TextType>()
+    private val animationIntervalsCache = mutableMapOf<String, List<Int>>()
+
     private fun shouldUpdateDisplay(text: String, updateRate: Int): Boolean {
-        val hasAnimation = animationRegex.containsMatchIn(text)
-        val hasPlaceholder = placeholderRegex.containsMatchIn(text)
+        val type = textCache.getOrPut(text) {
+            TextType(
+                hasAnimation = animationRegex.containsMatchIn(text),
+                hasPlaceholder = placeholderRegex.containsMatchIn(text)
+            )
+        }
 
         return when {
-            hasAnimation -> {
-                val intervals = findAnimationIntervals(text)
+            type.hasAnimation -> {
+                val intervals = animationIntervalsCache.getOrPut(text) { findAnimationIntervals(text) }
                 intervals.any { interval -> ticks % interval == 0 }
             }
 
-            hasPlaceholder -> ticks % (if (updateRate <= 0) 20 else updateRate) == 0
+            type.hasPlaceholder -> {
+                ticks % (if (updateRate <= 0) 20 else updateRate) == 0
+            }
+
             else -> false
         }
     }
+
+
 
     private fun processAnimations(text: String): String =
         animationRegex.replace(text) { match ->

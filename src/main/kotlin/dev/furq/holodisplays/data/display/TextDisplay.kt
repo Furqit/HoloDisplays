@@ -16,8 +16,21 @@ data class TextDisplay(
     override val billboardMode: BillboardMode? = null,
     override var conditionalPlaceholder: String? = null
 ) : BaseDisplay() {
+
     enum class TextAlignment {
         LEFT, CENTER, RIGHT
+    }
+
+    private var cachedText: String? = null
+    private var cachedHash: Int = 0
+
+    fun getText(): String {
+        val currentHash = lines.hashCode()
+        if (cachedText == null || cachedHash != currentHash) {
+            cachedText = lines.joinToString("\n")
+            cachedHash = currentHash
+        }
+        return cachedText!!
     }
 
     class Builder : BaseDisplay.Builder<TextDisplay> {
