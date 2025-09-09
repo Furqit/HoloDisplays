@@ -63,11 +63,8 @@ class HoloDisplays : ModInitializer {
     private fun registerServerEvents() = ErrorHandler.withCatch {
         ServerLifecycleEvents.SERVER_STARTING.register { SERVER = it }
         ServerTickEvents.END_SERVER_TICK.register { server ->
-            CompletableFuture.runAsync({
-                handleServerTick(server)
-            }, EXECUTOR_HOLODISPLAYS)
+            CompletableFuture.runAsync({ handleServerTick(server) }, EXECUTOR_HOLODISPLAYS)
         }
-
 
         ServerPlayConnectionEvents.JOIN.register { handler, _, _ ->
             ViewerHandler.updatePlayerVisibility(handler.player)

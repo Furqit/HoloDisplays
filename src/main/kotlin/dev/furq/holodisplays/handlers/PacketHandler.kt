@@ -35,6 +35,7 @@ object PacketHandler {
     private var nextEntityId = INITIAL_ENTITY_ID
     private val recycledIds = mutableSetOf<Int>()
     private val entityIds = mutableMapOf<UUID, MutableMap<String, MutableMap<String, Int>>>()
+    private val HEX_COLOR_REGEX = Regex("^[0-9A-Fa-f]{2}[0-9A-Fa-f]{6}$")
 
     fun resetEntityTracking() {
         entityIds.clear()
@@ -176,9 +177,6 @@ object PacketHandler {
             if (display is BlockDisplay) add(-0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z)
         }
 
-    private val HEX_COLOR_REGEX = Regex("^[0-9A-Fa-f]{2}[0-9A-Fa-f]{6}$")
-
-
     private fun MutableList<DataTracker.SerializedEntry<*>>.addTextProperties(
         display: TextDisplay,
         player: ServerPlayerEntity,
@@ -192,7 +190,7 @@ object PacketHandler {
 
         display.backgroundColor?.let { bgColor ->
             if (bgColor.matches(HEX_COLOR_REGEX)) {
-                val finalColor = bgColor.substring(0, 2).toInt(16).shl(24) or
+                val finalColor = bgColor.take(2).toInt(16).shl(24) or
                         bgColor.substring(2).toInt(16)
                 add(createEntry(TextDisplayEntityAccessor.getBackground(), finalColor))
             }

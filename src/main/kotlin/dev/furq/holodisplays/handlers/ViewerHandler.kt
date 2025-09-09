@@ -144,16 +144,14 @@ object ViewerHandler {
                 return@forEach
             }
 
-            val shouldView =
-                ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player) &&
-                        HologramHandler.isPlayerInRange(player, hologram.world, hologram.position, hologram.viewRange)
+            val shouldView = ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player) &&
+                    HologramHandler.isPlayerInRange(player, hologram.world, hologram.position, hologram.viewRange)
             when {
                 shouldView && !isCurrentlyViewing -> addViewer(player, tracked.hologramName)
                 !shouldView && isCurrentlyViewing -> removeViewer(player, tracked.hologramName)
             }
         }
     }
-
 
     fun getObserverCount(name: String): Int = trackedHolograms[name]?.observers?.size ?: 0
 }

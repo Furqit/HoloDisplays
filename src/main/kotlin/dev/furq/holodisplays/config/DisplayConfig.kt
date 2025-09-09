@@ -116,7 +116,8 @@ object DisplayConfig : Config {
     }
 
     fun getDisplay(name: String): DisplayData? = displays[name]
-    fun getDisplays(): Map<String, DisplayData> = displays.toMap()
+    fun getDisplayOrAPI(name: String): DisplayData? = displays[name] ?: HoloDisplaysAPI.get().getDisplay(name)
+    fun getDisplays(): Map<String, DisplayData> = displays
     fun exists(name: String): Boolean = displays.containsKey(name)
 
     fun saveDisplay(name: String, display: DisplayData) = ErrorHandler.withCatch {
@@ -179,9 +180,5 @@ object DisplayConfig : Config {
             throw ConfigException("Failed to delete display config file for $name")
         }
         displays.remove(name)
-    }
-
-    fun getDisplayOrAPI(id: String): DisplayData? {
-        return displays[id] ?: HoloDisplaysAPI.get().getDisplay(id)
     }
 }

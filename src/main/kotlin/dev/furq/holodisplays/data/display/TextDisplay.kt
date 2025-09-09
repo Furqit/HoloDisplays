@@ -21,17 +21,8 @@ data class TextDisplay(
         LEFT, CENTER, RIGHT
     }
 
-    private var cachedText: String? = null
-    private var cachedHash: Int = 0
-
-    fun getText(): String {
-        val currentHash = lines.hashCode()
-        if (cachedText == null || cachedHash != currentHash) {
-            cachedText = lines.joinToString("\n")
-            cachedHash = currentHash
-        }
-        return cachedText!!
-    }
+    private val cachedText by lazy { lines.joinToString("\n") }
+    fun getText(): String = cachedText
 
     class Builder : BaseDisplay.Builder<TextDisplay> {
         var lines = mutableListOf<String>()

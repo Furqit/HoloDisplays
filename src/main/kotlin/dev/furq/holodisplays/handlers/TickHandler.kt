@@ -22,6 +22,13 @@ object TickHandler {
     }
     private val animationRegex = "<animation:([^>]+)>".toRegex()
     private val placeholderRegex = "%([^%:]+):([^%]+)%".toRegex()
+    private val textCache = mutableMapOf<String, CachedTextInfo>()
+
+    data class CachedTextInfo(
+        val hasAnimation: Boolean,
+        val hasPlaceholder: Boolean,
+        val animationIntervals: List<Int>? = null
+    )
 
     fun init() {
         animationCache.clear()
@@ -64,33 +71,21 @@ object TickHandler {
         }
     }
 
-    data class TextType(val hasAnimation: Boolean, val hasPlaceholder: Boolean)
-
-    private val textCache = mutableMapOf<String, TextType>()
-    private val animationIntervalsCache = mutableMapOf<String, List<Int>>()
-
     private fun shouldUpdateDisplay(text: String, updateRate: Int): Boolean {
-        val type = textCache.getOrPut(text) {
-            TextType(
-                hasAnimation = animationRegex.containsMatchIn(text),
-                hasPlaceholder = placeholderRegex.containsMatchIn(text)
-            )
+        val info = textCache.getOrPut(text) {
+            val hasAnimation = animationRegex.containsMatchIn(text)
+            val hasPlaceholder = placeholderRegex.containsMatchIn(text)
+            val intervals = if (hasAnimation) findAnimationIntervals(text) else null
+            CachedTextInfo(hasAnimation, hasPlaceholder, intervals)
         }
 
         return when {
-            type.hasAnimation -> {
-                val intervals = animationIntervalsCache.getOrPut(text) { findAnimationIntervals(text) }
-                intervals.any { interval -> ticks % interval == 0 }
-            }
+            info.hasAnimation -> info.animationIntervals?.any { interval -> ticks % interval == 0 } ?: false
+            info.hasPlaceholder -> ticks % (if (updateRate <= 0) 20 else updateRate) == 0
 
-            type.hasPlaceholder -> {
-                ticks % (if (updateRate <= 0) 20 else updateRate) == 0
-            }
             else -> false
         }
     }
-
-
 
     private fun processAnimations(text: String): String =
         animationRegex.replace(text) { match ->

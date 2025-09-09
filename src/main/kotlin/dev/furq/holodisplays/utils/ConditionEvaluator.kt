@@ -13,32 +13,22 @@ object ConditionEvaluator {
     }
 
     fun evaluate(condition: String?, player: ServerPlayerEntity): Boolean {
-        if (condition.isNullOrBlank()) return true
+        condition ?: return true
 
-        val parts = parseCondition(condition) ?: return true
-        val (rawPlaceholder, rawOperator, rawValue) = parts
+        val (placeholder, operator, value) = parseCondition(condition) ?: return true
+        val resolvedValue = resolvePlaceholder(placeholder.trim(), player)
 
-        val placeholder = rawPlaceholder.trim()
-        val operator = rawOperator.trim()
-        val value = rawValue.trim()
-
-        val resolved = resolvePlaceholder(placeholder, player)
-
-        // Parse numéricos solo una vez
-        val resolvedNum = resolved.toDoubleOrNull()
-        val valueNum = value.toDoubleOrNull()
-
-        return when (operator) {
-            "="  -> resolved == value
-            "!=" -> resolved != value
-            ">"  -> resolvedNum != null && valueNum != null && resolvedNum > valueNum
-            "<"  -> resolvedNum != null && valueNum != null && resolvedNum < valueNum
-            ">=" -> resolvedNum != null && valueNum != null && resolvedNum >= valueNum
-            "<=" -> resolvedNum != null && valueNum != null && resolvedNum <= valueNum
-            "contains"    -> resolved.contains(value)
-            "!contains"   -> !resolved.contains(value)
-            "startsWith"  -> resolved.startsWith(value)
-            "endsWith"    -> resolved.endsWith(value)
+        return when (operator.trim()) {
+            "=" -> resolvedValue == value
+            "!=" -> resolvedValue != value
+            ">" -> compareNumbers(resolvedValue, value) { a, b -> a > b }
+            "<" -> compareNumbers(resolvedValue, value) { a, b -> a < b }
+            ">=" -> compareNumbers(resolvedValue, value) { a, b -> a >= b }
+            "<=" -> compareNumbers(resolvedValue, value) { a, b -> a <= b }
+            "contains" -> value in resolvedValue
+            "!contains" -> value !in resolvedValue
+            "startsWith" -> resolvedValue.startsWith(value)
+            "endsWith" -> resolvedValue.endsWith(value)
             else -> true
         }
     }

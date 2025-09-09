@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode as MinecraftBillboardMode
 
 object HologramHandler {
+    private val worldCache = ConcurrentHashMap<String, World>()
+
     sealed class HologramProperty {
         data class Scale(val value: Vector3f?) : HologramProperty()
         data class BillboardMode(val mode: MinecraftBillboardMode?) : HologramProperty()
@@ -140,8 +142,6 @@ object HologramHandler {
         }
         return false
     }
-
-    private val worldCache = ConcurrentHashMap<String, World>()
 
     private fun getWorld(world: String): World {
         return worldCache.computeIfAbsent(world) { w ->
