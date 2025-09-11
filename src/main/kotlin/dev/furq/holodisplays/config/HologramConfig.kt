@@ -2,7 +2,7 @@ package dev.furq.holodisplays.config
 
 import dev.furq.holodisplays.data.HologramData
 import dev.furq.holodisplays.handlers.ConfigException
-import dev.furq.holodisplays.handlers.ErrorHandler
+import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import org.joml.Vector3f
 import org.quiltmc.parsers.json.JsonReader
@@ -18,7 +18,7 @@ object HologramConfig : Config {
         super.init(baseDir)
     }
 
-    override fun reload() = ErrorHandler.withCatch {
+    override fun reload() {
         holograms.clear()
         configDir.toFile().listFiles(JsonUtils.jsonFilter)
             ?.forEach { file ->
@@ -102,7 +102,7 @@ object HologramConfig : Config {
     fun getHolograms(): Map<String, HologramData> = holograms
     fun exists(name: String): Boolean = holograms.containsKey(name)
 
-    fun saveHologram(name: String, hologram: HologramData) = ErrorHandler.withCatch {
+    fun saveHologram(name: String, hologram: HologramData) = safeCall {
         holograms[name] = hologram
         val file = configDir.resolve("$name.json").toFile()
         file.parentFile.mkdirs()
@@ -141,7 +141,7 @@ object HologramConfig : Config {
         endObject()
     }
 
-    fun deleteHologram(name: String) = ErrorHandler.withCatch {
+    fun deleteHologram(name: String) = safeCall {
         val file = configDir.resolve("$name.json").toFile()
         if (!file.exists()) {
             throw ConfigException("Hologram config file for $name does not exist")

@@ -1,6 +1,6 @@
 package dev.furq.holodisplays.config
 
-import dev.furq.holodisplays.handlers.ErrorHandler
+import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import java.nio.file.Path
 
 object ConfigManager {
@@ -11,13 +11,13 @@ object ConfigManager {
     )
 
     fun init(configDir: Path) = configs.forEach { config ->
-        ErrorHandler.withCatch {
+        safeCall {
             config.init(configDir)
         }
     }
 
     fun reload() = configs.forEach { config ->
-        ErrorHandler.withCatch {
+        safeCall {
             config.reload()
         }
     }

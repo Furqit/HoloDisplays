@@ -6,6 +6,7 @@ import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
+import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import org.joml.Vector3f
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode as MinecraftBillboardMode
 
@@ -28,7 +29,7 @@ object DisplayHandler {
         data class ConditionalPlaceholder(val value: String?) : DisplayProperty()
     }
 
-    fun updateDisplayProperty(displayId: String, property: DisplayProperty) = ErrorHandler.withCatch {
+    fun updateDisplayProperty(displayId: String, property: DisplayProperty) = safeCall {
         val display = DisplayConfig.getDisplay(displayId)
             ?: throw DisplayException("Display $displayId not found")
 
@@ -59,7 +60,7 @@ object DisplayHandler {
     }
 
     private fun updateDisplayData(display: DisplayData, property: DisplayProperty): DisplayData? {
-        val updatedDisplay = when (val currentDisplay = display.display) {
+        val updatedDisplay = when (val currentDisplay = display.type) {
             is TextDisplay -> updateTextDisplay(currentDisplay, property)
             is ItemDisplay -> updateItemDisplay(currentDisplay, property)
             is BlockDisplay -> updateBlockDisplay(currentDisplay, property)

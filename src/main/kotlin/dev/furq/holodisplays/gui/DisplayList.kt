@@ -50,16 +50,16 @@ object DisplayList {
                 if (slot in listOf(17, 26, 35)) slot += 2
 
                 val (name, display) = displays[i]
-                val icon = GuiUtils.getDisplayIcon(display.display)
+                val icon = GuiUtils.getDisplayIcon(display.type)
 
                 val lore = when {
                     selectionMode -> GuiUtils.createCombinedLore(
-                        "Type" to display.display.javaClass.simpleName,
+                        "Type" to display.type.javaClass.simpleName,
                         "Click to select"
                     )
 
                     else -> GuiUtils.createCombinedLore(
-                        "Type" to display.display.javaClass.simpleName,
+                        "Type" to display.type.javaClass.simpleName,
                         "Left-Click to edit", "Right-Click to delete"
                     )
                 }

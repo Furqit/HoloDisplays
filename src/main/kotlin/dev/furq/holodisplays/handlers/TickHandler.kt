@@ -61,7 +61,7 @@ object TickHandler {
 
     private fun processHologramDisplays(name: String, hologram: HologramData) {
         hologram.displays.forEachIndexed { index, displayLine ->
-            val display = DisplayConfig.getDisplayOrAPI(displayLine.displayId)?.display as? TextDisplay
+            val display = DisplayConfig.getDisplayOrAPI(displayLine.displayId)?.type as? TextDisplay
                 ?: return@forEachIndexed
 
             val text = display.getText()

@@ -6,8 +6,7 @@ import dev.furq.holodisplays.api.HoloDisplaysAPIImpl
 import dev.furq.holodisplays.commands.MainCommand
 import dev.furq.holodisplays.config.ConfigManager
 import dev.furq.holodisplays.config.HologramConfig
-import dev.furq.holodisplays.data.HologramData
-import dev.furq.holodisplays.handlers.ErrorHandler
+import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.handlers.TickHandler
 import dev.furq.holodisplays.handlers.ViewerHandler
@@ -40,7 +39,7 @@ class HoloDisplays : ModInitializer {
         )
     }
 
-    override fun onInitialize() = ErrorHandler.withCatch {
+    override fun onInitialize() {
         registerServerEvents()
         initializeManagers()
         registerCommands()
@@ -60,7 +59,7 @@ class HoloDisplays : ModInitializer {
         }
     }
 
-    private fun registerServerEvents() = ErrorHandler.withCatch {
+    private fun registerServerEvents() = safeCall {
         ServerLifecycleEvents.SERVER_STARTING.register { SERVER = it }
         ServerTickEvents.END_SERVER_TICK.register { server ->
             CompletableFuture.runAsync({ handleServerTick(server) }, EXECUTOR_HOLODISPLAYS)
@@ -78,14 +77,14 @@ class HoloDisplays : ModInitializer {
         }
     }
 
-    private fun initializeManagers() = ErrorHandler.withCatch {
+    private fun initializeManagers() = safeCall {
         val configDir = FabricLoader.getInstance().configDir.resolve(MOD_ID)
         ConfigManager.init(configDir)
         HologramHandler.init()
         TickHandler.init()
     }
 
-    private fun registerCommands() = ErrorHandler.withCatch {
+    private fun registerCommands() = safeCall {
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
             MainCommand.register(dispatcher)
         }

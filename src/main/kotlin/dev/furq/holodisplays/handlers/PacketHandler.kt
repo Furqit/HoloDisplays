@@ -6,6 +6,7 @@ import dev.furq.holodisplays.data.display.BaseDisplay
 import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
+import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import dev.furq.holodisplays.mixin.BlockDisplayEntityAccessor
 import dev.furq.holodisplays.mixin.DisplayEntityAccessor
 import dev.furq.holodisplays.mixin.ItemDisplayEntityAccessor
@@ -51,7 +52,7 @@ object PacketHandler {
         position: Vec3d,
         lineIndex: Int,
         hologram: HologramData,
-    ) = ErrorHandler.withCatch {
+    ) = safeCall {
         val entityId = getNextEntityId()
         val displayRef = "${line.displayId}:$lineIndex"
 
@@ -59,7 +60,7 @@ object PacketHandler {
             .getOrPut(name) { mutableMapOf() }[displayRef] = entityId
 
         player.networkHandler.run {
-            sendPacket(createSpawnPacket(entityId, position, displayData.display))
+            sendPacket(createSpawnPacket(entityId, position, displayData.type))
             sendDisplayMetadata(player, entityId, displayData, hologram, line)
         }
     }
@@ -108,7 +109,7 @@ object PacketHandler {
     }
 
     private fun createSpawnPacket(entityId: Int, position: Vec3d, display: BaseDisplay): EntitySpawnS2CPacket =
-        ErrorHandler.withCatch<EntitySpawnS2CPacket> {
+        safeCall {
             val entityType = when (display) {
                 is TextDisplay -> EntityType.TEXT_DISPLAY
                 is ItemDisplay -> EntityType.ITEM_DISPLAY
@@ -130,9 +131,9 @@ object PacketHandler {
         line: HologramData.DisplayLine,
     ) {
         val entries = mutableListOf<DataTracker.SerializedEntry<*>>().apply {
-            addCommonProperties(displayData.display, hologram, line)
+            addCommonProperties(displayData.type, hologram, line)
 
-            when (val display = displayData.display) {
+            when (val display = displayData.type) {
                 is TextDisplay -> addTextProperties(display, player)
                 is ItemDisplay -> addItemProperties(display)
                 is BlockDisplay -> addBlockProperties(display)
@@ -218,7 +219,7 @@ object PacketHandler {
     }
 
     private fun MutableList<DataTracker.SerializedEntry<*>>.addItemProperties(display: ItemDisplay) =
-        ErrorHandler.withCatch {
+        safeCall {
             val item = Registries.ITEM.get(
                 Identifier.tryParse(display.id)
                     ?: throw DisplayException("Invalid item identifier: ${display.id}")
@@ -255,7 +256,7 @@ object PacketHandler {
         }
 
     private fun MutableList<DataTracker.SerializedEntry<*>>.addBlockProperties(display: BlockDisplay) =
-        ErrorHandler.withCatch {
+        safeCall {
             val block = Registries.BLOCK.get(
                 Identifier.tryParse(display.id)
                     ?: throw DisplayException("Invalid block identifier: ${display.id}")
@@ -280,9 +281,9 @@ object PacketHandler {
         val line = hologram.displays.getOrNull(lineIndex) ?: return
 
         val entries = mutableListOf<DataTracker.SerializedEntry<*>>().apply {
-            addCommonProperties(displayData.display, hologram, line)
+            addCommonProperties(displayData.type, hologram, line)
 
-            when (val display = displayData.display) {
+            when (val display = displayData.type) {
                 is TextDisplay -> addTextProperties(display, player)
                 is ItemDisplay -> addItemProperties(display)
                 is BlockDisplay -> addBlockProperties(display)

@@ -21,7 +21,7 @@ object ItemDisplayEditor {
         name: String,
         returnCallback: () -> Unit = { DisplayEdit.open(player, name) }
     ) {
-        val display = DisplayConfig.getDisplay(name)?.display as? ItemDisplay ?: return
+        val display = DisplayConfig.getDisplay(name)?.type as? ItemDisplay ?: return
         val gui = GuiUtils.createGui(
             type = ScreenHandlerType.GENERIC_3X3,
             player = player,

@@ -3,6 +3,7 @@ package dev.furq.holodisplays.handlers
 import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.server.network.ServerPlayerEntity
@@ -41,10 +42,8 @@ object HologramHandler {
         }
     }
 
-    fun createHologram(name: String, data: HologramData) = ErrorHandler.withCatch {
-        if (HologramConfig.exists(name)) {
-            throw HologramException("Hologram with name $name already exists")
-        }
+    fun createHologram(name: String, data: HologramData) = safeCall {
+        if (HologramConfig.exists(name)) throw HologramException("Hologram with name $name already exists")
         HologramConfig.saveHologram(name, data)
         ViewerHandler.createTracker(name, data)
         showHologramToPlayers(name, data)
@@ -56,7 +55,7 @@ object HologramHandler {
         }
     }
 
-    fun updateHologramProperty(name: String, property: HologramProperty) = ErrorHandler.withCatch {
+    fun updateHologramProperty(name: String, property: HologramProperty) = safeCall {
         val hologram = HologramConfig.getHologram(name)
             ?: throw HologramException("Hologram $name not found")
 
@@ -111,7 +110,7 @@ object HologramHandler {
         )
     }
 
-    fun deleteHologram(name: String) = ErrorHandler.withCatch {
+    fun deleteHologram(name: String) = safeCall {
         if (!HologramConfig.exists(name)) {
             throw HologramException("Hologram $name not found")
         }
@@ -147,7 +146,6 @@ object HologramHandler {
         return worldCache.computeIfAbsent(world) { w ->
             val worldId = Identifier.tryParse(w)
                 ?: throw HologramException("Invalid world identifier: $w")
-
             HoloDisplays.SERVER?.getWorld(RegistryKey.of(RegistryKeys.WORLD, worldId))
                 ?: throw HologramException("World not found: $w")
         }

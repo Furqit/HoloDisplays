@@ -7,7 +7,7 @@ import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.ConfigException
-import dev.furq.holodisplays.handlers.ErrorHandler
+import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import org.quiltmc.parsers.json.JsonReader
 import org.quiltmc.parsers.json.JsonWriter
@@ -22,7 +22,7 @@ object DisplayConfig : Config {
         super.init(baseDir)
     }
 
-    override fun reload() = ErrorHandler.withCatch {
+    override fun reload() {
         displays.clear()
         configDir.toFile().listFiles(JsonUtils.jsonFilter)
             ?.forEach { file ->
@@ -120,7 +120,7 @@ object DisplayConfig : Config {
     fun getDisplays(): Map<String, DisplayData> = displays
     fun exists(name: String): Boolean = displays.containsKey(name)
 
-    fun saveDisplay(name: String, display: DisplayData) = ErrorHandler.withCatch {
+    fun saveDisplay(name: String, display: DisplayData) = safeCall {
         displays[name] = display
         val file = configDir.resolve("$name.json").toFile()
         file.parentFile.mkdirs()
@@ -133,7 +133,7 @@ object DisplayConfig : Config {
     private fun writeDisplay(json: JsonWriter, displayData: DisplayData) = json.run {
         beginObject()
 
-        when (val display = displayData.display) {
+        when (val display = displayData.type) {
             is TextDisplay -> {
                 name("type").value("text")
                 JsonUtils.writeStringList(this, "lines", display.lines)
@@ -171,7 +171,7 @@ object DisplayConfig : Config {
         display.conditionalPlaceholder?.let { json.name("conditionalPlaceholder").value(it) }
     }
 
-    fun deleteDisplay(name: String) = ErrorHandler.withCatch {
+    fun deleteDisplay(name: String) = safeCall {
         val file = configDir.resolve("$name.json").toFile()
         if (!file.exists()) {
             throw ConfigException("Display config file for $name does not exist")

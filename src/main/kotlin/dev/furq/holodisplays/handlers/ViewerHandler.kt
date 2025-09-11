@@ -6,6 +6,7 @@ import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.HologramData
 import dev.furq.holodisplays.data.display.TextDisplay
+import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import dev.furq.holodisplays.utils.ConditionEvaluator
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.math.Vec3d
@@ -20,7 +21,7 @@ object ViewerHandler {
 
     private val trackedHolograms = mutableMapOf<String, TrackedHologram>()
 
-    fun createTracker(name: String, data: HologramData) = ErrorHandler.withCatch {
+    fun createTracker(name: String, data: HologramData) {
         trackedHolograms[name] = TrackedHologram(name, data)
     }
 
@@ -32,7 +33,7 @@ object ViewerHandler {
         trackedHolograms.clear()
     }
 
-    fun addViewer(player: ServerPlayerEntity, name: String) = ErrorHandler.withCatch {
+    fun addViewer(player: ServerPlayerEntity, name: String) = safeCall {
         val tracked = trackedHolograms[name] ?: throw HologramException("Hologram $name not found")
         if (tracked.observers.add(player.uuid)) {
             showHologramToPlayer(player, name, tracked.hologramData)
@@ -81,7 +82,7 @@ object ViewerHandler {
         }
     }
 
-    fun updateForAllObservers(name: String) = ErrorHandler.withCatch {
+    fun updateForAllObservers(name: String) = safeCall {
         val tracked = trackedHolograms[name] ?: throw HologramException("Hologram $name not found")
         val hologramData = HologramConfig.getHologram(name) ?: throw HologramException("Hologram $name not found in config")
         HoloDisplays.SERVER?.playerManager?.playerList
@@ -91,19 +92,16 @@ object ViewerHandler {
             }
     }
 
-    private fun showHologramToPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) =
-        ErrorHandler.withCatch {
-            if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) return@withCatch
+    private fun showHologramToPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) = safeCall {
+        if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) return@safeCall
 
-            hologram.displays.forEachIndexed { index, entity ->
-                val display = DisplayConfig.getDisplayOrAPI(entity.displayId)
-                    ?: throw HologramException("Display ${entity.displayId} not found")
+        hologram.displays.forEachIndexed { index, entity ->
+            val display = DisplayConfig.getDisplayOrAPI(entity.displayId) ?: throw HologramException("Display ${entity.displayId} not found")
+            if (!ConditionEvaluator.evaluate(display.type.conditionalPlaceholder, player)) return@forEachIndexed
 
-                if (!ConditionEvaluator.evaluate(display.display.conditionalPlaceholder, player)) return@forEachIndexed
-
-                PacketHandler.spawnDisplayEntity(player, name, entity, processDisplayForPlayer(display), hologramPosition(hologram), index, hologram)
-            }
+            PacketHandler.spawnDisplayEntity(player, name, entity, processDisplayForPlayer(display), hologramPosition(hologram), index, hologram)
         }
+    }
 
     private fun hologramPosition(hologram: HologramData) = Vec3d(
         hologram.position.x.toDouble(),
@@ -111,8 +109,8 @@ object ViewerHandler {
         hologram.position.z.toDouble()
     )
 
-    private fun processDisplayForPlayer(display: DisplayData): DisplayData = when (val displayType = display.display) {
-        is TextDisplay -> display.copy(display = displayType.copy(lines = mutableListOf(displayType.lines.joinToString("\n"))))
+    private fun processDisplayForPlayer(display: DisplayData): DisplayData = when (val displayType = display.type) {
+        is TextDisplay -> display.copy(type = displayType.copy(lines = mutableListOf(displayType.lines.joinToString("\n"))))
         else -> display
     }
 
@@ -121,7 +119,7 @@ object ViewerHandler {
 
         hologram.displays.forEachIndexed { index, entity ->
             DisplayConfig.getDisplayOrAPI(entity.displayId)?.let { display ->
-                if (!ConditionEvaluator.evaluate(display.display.conditionalPlaceholder, player)) return@let
+                if (!ConditionEvaluator.evaluate(display.type.conditionalPlaceholder, player)) return@let
 
                 PacketHandler.updateDisplayMetadata(
                     player, name, entity.displayId, index, processDisplayForPlayer(display), hologram

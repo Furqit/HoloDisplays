@@ -14,7 +14,7 @@ object TextLineEditor {
     private const val ITEMS_PER_PAGE = 21
 
     fun open(player: ServerPlayerEntity, displayName: String, page: Int = 0) {
-        val display = DisplayConfig.getDisplay(displayName)?.display as? TextDisplay ?: return
+        val display = DisplayConfig.getDisplay(displayName)?.type as? TextDisplay ?: return
         val pageInfo = GuiUtils.calculatePageInfo(display.lines.size, page, ITEMS_PER_PAGE)
 
         val gui = GuiUtils.createGui(
@@ -90,7 +90,7 @@ object TextLineEditor {
             title = "Edit Line ${lineIndex + 1}",
             defaultText = currentText,
             onSubmit = { newText ->
-                val display = DisplayConfig.getDisplay(displayName)?.display as? TextDisplay ?: return@open
+                val display = DisplayConfig.getDisplay(displayName)?.type as? TextDisplay ?: return@open
                 val lines = display.lines.toMutableList().apply { this[lineIndex] = newText }
                 DisplayHandler.updateDisplayProperty(displayName, DisplayHandler.DisplayProperty.TextLines(lines))
                 FeedbackManager.send(player.commandSource, FeedbackType.TEXT_UPDATED, "text" to newText)
@@ -101,7 +101,7 @@ object TextLineEditor {
     }
 
     private fun deleteLine(player: ServerPlayerEntity, displayName: String, lineIndex: Int, currentPage: Int) {
-        val display = DisplayConfig.getDisplay(displayName)?.display as? TextDisplay ?: return
+        val display = DisplayConfig.getDisplay(displayName)?.type as? TextDisplay ?: return
         val lines = display.lines.toMutableList().apply { removeAt(lineIndex) }
         DisplayHandler.updateDisplayProperty(displayName, DisplayHandler.DisplayProperty.TextLines(lines))
         FeedbackManager.send(player.commandSource, FeedbackType.TEXT_UPDATED, "text" to "line removed")

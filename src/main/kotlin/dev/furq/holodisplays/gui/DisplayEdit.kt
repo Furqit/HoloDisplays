@@ -26,7 +26,7 @@ object DisplayEdit {
                 name = "Scale",
                 item = Items.SCAFFOLDING,
                 lore = GuiUtils.createCombinedLore(
-                    "Current" to "${display.display.scale?.x ?: 1.0}, ${display.display.scale?.y ?: 1.0}, ${display.display.scale?.z ?: 1.0}",
+                    "Current" to "${display.type.scale?.x ?: 1.0}, ${display.type.scale?.y ?: 1.0}, ${display.type.scale?.z ?: 1.0}",
                     "Click to change", "Right click to reset"
                 )
             )) { _, type, _, _ ->
@@ -36,7 +36,7 @@ object DisplayEdit {
                         open(player, name, returnCallback)
                     }
 
-                    else -> editScale(player, name, display.display.scale, returnCallback)
+                    else -> editScale(player, name, display.type.scale, returnCallback)
                 }
             }
 
@@ -44,7 +44,7 @@ object DisplayEdit {
                 name = "Billboard Mode",
                 item = Items.COMPASS,
                 lore = buildList {
-                    addAll(GuiUtils.createCurrentValueLore("Current", display.display.billboardMode?.name?.uppercase()
+                    addAll(GuiUtils.createCurrentValueLore("Current", display.type.billboardMode?.name?.uppercase()
                         ?: "NONE"))
                     addAll(GuiUtils.createActionLore("Click to cycle through modes", "Right click to reset"))
                     addAll(GuiUtils.createLore("Available modes: HORIZONTAL, VERTICAL, CENTER, FIXED"))
@@ -57,7 +57,7 @@ object DisplayEdit {
                     }
 
                     else -> {
-                        val currentMode = display.display.billboardMode?.name ?: "FIXED"
+                        val currentMode = display.type.billboardMode?.name ?: "FIXED"
                         val currentIndex = billboardModes.indexOf(currentMode)
                         val nextMode = billboardModes[(currentIndex + 1) % billboardModes.size]
                         DisplayManager.updateBillboard(name, nextMode.lowercase(), player.commandSource)
@@ -70,7 +70,7 @@ object DisplayEdit {
                 name = "Rotation",
                 item = Items.CLOCK,
                 lore = GuiUtils.createCombinedLore(
-                    "Current" to "${display.display.rotation?.x ?: 0}°, ${display.display.rotation?.y ?: 0}°, ${display.display.rotation?.z ?: 0}°",
+                    "Current" to "${display.type.rotation?.x ?: 0}°, ${display.type.rotation?.y ?: 0}°, ${display.type.rotation?.z ?: 0}°",
                     "Click to change", "Right click to reset"
                 )
             )) { _, type, _, _ ->
@@ -80,7 +80,7 @@ object DisplayEdit {
                         open(player, name, returnCallback)
                     }
 
-                    else -> editRotation(player, name, display.display.rotation, returnCallback)
+                    else -> editRotation(player, name, display.type.rotation, returnCallback)
                 }
             }
 
@@ -88,7 +88,7 @@ object DisplayEdit {
                 name = "Condition",
                 item = Items.REPEATER,
                 lore = GuiUtils.createCombinedLore(
-                    "Current" to (display.display.conditionalPlaceholder ?: "none"),
+                    "Current" to (display.type.conditionalPlaceholder ?: "none"),
                     "Click to change", "Right-Click to remove"
                 )
             )) { _, type, _, _ ->
@@ -103,13 +103,13 @@ object DisplayEdit {
 
             setSlot(32, GuiUtils.createGuiItem(
                 name = "Type Settings",
-                item = GuiUtils.getDisplayIcon(display.display),
+                item = GuiUtils.getDisplayIcon(display.type),
                 lore = GuiUtils.createCombinedLore(
-                    "Type" to display.display.javaClass.simpleName,
+                    "Type" to display.type.javaClass.simpleName,
                     "Click to edit type-specific settings"
                 )
             )) { _, _, _, _ ->
-                when (display.display) {
+                when (display.type) {
                     is dev.furq.holodisplays.data.display.TextDisplay -> TextDisplayEditor.open(player, name)
                     is dev.furq.holodisplays.data.display.ItemDisplay -> ItemDisplayEditor.open(player, name)
                     is dev.furq.holodisplays.data.display.BlockDisplay -> BlockDisplayEditor.open(player, name)

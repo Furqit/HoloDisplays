@@ -15,7 +15,7 @@ object BlockDisplayEditor {
         name: String,
         returnCallback: () -> Unit = { DisplayEdit.open(player, name) }
     ) {
-        val display = DisplayConfig.getDisplay(name)?.display as? BlockDisplay ?: return
+        val display = DisplayConfig.getDisplay(name)?.type as? BlockDisplay ?: return
         val gui = GuiUtils.createGui(
             type = ScreenHandlerType.GENERIC_3X3,
             player = player,

@@ -231,7 +231,7 @@ object DisplayManager {
         if (!validateDisplayExists(displayName, source)) return
 
         val display = DisplayConfig.getDisplay(displayName)
-        if (display?.display !is TextDisplay) {
+        if (display?.type !is TextDisplay) {
             FeedbackManager.send(source, FeedbackType.INVALID_DISPLAY_TYPE, "type" to "text")
             return
         }
@@ -244,7 +244,7 @@ object DisplayManager {
         if (!validateDisplayExists(displayName, source)) return
 
         val display = DisplayConfig.getDisplay(displayName)
-        if (display?.display !is TextDisplay) {
+        if (display?.type !is TextDisplay) {
             FeedbackManager.send(source, FeedbackType.INVALID_DISPLAY_TYPE, "type" to "text")
             return
         }
@@ -257,7 +257,7 @@ object DisplayManager {
         if (!validateDisplayExists(displayName, source)) return
 
         val display = DisplayConfig.getDisplay(displayName)
-        if (display?.display !is ItemDisplay) {
+        if (display?.type !is ItemDisplay) {
             FeedbackManager.send(source, FeedbackType.INVALID_DISPLAY_TYPE, "type" to "item")
             return
         }
@@ -270,7 +270,7 @@ object DisplayManager {
         if (!validateDisplayExists(displayName, source)) return
 
         val display = DisplayConfig.getDisplay(displayName)
-        if (display?.display !is BlockDisplay) {
+        if (display?.type !is BlockDisplay) {
             FeedbackManager.send(source, FeedbackType.INVALID_DISPLAY_TYPE, "type" to "block")
             return
         }

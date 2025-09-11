@@ -122,7 +122,7 @@ object DisplayEditCommand : EditCommand() {
     private fun executeAddTextLine(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
         val content = StringArgumentType.getString(context, "content")
-        val display = DisplayConfig.getDisplay(name)?.display as? TextDisplay ?: return 0
+        val display = DisplayConfig.getDisplay(name)?.type as? TextDisplay ?: return 0
         val lines = display.lines.toMutableList().apply { add(content) }
         DisplayHandler.updateDisplayProperty(name, DisplayHandler.DisplayProperty.TextLines(lines))
         FeedbackManager.send(context.source, FeedbackType.DISPLAY_UPDATED, "detail" to "text line added")
@@ -133,7 +133,7 @@ object DisplayEditCommand : EditCommand() {
         val name = StringArgumentType.getString(context, "name")
         val lineIndex = IntegerArgumentType.getInteger(context, "lineIndex")
         val content = StringArgumentType.getString(context, "content")
-        val display = DisplayConfig.getDisplay(name)?.display as? TextDisplay ?: return 0
+        val display = DisplayConfig.getDisplay(name)?.type as? TextDisplay ?: return 0
         if (lineIndex >= display.lines.size) {
             FeedbackManager.send(context.source, FeedbackType.DISPLAY_UPDATED, "detail" to "invalid line index")
             return 0
@@ -147,7 +147,7 @@ object DisplayEditCommand : EditCommand() {
     private fun executeDeleteTextLine(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
         val lineIndex = IntegerArgumentType.getInteger(context, "lineIndex")
-        val display = DisplayConfig.getDisplay(name)?.display as? TextDisplay ?: return 0
+        val display = DisplayConfig.getDisplay(name)?.type as? TextDisplay ?: return 0
         if (lineIndex >= display.lines.size) {
             FeedbackManager.send(context.source, FeedbackType.DISPLAY_UPDATED, "detail" to "invalid line index")
             return 0

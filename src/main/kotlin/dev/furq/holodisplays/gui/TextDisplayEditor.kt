@@ -19,7 +19,7 @@ object TextDisplayEditor {
         name: String,
         returnCallback: () -> Unit = { DisplayEdit.open(player, name) }
     ) {
-        val display = DisplayConfig.getDisplay(name)?.display as? TextDisplay ?: return
+        val display = DisplayConfig.getDisplay(name)?.type as? TextDisplay ?: return
         val gui = GuiUtils.createGui(
             type = ScreenHandlerType.GENERIC_9X5,
             player = player,
@@ -134,7 +134,7 @@ object TextDisplayEditor {
     }
 
     private fun addNewLine(player: ServerPlayerEntity, name: String, returnCallback: () -> Unit) {
-        val display = DisplayConfig.getDisplay(name)?.display as? TextDisplay ?: return
+        val display = DisplayConfig.getDisplay(name)?.type as? TextDisplay ?: return
         AnvilInput.open(
             player = player,
             title = "Enter New Line",

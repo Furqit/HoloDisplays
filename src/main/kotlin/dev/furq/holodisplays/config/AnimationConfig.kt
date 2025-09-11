@@ -2,7 +2,6 @@ package dev.furq.holodisplays.config
 
 import dev.furq.holodisplays.data.AnimationData
 import dev.furq.holodisplays.handlers.ConfigException
-import dev.furq.holodisplays.handlers.ErrorHandler
 import org.quiltmc.parsers.json.JsonReader
 import org.quiltmc.parsers.json.JsonWriter
 import java.nio.file.Path
@@ -16,7 +15,7 @@ object AnimationConfig : Config {
         super.init(baseDir)
     }
 
-    override fun reload() = ErrorHandler.withCatch {
+    override fun reload() {
         animations.clear()
         configDir.toFile().listFiles(JsonUtils.jsonFilter)
             ?.forEach { file ->
@@ -52,7 +51,7 @@ object AnimationConfig : Config {
     fun getAnimation(name: String) = animations[name]
     fun getAnimations() = animations.toMap()
 
-    fun saveAnimation(name: String, animation: AnimationData) = ErrorHandler.withCatch {
+    fun saveAnimation(name: String, animation: AnimationData) {
         animations[name] = animation
         val file = configDir.resolve("$name.json").toFile()
         file.parentFile.mkdirs()
@@ -69,7 +68,7 @@ object AnimationConfig : Config {
         endObject()
     }
 
-    fun deleteAnimation(name: String) = ErrorHandler.withCatch {
+    fun deleteAnimation(name: String) {
         val file = configDir.resolve("$name.json").toFile()
         if (!file.exists()) {
             throw ConfigException("Animation config file for $name does not exist")

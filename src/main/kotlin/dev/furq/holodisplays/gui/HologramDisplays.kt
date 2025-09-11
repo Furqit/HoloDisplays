@@ -44,7 +44,7 @@ object HologramDisplays {
 
                 val display = hologram.displays[i]
                 val displayConfig = DisplayConfig.getDisplay(display.displayId)
-                val icon = GuiUtils.getDisplayIcon(displayConfig?.display)
+                val icon = GuiUtils.getDisplayIcon(displayConfig?.type)
 
                 val lore = buildList {
                     addAll(GuiUtils.createCurrentValueLore("Display", display.displayId))

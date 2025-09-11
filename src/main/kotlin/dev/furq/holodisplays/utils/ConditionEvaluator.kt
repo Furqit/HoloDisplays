@@ -39,7 +39,7 @@ object ConditionEvaluator {
         return comparator(leftNum, rightNum)
     }
 
-    private fun parseCondition(condition: String): Triple<String, String, String>? {
+    fun parseCondition(condition: String): Triple<String, String, String>? {
         val match = operatorRegex.find(condition) ?: return null
         val operator = match.groupValues[1]
         val parts = condition.split(" $operator ")

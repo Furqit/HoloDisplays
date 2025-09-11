@@ -6,7 +6,7 @@ import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
 
 data class DisplayData(
-    val display: BaseDisplay,
+    val type: BaseDisplay,
 ) {
     companion object {
         fun text(builder: TextDisplay.Builder.() -> Unit): DisplayData {
