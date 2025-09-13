@@ -82,7 +82,7 @@ object HologramConfig : Config {
 
     private fun JsonReader.parsePosition(): Pair<String, Vector3f> {
         var world = "minecraft:overworld"
-        var position = Vector3f()
+        val position = Vector3f()
 
         beginObject()
         while (hasNext()) {

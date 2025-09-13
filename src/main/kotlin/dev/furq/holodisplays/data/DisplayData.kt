@@ -1,9 +1,6 @@
 package dev.furq.holodisplays.data
 
-import dev.furq.holodisplays.data.display.BaseDisplay
-import dev.furq.holodisplays.data.display.BlockDisplay
-import dev.furq.holodisplays.data.display.ItemDisplay
-import dev.furq.holodisplays.data.display.TextDisplay
+import dev.furq.holodisplays.data.display.*
 
 data class DisplayData(
     val type: BaseDisplay,
@@ -25,6 +22,12 @@ data class DisplayData(
             val blockBuilder = BlockDisplay.Builder()
             blockBuilder.builder()
             return DisplayData(blockBuilder.build())
+        }
+
+        fun entity(builder: EntityDisplay.Builder.() -> Unit): DisplayData {
+            val entityBuilder = EntityDisplay.Builder()
+            entityBuilder.builder()
+            return DisplayData(entityBuilder.build())
         }
     }
 }

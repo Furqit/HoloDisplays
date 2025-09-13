@@ -2,12 +2,10 @@ package dev.furq.holodisplays.config
 
 import dev.furq.holodisplays.api.HoloDisplaysAPI
 import dev.furq.holodisplays.data.DisplayData
-import dev.furq.holodisplays.data.display.BaseDisplay
-import dev.furq.holodisplays.data.display.BlockDisplay
-import dev.furq.holodisplays.data.display.ItemDisplay
-import dev.furq.holodisplays.data.display.TextDisplay
+import dev.furq.holodisplays.data.display.*
 import dev.furq.holodisplays.handlers.ConfigException
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
+import net.minecraft.entity.EntityPose
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import org.quiltmc.parsers.json.JsonReader
 import org.quiltmc.parsers.json.JsonWriter
@@ -44,6 +42,7 @@ object DisplayConfig : Config {
                         "text" -> parseTextDisplay()
                         "item" -> parseItemDisplay()
                         "block" -> parseBlockDisplay()
+                        "entity" -> parseEntityDisplay()
                         else -> throw IllegalArgumentException("Invalid display type")
                     }
                 }
@@ -115,6 +114,24 @@ object DisplayConfig : Config {
         return DisplayData(builder.build())
     }
 
+    private fun JsonReader.parseEntityDisplay(): DisplayData {
+        val builder = EntityDisplay.Builder()
+
+        while (hasNext()) {
+            when (nextName()) {
+                "id" -> builder.id = nextString()
+                "rotation" -> builder.rotation = JsonUtils.parseVector3f(this)
+                "scale" -> builder.scale = JsonUtils.parseVector3f(this)
+                "glow" -> builder.glow = nextBoolean()
+                "pose" -> builder.pose = EntityPose.valueOf(nextString().uppercase())
+                "conditionalPlaceholder" -> builder.conditionalPlaceholder = nextString()
+                else -> skipValue()
+            }
+        }
+
+        return DisplayData(builder.build())
+    }
+
     fun getDisplay(name: String): DisplayData? = displays[name]
     fun getDisplayOrAPI(name: String): DisplayData? = displays[name] ?: HoloDisplaysAPI.get().getDisplay(name)
     fun getDisplays(): Map<String, DisplayData> = displays
@@ -159,6 +176,15 @@ object DisplayConfig : Config {
                 name("id").value(display.id)
                 writeCommonProperties(this, display)
             }
+
+            is EntityDisplay -> {
+                name("type").value("entity")
+                name("id").value(display.id)
+                display.glow?.let { name("glow").value(it) }
+                display.pose?.let { name("pose").value(it.name) }
+                display.conditionalPlaceholder?.let { name("conditionalPlaceholder").value(it) }
+                writeCommonProperties(this, display)
+            }
         }
 
         endObject()
@@ -167,7 +193,9 @@ object DisplayConfig : Config {
     private fun writeCommonProperties(json: JsonWriter, display: BaseDisplay) {
         display.rotation?.let { JsonUtils.writeVector3f(json, "rotation", it) }
         display.scale?.let { JsonUtils.writeVector3f(json, "scale", it) }
-        display.billboardMode?.let { json.name("billboardMode").value(it.name) }
+        if (display !is EntityDisplay) {
+            display.billboardMode?.let { json.name("billboardMode").value(it.name) }
+        }
         display.conditionalPlaceholder?.let { json.name("conditionalPlaceholder").value(it) }
     }
 

@@ -15,11 +15,11 @@ object CreateDisplay {
             player = player,
             title = "Create Display",
             size = 9,
-            borderSlots = listOf(3, 4, 5, 6)
+            borderSlots = listOf(1, 3, 5, 6, 7)
         )
 
         gui.apply {
-            setSlot(3, GuiUtils.createGuiItem(
+            setSlot(1, GuiUtils.createGuiItem(
                 name = "Text Display",
                 item = Items.PAPER,
                 lore = GuiUtils.createActionLore("Click to create a new text display")
@@ -27,7 +27,7 @@ object CreateDisplay {
                 createDisplay(player, hologramName, "text", "text_display", "Hello World!")
             }
 
-            setSlot(4, GuiUtils.createGuiItem(
+            setSlot(3, GuiUtils.createGuiItem(
                 name = "Item Display",
                 item = Items.ITEM_FRAME,
                 lore = GuiUtils.createActionLore("Click to create a new item display")
@@ -41,6 +41,14 @@ object CreateDisplay {
                 lore = GuiUtils.createActionLore("Click to create a new block display")
             )) { _, _, _, _ ->
                 createDisplay(player, hologramName, "block", "block_display", "minecraft:grass_block")
+            }
+
+            setSlot(7, GuiUtils.createGuiItem(
+                name = "Entity Display",
+                item = Items.ARMOR_STAND,
+                lore = GuiUtils.createActionLore("Click to create a new entity display")
+            )) { _, _, _, _ ->
+                createDisplay(player, hologramName, "entity", "entity_display", "minecraft:zombie")
             }
 
             GuiUtils.setupBackButton(this, 6) {
@@ -64,6 +72,7 @@ object CreateDisplay {
                     "text" -> "Enter Text" to defaultValue
                     "item" -> "Enter Item ID" to defaultValue
                     "block" -> "Enter Block ID" to defaultValue
+                    "entity" -> "Enter Entity ID" to defaultValue
                     else -> "Enter Value" to defaultValue
                 }
 
@@ -76,6 +85,7 @@ object CreateDisplay {
                             "text" -> DisplayManager.createTextDisplay(name, value, player.commandSource)
                             "item" -> DisplayManager.createItemDisplay(name, value, player.commandSource)
                             "block" -> DisplayManager.createBlockDisplay(name, value, player.commandSource)
+                            "entity" -> DisplayManager.createEntityDisplay(name, value, player.commandSource)
                             else -> false
                         }
 

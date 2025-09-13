@@ -1,6 +1,7 @@
 package dev.furq.holodisplays.utils
 
 import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.data.display.EntityDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
 import eu.pb4.sgui.api.gui.SimpleGui
@@ -90,6 +91,7 @@ object GuiUtils {
         is TextDisplay -> Items.PAPER
         is ItemDisplay -> Items.ITEM_FRAME
         is BlockDisplay -> Items.GRASS_BLOCK
+        is EntityDisplay -> Items.ARMOR_STAND
         else -> Items.BARRIER
     }
 

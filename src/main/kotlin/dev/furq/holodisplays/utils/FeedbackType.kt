@@ -22,6 +22,7 @@ enum class FeedbackType(private val template: String, val isError: Boolean = fal
     SEE_THROUGH_UPDATED("See-through mode {enabled}"),
     ITEM_ID_UPDATED("Item ID changed to {id}"),
     BLOCK_ID_UPDATED("Block ID changed to {id}"),
+    ENTITY_ID_UPDATED("Entity ID changed to {id}"),
     OFFSET_UPDATED("Offset updated to x: {x}, y: {y}, z: {z}"),
 
     // Error Messages
@@ -37,6 +38,7 @@ enum class FeedbackType(private val template: String, val isError: Boolean = fal
     INVALID_DISPLAY_TYPE("Invalid display type. Use: none, thirdperson_lefthand, thirdperson_righthand, firstperson_lefthand, firstperson_righthand, head, gui, ground, fixed", true),
     INVALID_ITEM("Invalid item ID. Item does not exist in the game", true),
     INVALID_BLOCK("Invalid block ID. Block does not exist in the game", true),
+    INVALID_ENTITY("Invalid entity ID. Entity does not exist in the game", true),
     INVALID_TEXT_OPACITY("Invalid text opacity. Must be between 1 and 100", true),
     INVALID_UPDATE_RATE("Invalid update rate. Must be between 1 and 100 ticks", true),
     INVALID_ROTATION("Invalid rotation values. Must be valid angles", true),

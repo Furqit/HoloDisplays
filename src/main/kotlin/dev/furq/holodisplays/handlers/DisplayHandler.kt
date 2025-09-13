@@ -4,10 +4,12 @@ import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.data.display.EntityDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import org.joml.Vector3f
+import net.minecraft.entity.EntityPose as MinecraftEntityPose
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode as MinecraftBillboardMode
 
 object DisplayHandler {
@@ -26,6 +28,9 @@ object DisplayHandler {
         data class ItemDisplayType(val value: String) : DisplayProperty()
         data class ItemCustomModelData(val value: Int?) : DisplayProperty()
         data class BlockId(val value: String) : DisplayProperty()
+        data class EntityId(val value: String) : DisplayProperty()
+        data class EntityGlow(val value: Boolean?) : DisplayProperty()
+        data class EntityPose(val value: MinecraftEntityPose?) : DisplayProperty()
         data class ConditionalPlaceholder(val value: String?) : DisplayProperty()
     }
 
@@ -45,7 +50,9 @@ object DisplayHandler {
 
         val needsRespawn = when (property) {
             is DisplayProperty.ConditionalPlaceholder,
-            is DisplayProperty.Rotation -> true
+            is DisplayProperty.Rotation,
+            is DisplayProperty.EntityId -> true
+            is DisplayProperty.Scale -> display.type is EntityDisplay
 
             else -> false
         }
@@ -64,6 +71,7 @@ object DisplayHandler {
             is TextDisplay -> updateTextDisplay(currentDisplay, property)
             is ItemDisplay -> updateItemDisplay(currentDisplay, property)
             is BlockDisplay -> updateBlockDisplay(currentDisplay, property)
+            is EntityDisplay -> updateEntityDisplay(currentDisplay, property)
             else -> return null
         } ?: return null
 
@@ -101,6 +109,16 @@ object DisplayHandler {
         is DisplayProperty.BillboardMode -> display.copy(billboardMode = property.mode)
         is DisplayProperty.Rotation -> display.copy(rotation = property.value)
         is DisplayProperty.BlockId -> display.copy(id = property.value)
+        is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
+        else -> null
+    }
+
+    private fun updateEntityDisplay(display: EntityDisplay, property: DisplayProperty): EntityDisplay? = when (property) {
+        is DisplayProperty.Scale -> display.copy(scale = property.value)
+        is DisplayProperty.Rotation -> display.copy(rotation = property.value)
+        is DisplayProperty.EntityId -> display.copy(id = property.value)
+        is DisplayProperty.EntityGlow -> display.copy(glow = property.value)
+        is DisplayProperty.EntityPose -> display.copy(pose = property.value)
         is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
         else -> null
     }

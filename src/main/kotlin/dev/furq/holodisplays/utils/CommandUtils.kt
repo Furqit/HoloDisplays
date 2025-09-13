@@ -23,6 +23,9 @@ object CommandUtils {
     fun suggestBlockIds(builder: SuggestionsBuilder): CompletableFuture<Suggestions> =
         builder.apply { Registries.BLOCK.ids.forEach { suggest(it.toString()) } }.buildFuture()
 
+    fun suggestEntityIds(builder: SuggestionsBuilder): CompletableFuture<Suggestions> =
+        builder.apply { Registries.ENTITY_TYPE.ids.forEach { suggest(it.toString()) } }.buildFuture()
+
     fun requirePlayer(context: CommandContext<ServerCommandSource>): net.minecraft.server.network.ServerPlayerEntity? {
         return context.source.player ?: run {
             FeedbackManager.send(context.source, FeedbackType.PLAYER_ONLY)

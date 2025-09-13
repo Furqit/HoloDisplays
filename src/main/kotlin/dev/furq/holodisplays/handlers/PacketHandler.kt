@@ -9,10 +9,13 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.component.type.CustomModelDataComponent
 import net.minecraft.entity.EntityType
+import net.minecraft.entity.attribute.EntityAttributeInstance
+import net.minecraft.entity.attribute.EntityAttributes
 import net.minecraft.entity.data.DataTracker
 import net.minecraft.entity.data.TrackedData
 import net.minecraft.item.ItemStack
 import net.minecraft.network.packet.s2c.play.EntitiesDestroyS2CPacket
+import net.minecraft.network.packet.s2c.play.EntityAttributesS2CPacket
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket
 import net.minecraft.network.packet.s2c.play.EntityTrackerUpdateS2CPacket
 import net.minecraft.registry.Registries
@@ -75,8 +78,17 @@ object PacketHandler {
         entityIds.getOrPut(player.uuid, ::mutableMapOf)
             .getOrPut(hologramName, ::mutableMapOf)[displayRef] = entityId
 
+        val display = displayData.type
         player.networkHandler.run {
-            sendPacket(createSpawnPacket(entityId, position, displayData.type))
+            if (display is EntityDisplay) {
+                val translation = line.offset
+                val effectivePosition = Vec3d(position.x + translation.x, position.y + translation.y, position.z + translation.z)
+                val rotation = display.rotation ?: hologram.rotation
+
+                sendPacket(createSpawnPacket(entityId, effectivePosition, display, rotation.x, rotation.y, rotation.y.toDouble()))
+            } else {
+                sendPacket(createSpawnPacket(entityId, position, displayData.type))
+            }
             sendDisplayMetadata(player, entityId, displayData, hologram, line)
         }
     }
@@ -109,6 +121,7 @@ object PacketHandler {
             is TextDisplay -> EntityType.TEXT_DISPLAY
             is ItemDisplay -> EntityType.ITEM_DISPLAY
             is BlockDisplay -> EntityType.BLOCK_DISPLAY
+            is EntityDisplay -> Registries.ENTITY_TYPE.get(Identifier.tryParse(display.id))
             else -> throw DisplayException("Unknown display type")
         }
 
@@ -127,6 +140,13 @@ object PacketHandler {
     ) = safeCall {
         val entries = buildDisplayMetadata(displayData, hologram, line, player)
         player.networkHandler.sendPacket(EntityTrackerUpdateS2CPacket(entityId, entries))
+
+        if (displayData.type is EntityDisplay) {
+            val scaleAttr = EntityAttributeInstance(/*? if 1.20.6 {*/ EntityAttributes.GENERIC_SCALE /*?}*//*? if >=1.21.3 {*/ /*EntityAttributes.SCALE *//*?}*/) { }
+            scaleAttr.baseValue = displayData.type.scale?.x()?.toDouble() ?: 1.0
+            val scalePacket = EntityAttributesS2CPacket(entityId, listOf(scaleAttr))
+            player.networkHandler.sendPacket(scalePacket)
+        }
     }
 
     fun updateDisplayMetadata(
@@ -176,12 +196,13 @@ object PacketHandler {
         buildList {
             val display = displayData.type
             val commonProps = commonDisplayProperties(displayData, hologram, line)
-            addAll(commonProps)
+            if (display !is EntityDisplay) addAll(commonProps)
 
             when (display) {
                 is TextDisplay -> addAll(textDisplayProperties(display, player))
                 is ItemDisplay -> addAll(itemDisplayProperties(display))
                 is BlockDisplay -> addAll(blockDisplayProperties(display))
+                is EntityDisplay -> addAll(entityDisplayProperties(display))
             }
         }
     } ?: emptyList()
@@ -272,4 +293,14 @@ object PacketHandler {
             add(createEntry(BlockDisplayEntityAccessor.getBlockState(), block.defaultState))
         }
     } ?: emptyList()
+
+    private fun entityDisplayProperties(display: EntityDisplay): List<DataTracker.SerializedEntry<*>> = buildList {
+        display.glow?.also { glow ->
+            add(createEntry(EntityAccessor.getFlags(), if (glow) (1 shl 6).toByte() else 0))
+        }
+
+        display.pose?.also {
+            add(createEntry(EntityAccessor.getPose(), it))
+        }
+    }
 }

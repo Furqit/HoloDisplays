@@ -1,6 +1,7 @@
 package dev.furq.holodisplays.commands
 
 import com.mojang.brigadier.arguments.BoolArgumentType
+import com.mojang.brigadier.arguments.FloatArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.ArgumentBuilder
@@ -13,6 +14,7 @@ import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.managers.FeedbackManager
 import dev.furq.holodisplays.utils.CommandUtils
 import dev.furq.holodisplays.utils.FeedbackType
+import net.minecraft.entity.EntityPose
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
 import org.joml.Vector3f
@@ -35,6 +37,7 @@ object DisplayEditCommand : EditCommand() {
             .then(buildTextCommands())
             .then(buildItemCommands())
             .then(buildBlockCommands())
+            .then(buildEntityCommands())
             .then(buildConditionCommands())
         )
 
@@ -117,6 +120,33 @@ object DisplayEditCommand : EditCommand() {
                 .then(CommandManager.argument("blockId", StringArgumentType.greedyString())
                     .suggests { _, builder -> CommandUtils.suggestBlockIds(builder) }
                     .executes { context -> executeBlockId(context) }))
+    }
+
+    private fun buildEntityCommands(): ArgumentBuilder<ServerCommandSource, *> {
+        return CommandManager.literal("entity")
+            .then(CommandManager.literal("id")
+                .then(CommandManager.argument("entityId", StringArgumentType.greedyString())
+                    .suggests { _, builder -> CommandUtils.suggestEntityIds(builder) }
+                    .executes { context -> executeEntityId(context) }))
+            .then(CommandManager.literal("scale")
+                .then(CommandManager.argument("value", FloatArgumentType.floatArg(0.1f))
+                    .executes { context -> executeEntityScale(context) })
+                .then(CommandManager.literal("reset")
+                    .executes { context -> executeResetEntityScale(context) }))
+            .then(CommandManager.literal("rotation")
+                .then(CommandManager.argument("pitch", FloatArgumentType.floatArg(-180f, 180f))
+                    .then(CommandManager.argument("yaw", FloatArgumentType.floatArg(-180f, 180f))
+                        .executes { context -> executeEntityRotation(context) }))
+                .then(CommandManager.literal("reset")
+                    .executes { context -> executeResetEntityRotation(context) }))
+            .then(CommandManager.literal("glow")
+                .then(CommandManager.argument("enabled", BoolArgumentType.bool())
+                    .executes { context -> executeEntityGlow(context) }))
+            .then(CommandManager.literal("pose")
+                .then(CommandManager.argument("pose", StringArgumentType.greedyString())
+                    .executes { context -> executeEntityPose(context) })
+                .then(CommandManager.literal("reset")
+                    .executes { context -> executeResetEntityPose(context) }))
     }
 
     private fun executeAddTextLine(context: CommandContext<ServerCommandSource>): Int {
@@ -238,6 +268,61 @@ object DisplayEditCommand : EditCommand() {
         val name = StringArgumentType.getString(context, "name")
         val blockId = StringArgumentType.getString(context, "blockId")
         DisplayManager.updateBlockId(name, blockId, context.source)
+        return 1
+    }
+
+    private fun executeEntityId(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        val entityId = StringArgumentType.getString(context, "entityId")
+        DisplayManager.updateEntityId(name, entityId, context.source)
+        return 1
+    }
+
+    private fun executeEntityGlow(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        val enabled = BoolArgumentType.getBool(context, "enabled")
+        DisplayManager.updateEntityGlow(name, enabled, context.source)
+        return 1
+    }
+
+    private fun executeEntityPose(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        val poseString = StringArgumentType.getString(context, "pose")
+        val pose = EntityPose.valueOf(poseString.uppercase())
+        DisplayManager.updateEntityPose(name, pose, context.source)
+        return 1
+    }
+
+    private fun executeResetEntityPose(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        DisplayManager.updateEntityPose(name, null as EntityPose?, context.source)
+        return 1
+    }
+
+    private fun executeEntityScale(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        val value = FloatArgumentType.getFloat(context, "value")
+        updateScale(name, Vector3f(value), context.source)
+        return 1
+    }
+
+    private fun executeResetEntityScale(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        updateScale(name, Vector3f(1f), context.source)
+        return 1
+    }
+
+    private fun executeEntityRotation(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        val pitch = FloatArgumentType.getFloat(context, "pitch")
+        val yaw = FloatArgumentType.getFloat(context, "yaw")
+        updateRotation(name, pitch, yaw, 0f, context.source)
+        return 1
+    }
+
+    private fun executeResetEntityRotation(context: CommandContext<ServerCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        updateRotation(name, 0f, 0f, 0f, context.source)
         return 1
     }
 }

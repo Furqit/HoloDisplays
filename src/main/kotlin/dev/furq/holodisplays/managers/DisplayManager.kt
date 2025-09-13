@@ -3,10 +3,7 @@ package dev.furq.holodisplays.managers
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.data.DisplayData
-import dev.furq.holodisplays.data.display.BaseDisplay
-import dev.furq.holodisplays.data.display.BlockDisplay
-import dev.furq.holodisplays.data.display.ItemDisplay
-import dev.furq.holodisplays.data.display.TextDisplay
+import dev.furq.holodisplays.data.display.*
 import dev.furq.holodisplays.handlers.DisplayHandler
 import dev.furq.holodisplays.handlers.DisplayHandler.DisplayProperty.*
 import dev.furq.holodisplays.handlers.HologramHandler
@@ -17,6 +14,7 @@ import net.minecraft.registry.Registries
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.util.Identifier
 import org.joml.Vector3f
+import net.minecraft.entity.EntityPose as MinecraftEntityPose
 
 object DisplayManager {
     private fun validateDisplayName(name: String, source: ServerCommandSource): Boolean =
@@ -65,6 +63,20 @@ object DisplayManager {
             false
         } else {
             createDisplay(name, BlockDisplay(id = fullBlockId), "block", source)
+        }
+    }
+
+    fun createEntityDisplay(name: String, entityId: String, source: ServerCommandSource): Boolean {
+        if (!validateDisplayName(name, source)) return false
+
+        val fullEntityId = if (!entityId.contains(":")) "minecraft:$entityId" else entityId
+        val entityIdentifier = Identifier.tryParse(fullEntityId)
+
+        return if (entityIdentifier == null || !Registries.ENTITY_TYPE.containsId(entityIdentifier)) {
+            FeedbackManager.send(source, FeedbackType.INVALID_ENTITY)
+            false
+        } else {
+            createDisplay(name, EntityDisplay(id = fullEntityId), "entity", source)
         }
     }
 
@@ -277,5 +289,44 @@ object DisplayManager {
 
         DisplayHandler.updateDisplayProperty(displayName, BlockId(blockId))
         FeedbackManager.send(source, FeedbackType.BLOCK_ID_UPDATED, "id" to blockId)
+    }
+
+    fun updateEntityId(displayName: String, entityId: String, source: ServerCommandSource) {
+        if (!validateDisplayExists(displayName, source)) return
+
+        val display = DisplayConfig.getDisplay(displayName)
+        if (display?.type !is EntityDisplay) {
+            FeedbackManager.send(source, FeedbackType.INVALID_DISPLAY_TYPE, "type" to "entity")
+            return
+        }
+
+        DisplayHandler.updateDisplayProperty(displayName, EntityId(entityId))
+        FeedbackManager.send(source, FeedbackType.ENTITY_ID_UPDATED, "id" to entityId)
+    }
+
+    fun updateEntityGlow(displayName: String, glow: Boolean, source: ServerCommandSource) {
+        if (!validateDisplayExists(displayName, source)) return
+
+        val display = DisplayConfig.getDisplay(displayName)
+        if (display?.type !is EntityDisplay) {
+            FeedbackManager.send(source, FeedbackType.INVALID_DISPLAY_TYPE, "type" to "entity")
+            return
+        }
+
+        DisplayHandler.updateDisplayProperty(displayName, EntityGlow(glow))
+        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "glow ${if (glow) "enabled" else "disabled"}")
+    }
+
+    fun updateEntityPose(displayName: String, pose: MinecraftEntityPose?, source: ServerCommandSource) {
+        if (!validateDisplayExists(displayName, source)) return
+
+        val display = DisplayConfig.getDisplay(displayName)
+        if (display?.type !is EntityDisplay) {
+            FeedbackManager.send(source, FeedbackType.INVALID_DISPLAY_TYPE, "type" to "entity")
+            return
+        }
+
+        DisplayHandler.updateDisplayProperty(displayName, EntityPose(pose))
+        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "pose set to ${pose?.name?.lowercase() ?: "none"}")
     }
 }
