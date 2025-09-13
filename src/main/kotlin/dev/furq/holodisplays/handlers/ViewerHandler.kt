@@ -43,7 +43,7 @@ object ViewerHandler {
     private fun removeViewer(player: ServerPlayerEntity, name: String) {
         trackedHolograms[name]?.let { tracked ->
             if (tracked.observers.remove(player.uuid)) {
-                PacketHandler.destroyHologram(player, name)
+                PacketHandler.destroyDisplayEntity(player, name)
             }
         }
     }
@@ -56,7 +56,7 @@ object ViewerHandler {
             .filter { it.observers.contains(player.uuid) }
             .forEach { tracked ->
                 tracked.observers.remove(player.uuid)
-                PacketHandler.destroyHologram(player, tracked.hologramName)
+                PacketHandler.destroyDisplayEntity(player, tracked.hologramName)
             }
     }
 
@@ -76,7 +76,7 @@ object ViewerHandler {
             HoloDisplays.SERVER?.playerManager?.playerList
                 ?.filter { tracked.observers.contains(it.uuid) }
                 ?.forEach { player ->
-                    PacketHandler.destroyHologram(player, name)
+                    PacketHandler.destroyDisplayEntity(player, name)
                     showHologramToPlayer(player, name, hologramData)
                 }
         }

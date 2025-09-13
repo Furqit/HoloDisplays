@@ -2,15 +2,9 @@ package dev.furq.holodisplays.handlers
 
 import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.HologramData
-import dev.furq.holodisplays.data.display.BaseDisplay
-import dev.furq.holodisplays.data.display.BlockDisplay
-import dev.furq.holodisplays.data.display.ItemDisplay
-import dev.furq.holodisplays.data.display.TextDisplay
+import dev.furq.holodisplays.data.display.*
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
-import dev.furq.holodisplays.mixin.BlockDisplayEntityAccessor
-import dev.furq.holodisplays.mixin.DisplayEntityAccessor
-import dev.furq.holodisplays.mixin.ItemDisplayEntityAccessor
-import dev.furq.holodisplays.mixin.TextDisplayEntityAccessor
+import dev.furq.holodisplays.mixin.*
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.component.type.CustomModelDataComponent
@@ -26,6 +20,7 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.Vec3d
+import org.joml.Math.toRadians
 import org.joml.Quaternionf
 import org.joml.Vector3f
 import java.util.*
@@ -36,7 +31,28 @@ object PacketHandler {
     private var nextEntityId = INITIAL_ENTITY_ID
     private val recycledIds = mutableSetOf<Int>()
     private val entityIds = mutableMapOf<UUID, MutableMap<String, MutableMap<String, Int>>>()
-    private val HEX_COLOR_REGEX = Regex("^[0-9A-Fa-f]{2}[0-9A-Fa-f]{6}$")
+    private val hexColorPattern = "^[0-9A-Fa-f]{2}[0-9A-Fa-f]{6}$".toRegex()
+
+    private val itemDisplayTypeMap = mapOf(
+        "none" to 0.toByte(),
+        "thirdperson_lefthand" to 1.toByte(),
+        "thirdperson_righthand" to 2.toByte(),
+        "firstperson_lefthand" to 3.toByte(),
+        "firstperson_righthand" to 4.toByte(),
+        "head" to 5.toByte(),
+        "gui" to 6.toByte(),
+        "ground" to 7.toByte(),
+        "fixed" to 8.toByte()
+    )
+
+    private fun getNextEntityId(): Int = recycledIds.firstOrNull()?.also(recycledIds::remove) ?: --nextEntityId
+
+    private fun <T> createEntry(trackedData: TrackedData<T>, value: T):
+            DataTracker.SerializedEntry<T> = DataTracker.SerializedEntry(trackedData.id, trackedData.dataType, value)
+
+    private fun calculateTranslation(display: BaseDisplay, offset: Vector3f, scale: Vector3f): Vector3f = Vector3f(offset).apply {
+        if (display is BlockDisplay) add(-0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z)
+    }
 
     fun resetEntityTracking() {
         entityIds.clear()
@@ -46,7 +62,7 @@ object PacketHandler {
 
     fun spawnDisplayEntity(
         player: ServerPlayerEntity,
-        name: String,
+        hologramName: String,
         line: HologramData.DisplayLine,
         displayData: DisplayData,
         position: Vec3d,
@@ -56,8 +72,8 @@ object PacketHandler {
         val entityId = getNextEntityId()
         val displayRef = "${line.displayId}:$lineIndex"
 
-        entityIds.getOrPut(player.uuid) { mutableMapOf() }
-            .getOrPut(name) { mutableMapOf() }[displayRef] = entityId
+        entityIds.getOrPut(player.uuid, ::mutableMapOf)
+            .getOrPut(hologramName, ::mutableMapOf)[displayRef] = entityId
 
         player.networkHandler.run {
             sendPacket(createSpawnPacket(entityId, position, displayData.type))
@@ -65,9 +81,9 @@ object PacketHandler {
         }
     }
 
-    fun destroyHologram(player: ServerPlayerEntity, name: String) {
+    fun destroyDisplayEntity(player: ServerPlayerEntity, hologramName: String) {
         val playerHolograms = entityIds[player.uuid] ?: return
-        val hologramIds = playerHolograms[name] ?: return
+        val hologramIds = playerHolograms[hologramName] ?: return
         val idsToDestroy = hologramIds.values.toList()
 
         if (idsToDestroy.isNotEmpty()) {
@@ -75,53 +91,32 @@ object PacketHandler {
             recycledIds.addAll(idsToDestroy)
         }
 
-        playerHolograms.remove(name)
+        playerHolograms.remove(hologramName)
         if (playerHolograms.isEmpty()) {
             entityIds.remove(player.uuid)
         }
     }
 
-    private fun updateEntityMetadata(
-        player: ServerPlayerEntity,
-        name: String,
-        displayRef: String,
-        lineIndex: Int,
-        metadata: List<DataTracker.SerializedEntry<*>>,
-    ) {
-        val uniqueRef = "$displayRef:$lineIndex"
-        val entityId = entityIds[player.uuid]?.get(name)?.get(uniqueRef) ?: return
-        player.networkHandler.sendPacket(EntityTrackerUpdateS2CPacket(entityId, metadata))
-    }
-
-    private fun getNextEntityId(): Int = recycledIds.firstOrNull()?.also(recycledIds::remove) ?: --nextEntityId
-
-    fun updateTextMetadata(
-        player: ServerPlayerEntity,
-        name: String,
-        displayRef: String,
-        lineIndex: Int,
-        text: Text,
-    ) {
-        val entries = mutableListOf<DataTracker.SerializedEntry<*>>().apply {
-            add(createEntry(TextDisplayEntityAccessor.getText(), text))
+    private fun createSpawnPacket(
+        entityId: Int,
+        position: Vec3d,
+        display: BaseDisplay,
+        pitch: Float = 0f,
+        yaw: Float = 0f,
+        headYaw: Double = 0.0
+    ): EntitySpawnS2CPacket = safeCall {
+        val entityType = when (display) {
+            is TextDisplay -> EntityType.TEXT_DISPLAY
+            is ItemDisplay -> EntityType.ITEM_DISPLAY
+            is BlockDisplay -> EntityType.BLOCK_DISPLAY
+            else -> throw DisplayException("Unknown display type")
         }
-        updateEntityMetadata(player, name, displayRef, lineIndex, entries)
-    }
 
-    private fun createSpawnPacket(entityId: Int, position: Vec3d, display: BaseDisplay): EntitySpawnS2CPacket =
-        safeCall {
-            val entityType = when (display) {
-                is TextDisplay -> EntityType.TEXT_DISPLAY
-                is ItemDisplay -> EntityType.ITEM_DISPLAY
-                is BlockDisplay -> EntityType.BLOCK_DISPLAY
-                else -> throw DisplayException("Unknown display type")
-            }
-
-            EntitySpawnS2CPacket(
-                entityId, UUID.randomUUID(), position.x, position.y, position.z,
-                0f, 0f, entityType, 0, Vec3d.ZERO, 0.0
-            )
-        } ?: throw DisplayException("Failed to create spawn packet")
+        EntitySpawnS2CPacket(
+            entityId, UUID.randomUUID(), position.x, position.y, position.z,
+            pitch, yaw, entityType, 0, Vec3d.ZERO, headYaw
+        )
+    } ?: throw DisplayException("Failed to create spawn packet")
 
     private fun sendDisplayMetadata(
         player: ServerPlayerEntity,
@@ -129,166 +124,152 @@ object PacketHandler {
         displayData: DisplayData,
         hologram: HologramData,
         line: HologramData.DisplayLine,
-    ) {
-        val entries = mutableListOf<DataTracker.SerializedEntry<*>>().apply {
-            addCommonProperties(displayData.type, hologram, line)
-
-            when (val display = displayData.type) {
-                is TextDisplay -> addTextProperties(display, player)
-                is ItemDisplay -> addItemProperties(display)
-                is BlockDisplay -> addBlockProperties(display)
-            }
-        }
-
+    ) = safeCall {
+        val entries = buildDisplayMetadata(displayData, hologram, line, player)
         player.networkHandler.sendPacket(EntityTrackerUpdateS2CPacket(entityId, entries))
     }
 
-    private fun MutableList<DataTracker.SerializedEntry<*>>.addCommonProperties(
-        display: BaseDisplay,
+    fun updateDisplayMetadata(
+        player: ServerPlayerEntity,
+        hologramName: String,
+        displayId: String,
+        lineIndex: Int,
+        displayData: DisplayData,
+        hologram: HologramData,
+    ) = safeCall {
+        val line = hologram.displays.getOrNull(lineIndex) ?: return@safeCall
+        val entries = buildDisplayMetadata(displayData, hologram, line, player)
+        val displayRef = "$displayId:$lineIndex"
+        updateEntityMetadata(player, hologramName, displayRef, entries)
+    }
+
+    fun updateTextMetadata(
+        player: ServerPlayerEntity,
+        hologramName: String,
+        displayId: String,
+        lineIndex: Int,
+        text: Text,
+    ) {
+        val entries = buildList {
+            add(createEntry(TextDisplayEntityAccessor.getText(), text))
+        }
+        val displayRef = "$displayId:$lineIndex"
+        updateEntityMetadata(player, hologramName, displayRef, entries)
+    }
+
+    private fun updateEntityMetadata(
+        player: ServerPlayerEntity,
+        hologramName: String,
+        displayRef: String,
+        metadata: List<DataTracker.SerializedEntry<*>>,
+    ) = safeCall {
+        val entityId = entityIds[player.uuid]?.get(hologramName)?.get(displayRef) ?: return@safeCall
+        player.networkHandler.sendPacket(EntityTrackerUpdateS2CPacket(entityId, metadata))
+    }
+
+    private fun buildDisplayMetadata(
+        displayData: DisplayData,
         hologram: HologramData,
         line: HologramData.DisplayLine,
-    ) {
+        player: ServerPlayerEntity,
+    ): List<DataTracker.SerializedEntry<*>> = safeCall(default = emptyList()) {
+        buildList {
+            val display = displayData.type
+            val commonProps = commonDisplayProperties(displayData, hologram, line)
+            addAll(commonProps)
+
+            when (display) {
+                is TextDisplay -> addAll(textDisplayProperties(display, player))
+                is ItemDisplay -> addAll(itemDisplayProperties(display))
+                is BlockDisplay -> addAll(blockDisplayProperties(display))
+            }
+        }
+    } ?: emptyList()
+
+    private fun commonDisplayProperties(
+        displayData: DisplayData,
+        hologram: HologramData,
+        line: HologramData.DisplayLine,
+    ): List<DataTracker.SerializedEntry<*>> = buildList {
+        val display = displayData.type
+
         val scale = display.scale ?: hologram.scale
         add(createEntry(DisplayEntityAccessor.getScale(), Vector3f(scale.x, scale.y, scale.z)))
 
-        add(
-            createEntry(
-                DisplayEntityAccessor.getBillboard(),
-                (display.billboardMode ?: hologram.billboardMode).ordinal.toByte()
-            )
-        )
+        val billboardOrdinal = (display.billboardMode ?: hologram.billboardMode).ordinal.toByte()
+        add(createEntry(DisplayEntityAccessor.getBillboard(), billboardOrdinal))
 
         val rotation = display.rotation ?: hologram.rotation
-        add(
-            createEntry(
-                DisplayEntityAccessor.getLeftRotation(),
-                Quaternionf()
-                    .rotateX(Math.toRadians(rotation.x.toDouble()).toFloat())
-                    .rotateY(Math.toRadians(rotation.y.toDouble()).toFloat())
-                    .rotateZ(Math.toRadians(rotation.z.toDouble()).toFloat())
-            )
-        )
+        val quaternion = Quaternionf()
+            .rotateX(toRadians(rotation.x))
+            .rotateY(toRadians(rotation.y))
+            .rotateZ(toRadians(rotation.z))
+        add(createEntry(DisplayEntityAccessor.getLeftRotation(), quaternion))
 
         val translation = calculateTranslation(display, line.offset, scale)
         add(createEntry(DisplayEntityAccessor.getTranslation(), translation))
+
     }
 
-    private fun calculateTranslation(display: BaseDisplay, offset: Vector3f, scale: Vector3f): Vector3f =
-        Vector3f(offset).apply {
-            if (display is BlockDisplay) add(-0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z)
-        }
-
-    private fun MutableList<DataTracker.SerializedEntry<*>>.addTextProperties(
+    private fun textDisplayProperties(
         display: TextDisplay,
         player: ServerPlayerEntity,
-    ) {
-        val processedText = Text.literal(display.getText()).let { text ->
-            TickHandler.processText(text.string, player)
-        }
-        add(createEntry(TextDisplayEntityAccessor.getText(), processedText))
+    ): List<DataTracker.SerializedEntry<*>> = safeCall(default = emptyList()) {
+        buildList {
+            val processedText = TickHandler.processText(display.getText(), player)
+            add(createEntry(TextDisplayEntityAccessor.getText(), processedText))
 
-        display.lineWidth?.let { add(createEntry(TextDisplayEntityAccessor.getLineWidth(), it)) }
+            display.lineWidth?.also { add(createEntry(TextDisplayEntityAccessor.getLineWidth(), it)) }
 
-        display.backgroundColor?.let { bgColor ->
-            if (bgColor.matches(HEX_COLOR_REGEX)) {
-                val finalColor = bgColor.take(2).toInt(16).shl(24) or
-                        bgColor.substring(2).toInt(16)
-                add(createEntry(TextDisplayEntityAccessor.getBackground(), finalColor))
+            display.backgroundColor
+                ?.takeIf { it.matches(hexColorPattern) }
+                ?.also { bgColor ->
+                    val finalColor = bgColor.take(2).toInt(16).shl(24) or bgColor.substring(2).toInt(16)
+                    add(createEntry(TextDisplayEntityAccessor.getBackground(), finalColor))
+                }
+
+            display.textOpacity?.also {
+                val opacity = ((it.coerceIn(1, 100) / 100.0) * 255).toInt().toByte()
+                add(createEntry(TextDisplayEntityAccessor.getTextOpacity(), opacity))
             }
-        }
 
-        display.textOpacity?.let {
-            add(
-                createEntry(
-                    TextDisplayEntityAccessor.getTextOpacity(),
-                    (it.coerceIn(1, 100) / 100.0 * 255).toInt().toByte()
-                )
-            )
+            var flags: Byte = 0
+            if (display.shadow == true) flags = flags or TextDisplayEntityAccessor.getShadowFlag()
+            if (display.seeThrough == true) flags = flags or TextDisplayEntityAccessor.getSeeThroughFlag()
+            if (display.backgroundColor == null) flags = flags or TextDisplayEntityAccessor.getDefaultBackgroundFlag()
+            when (display.alignment) {
+                TextDisplay.TextAlignment.LEFT -> flags = flags or TextDisplayEntityAccessor.getLeftAlignmentFlag()
+                TextDisplay.TextAlignment.RIGHT -> flags = flags or TextDisplayEntityAccessor.getRightAlignmentFlag()
+                else -> {}
+            }
+            add(createEntry(TextDisplayEntityAccessor.getTextDisplayFlags(), flags))
         }
+    } ?: emptyList()
 
-        var flags: Byte = 0
-        if (display.shadow == true) flags = flags or TextDisplayEntityAccessor.getShadowFlag()
-        if (display.seeThrough == true) flags = flags or TextDisplayEntityAccessor.getSeeThroughFlag()
-        if (display.backgroundColor == null) flags = flags or TextDisplayEntityAccessor.getDefaultBackgroundFlag()
-        when (display.alignment) {
-            TextDisplay.TextAlignment.LEFT -> flags = flags or TextDisplayEntityAccessor.getLeftAlignmentFlag()
-            TextDisplay.TextAlignment.RIGHT -> flags = flags or TextDisplayEntityAccessor.getRightAlignmentFlag()
-            else -> {}
-        }
-        add(createEntry(TextDisplayEntityAccessor.getTextDisplayFlags(), flags))
-    }
-
-    private fun MutableList<DataTracker.SerializedEntry<*>>.addItemProperties(display: ItemDisplay) =
-        safeCall {
-            val item = Registries.ITEM.get(
-                Identifier.tryParse(display.id)
-                    ?: throw DisplayException("Invalid item identifier: ${display.id}")
-            )
+    private fun itemDisplayProperties(display: ItemDisplay): List<DataTracker.SerializedEntry<*>> = safeCall(default = emptyList()) {
+        buildList {
+            val item = Identifier.tryParse(display.id)?.let(Registries.ITEM::get)
+                ?: throw DisplayException("Invalid item identifier: ${display.id}")
 
             val itemStack = ItemStack(item)
-            display.customModelData?.let { cmd ->
+            display.customModelData?.also { cmd ->
                 itemStack.set(
-                    //? if <=1.21.3 {
-                    DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelDataComponent(cmd)
-                    //?} else {
-                    /*DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelDataComponent(
-                        listOf(cmd.toFloat()), listOf(), listOf(), listOf()
-                    )
-                    *///?}
+                    DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelDataComponent(/*? if <=1.21.3 {*/cmd/*?}*//*? if >1.21.3 {*//*listOf(cmd.toFloat()), listOf(), listOf(), listOf()*//*?}*/)
                 )
             }
 
             add(createEntry(ItemDisplayEntityAccessor.getItem(), itemStack))
 
-            val displayType = when (display.itemDisplayType.lowercase()) {
-                "none" -> 0
-                "thirdperson_lefthand" -> 1
-                "thirdperson_righthand" -> 2
-                "firstperson_lefthand" -> 3
-                "firstperson_righthand" -> 4
-                "head" -> 5
-                "gui" -> 6
-                "ground" -> 7
-                "fixed" -> 8
-                else -> 7
-            }
-            add(createEntry(ItemDisplayEntityAccessor.getItemDisplay(), displayType.toByte()))
+            val displayType = itemDisplayTypeMap[display.itemDisplayType.lowercase()] ?: 7.toByte()
+            add(createEntry(ItemDisplayEntityAccessor.getItemDisplay(), displayType))
         }
+    } ?: emptyList()
 
-    private fun MutableList<DataTracker.SerializedEntry<*>>.addBlockProperties(display: BlockDisplay) =
-        safeCall {
-            val block = Registries.BLOCK.get(
-                Identifier.tryParse(display.id)
-                    ?: throw DisplayException("Invalid block identifier: ${display.id}")
-            )
+    private fun blockDisplayProperties(display: BlockDisplay): List<DataTracker.SerializedEntry<*>> = safeCall(default = emptyList()) {
+        buildList {
+            val block = Identifier.tryParse(display.id)?.let(Registries.BLOCK::get)
+                ?: throw DisplayException("Invalid block identifier: ${display.id}")
             add(createEntry(BlockDisplayEntityAccessor.getBlockState(), block.defaultState))
         }
-
-    private fun <T> createEntry(
-        trackedData: TrackedData<T>,
-        value: T,
-    ): DataTracker.SerializedEntry<T> =
-        DataTracker.SerializedEntry(trackedData.id, trackedData.dataType, value)
-
-    fun updateDisplayMetadata(
-        player: ServerPlayerEntity,
-        name: String,
-        displayRef: String,
-        lineIndex: Int,
-        displayData: DisplayData,
-        hologram: HologramData,
-    ) {
-        val line = hologram.displays.getOrNull(lineIndex) ?: return
-
-        val entries = mutableListOf<DataTracker.SerializedEntry<*>>().apply {
-            addCommonProperties(displayData.type, hologram, line)
-
-            when (val display = displayData.type) {
-                is TextDisplay -> addTextProperties(display, player)
-                is ItemDisplay -> addItemProperties(display)
-                is BlockDisplay -> addBlockProperties(display)
-            }
-        }
-        updateEntityMetadata(player, name, displayRef, lineIndex, entries)
-    }
+    } ?: emptyList()
 }

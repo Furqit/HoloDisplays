@@ -41,7 +41,7 @@ class HoloDisplays : ModInitializer {
 
     override fun onInitialize() {
         registerServerEvents()
-        initializeManagers()
+        initializeHandlers()
         registerCommands()
         LOGGER.info("Initialized $MOD_ID v$VERSION")
     }
@@ -77,7 +77,7 @@ class HoloDisplays : ModInitializer {
         }
     }
 
-    private fun initializeManagers() = safeCall {
+    private fun initializeHandlers() = safeCall {
         val configDir = FabricLoader.getInstance().configDir.resolve(MOD_ID)
         ConfigManager.init(configDir)
         HologramHandler.init()

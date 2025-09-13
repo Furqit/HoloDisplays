@@ -4,7 +4,7 @@ plugins {
 stonecutter active "1.20.6" /* [SC] DO NOT EDIT */
 
 tasks.register("chiseledBuild") {
-    group = "project"
+    group = "build"
     dependsOn(stonecutter.tasks.named("buildAndCollect"))
 }
 
