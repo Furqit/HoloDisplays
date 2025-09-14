@@ -1,3 +1,4 @@
 ### Updates & Improvements:
-- Adds a check to prevent crash in case the updateRate is set to 0 or a negative number.
-- Better "hasPlaceholder" regex check.
+- Introduces a new Entity Display Type, allowing to create packet-based entities.
+- Performance and Memory Optimizations (special thanks to zonary123).
+- Further minor performance optimizations.

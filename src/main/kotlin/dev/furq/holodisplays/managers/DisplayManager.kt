@@ -112,8 +112,8 @@ object DisplayManager {
     fun resetScale(name: String, source: ServerCommandSource) {
         if (!validateDisplayExists(name, source)) return
 
-        DisplayHandler.updateDisplayProperty(name, Scale(Vector3f(1f)))
-        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "scale reset to default")
+        DisplayHandler.updateDisplayProperty(name, Scale(null))
+        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "scale reset to inherit from hologram")
     }
 
     fun updateBillboard(name: String, mode: String, source: ServerCommandSource) {
@@ -133,8 +133,8 @@ object DisplayManager {
     fun resetBillboard(name: String, source: ServerCommandSource) {
         if (!validateDisplayExists(name, source)) return
 
-        DisplayHandler.updateDisplayProperty(name, BillboardMode(BillboardMode.CENTER))
-        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "billboard mode reset to center")
+        DisplayHandler.updateDisplayProperty(name, BillboardMode(null))
+        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "billboard mode reset to inherit from hologram")
     }
 
     fun updateRotation(name: String, pitch: Float, yaw: Float, roll: Float, source: ServerCommandSource) {
@@ -152,8 +152,8 @@ object DisplayManager {
     fun resetRotation(name: String, source: ServerCommandSource) {
         if (!validateDisplayExists(name, source)) return
 
-        DisplayHandler.updateDisplayProperty(name, Rotation(Vector3f()))
-        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "rotation reset to default")
+        DisplayHandler.updateDisplayProperty(name, Rotation(null))
+        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "rotation reset to inherit from hologram")
     }
 
     fun updateBackground(name: String, color: String, opacity: Int, source: ServerCommandSource) {
@@ -177,7 +177,7 @@ object DisplayManager {
         if (!validateDisplayExists(name, source)) return
 
         DisplayHandler.updateDisplayProperty(name, TextBackgroundColor(null))
-        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "background reset to default")
+        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "background reset to inherit from hologram")
     }
 
     fun updateTextOpacity(name: String, opacity: Int, source: ServerCommandSource) {
@@ -328,5 +328,18 @@ object DisplayManager {
 
         DisplayHandler.updateDisplayProperty(displayName, EntityPose(pose))
         FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "pose set to ${pose?.name?.lowercase() ?: "none"}")
+    }
+
+    fun resetEntityPose(displayName: String, source: ServerCommandSource) {
+        if (!validateDisplayExists(displayName, source)) return
+
+        val display = DisplayConfig.getDisplay(displayName)
+        if (display?.type !is EntityDisplay) {
+            FeedbackManager.send(source, FeedbackType.INVALID_DISPLAY_TYPE, "type" to "entity")
+            return
+        }
+
+        DisplayHandler.updateDisplayProperty(displayName, EntityPose(null))
+        FeedbackManager.send(source, FeedbackType.DISPLAY_UPDATED, "detail" to "pose reset to default")
     }
 }

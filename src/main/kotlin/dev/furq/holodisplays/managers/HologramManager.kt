@@ -89,6 +89,13 @@ object HologramManager {
         FeedbackManager.send(source, FeedbackType.SCALE_UPDATED, *FeedbackManager.formatVector3f(scale))
     }
 
+    fun resetScale(name: String, source: ServerCommandSource) {
+        if (!validateHologramExists(name, source)) return
+
+        HologramHandler.updateHologramProperty(name, Scale(Vector3f(1f)))
+        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "scale reset to default")
+    }
+
     fun updateBillboard(name: String, billboard: String, source: ServerCommandSource) {
         if (!validateHologramExists(name, source)) return
 
@@ -96,6 +103,13 @@ object HologramManager {
             HologramHandler.updateHologramProperty(name, BillboardMode(newMode))
             FeedbackManager.send(source, FeedbackType.BILLBOARD_UPDATED, "mode" to billboard.lowercase())
         }
+    }
+
+    fun resetBillboard(name: String, source: ServerCommandSource) {
+        if (!validateHologramExists(name, source)) return
+
+        HologramHandler.updateHologramProperty(name, BillboardMode(BillboardMode.CENTER))
+        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "billboard mode reset to center")
     }
 
     fun updateUpdateRate(name: String, rate: Int, source: ServerCommandSource) {
@@ -110,6 +124,13 @@ object HologramManager {
         FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "update rate set to ${rate}t")
     }
 
+    fun resetUpdateRate(name: String, source: ServerCommandSource) {
+        if (!validateHologramExists(name, source)) return
+
+        HologramHandler.updateHologramProperty(name, UpdateRate(20))
+        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "update rate reset to default")
+    }
+
     fun updateViewRange(name: String, range: Float, source: ServerCommandSource) {
         if (!validateHologramExists(name, source)) return
 
@@ -122,6 +143,13 @@ object HologramManager {
         FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "view range set to $range blocks")
     }
 
+    fun resetViewRange(name: String, source: ServerCommandSource) {
+        if (!validateHologramExists(name, source)) return
+
+        HologramHandler.updateHologramProperty(name, ViewRange(48.0))
+        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "view range reset to default")
+    }
+
     fun updateRotation(name: String, pitch: Float, yaw: Float, roll: Float, source: ServerCommandSource) {
         if (!validateHologramExists(name, source)) return
 
@@ -132,6 +160,13 @@ object HologramManager {
 
         HologramHandler.updateHologramProperty(name, Rotation(Vector3f(pitch, yaw, roll)))
         FeedbackManager.send(source, FeedbackType.ROTATION_UPDATED, *FeedbackManager.formatRotation(pitch, yaw, roll))
+    }
+
+    fun resetRotation(name: String, source: ServerCommandSource) {
+        if (!validateHologramExists(name, source)) return
+
+        HologramHandler.updateHologramProperty(name, Rotation(Vector3f()))
+        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "rotation reset to default")
     }
 
     fun updateCondition(name: String, condition: String?, source: ServerCommandSource) {

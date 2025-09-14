@@ -79,7 +79,7 @@ object DisplayEdit {
                 item = Items.CLOCK,
                 lore = GuiUtils.createCombinedLore(
                     "Current" to if (isEntity) {
-                        "${display.type.rotation?.x ?: 0}°, ${display.type.rotation?.y ?: 0}° (roll 0°)"
+                        "${display.type.rotation?.x ?: 0}°, ${display.type.rotation?.y ?: 0}°"
                     } else {
                         "${display.type.rotation?.x ?: 0}°, ${display.type.rotation?.y ?: 0}°, ${display.type.rotation?.z ?: 0}°"
                     },

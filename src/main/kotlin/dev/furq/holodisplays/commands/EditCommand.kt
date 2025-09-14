@@ -13,8 +13,11 @@ import org.joml.Vector3f
 
 abstract class EditCommand {
     abstract fun updateScale(name: String, scale: Vector3f, source: ServerCommandSource)
+    abstract fun resetScale(name: String, source: ServerCommandSource)
     abstract fun updateBillboard(name: String, mode: String, source: ServerCommandSource)
+    abstract fun resetBillboard(name: String, source: ServerCommandSource)
     abstract fun updateRotation(name: String, pitch: Float, yaw: Float, roll: Float, source: ServerCommandSource)
+    abstract fun resetRotation(name: String, source: ServerCommandSource)
     abstract fun updateCondition(name: String, condition: String?, source: ServerCommandSource)
     abstract fun openEditGui(player: ServerPlayerEntity, name: String)
     fun buildScaleCommands(): ArgumentBuilder<ServerCommandSource, *> {
@@ -76,7 +79,7 @@ abstract class EditCommand {
 
     private fun executeResetScale(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
-        updateScale(name, Vector3f(1f), context.source)
+        resetScale(name, context.source)
         return 1
     }
 
@@ -89,7 +92,7 @@ abstract class EditCommand {
 
     private fun executeResetBillboard(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
-        updateBillboard(name, BillboardMode.CENTER.name, context.source)
+        resetBillboard(name, context.source)
         return 1
     }
 
@@ -104,7 +107,7 @@ abstract class EditCommand {
 
     private fun executeResetRotation(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
-        updateRotation(name, 0f, 0f, 0f, context.source)
+        resetRotation(name, context.source)
         return 1
     }
 

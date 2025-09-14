@@ -21,8 +21,11 @@ import org.joml.Vector3f
 
 object DisplayEditCommand : EditCommand() {
     override fun updateScale(name: String, scale: Vector3f, source: ServerCommandSource) = DisplayManager.updateScale(name, scale, source)
+    override fun resetScale(name: String, source: ServerCommandSource) = DisplayManager.resetScale(name, source)
     override fun updateBillboard(name: String, mode: String, source: ServerCommandSource) = DisplayManager.updateBillboard(name, mode, source)
+    override fun resetBillboard(name: String, source: ServerCommandSource) = DisplayManager.resetBillboard(name, source)
     override fun updateRotation(name: String, pitch: Float, yaw: Float, roll: Float, source: ServerCommandSource) = DisplayManager.updateRotation(name, pitch, yaw, roll, source)
+    override fun resetRotation(name: String, source: ServerCommandSource) = DisplayManager.resetRotation(name, source)
     override fun updateCondition(name: String, condition: String?, source: ServerCommandSource) = DisplayManager.updateCondition(name, condition, source)
     override fun openEditGui(player: net.minecraft.server.network.ServerPlayerEntity, name: String) = DisplayEdit.open(player, name)
 
@@ -128,17 +131,6 @@ object DisplayEditCommand : EditCommand() {
                 .then(CommandManager.argument("entityId", StringArgumentType.greedyString())
                     .suggests { _, builder -> CommandUtils.suggestEntityIds(builder) }
                     .executes { context -> executeEntityId(context) }))
-            .then(CommandManager.literal("scale")
-                .then(CommandManager.argument("value", FloatArgumentType.floatArg(0.1f))
-                    .executes { context -> executeEntityScale(context) })
-                .then(CommandManager.literal("reset")
-                    .executes { context -> executeResetEntityScale(context) }))
-            .then(CommandManager.literal("rotation")
-                .then(CommandManager.argument("pitch", FloatArgumentType.floatArg(-180f, 180f))
-                    .then(CommandManager.argument("yaw", FloatArgumentType.floatArg(-180f, 180f))
-                        .executes { context -> executeEntityRotation(context) }))
-                .then(CommandManager.literal("reset")
-                    .executes { context -> executeResetEntityRotation(context) }))
             .then(CommandManager.literal("glow")
                 .then(CommandManager.argument("enabled", BoolArgumentType.bool())
                     .executes { context -> executeEntityGlow(context) }))
@@ -295,34 +287,7 @@ object DisplayEditCommand : EditCommand() {
 
     private fun executeResetEntityPose(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
-        DisplayManager.updateEntityPose(name, null as EntityPose?, context.source)
-        return 1
-    }
-
-    private fun executeEntityScale(context: CommandContext<ServerCommandSource>): Int {
-        val name = StringArgumentType.getString(context, "name")
-        val value = FloatArgumentType.getFloat(context, "value")
-        updateScale(name, Vector3f(value), context.source)
-        return 1
-    }
-
-    private fun executeResetEntityScale(context: CommandContext<ServerCommandSource>): Int {
-        val name = StringArgumentType.getString(context, "name")
-        updateScale(name, Vector3f(1f), context.source)
-        return 1
-    }
-
-    private fun executeEntityRotation(context: CommandContext<ServerCommandSource>): Int {
-        val name = StringArgumentType.getString(context, "name")
-        val pitch = FloatArgumentType.getFloat(context, "pitch")
-        val yaw = FloatArgumentType.getFloat(context, "yaw")
-        updateRotation(name, pitch, yaw, 0f, context.source)
-        return 1
-    }
-
-    private fun executeResetEntityRotation(context: CommandContext<ServerCommandSource>): Int {
-        val name = StringArgumentType.getString(context, "name")
-        updateRotation(name, 0f, 0f, 0f, context.source)
+        DisplayManager.resetEntityPose(name, context.source)
         return 1
     }
 }
