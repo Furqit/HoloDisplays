@@ -4,14 +4,14 @@ import dev.furq.holodisplays.HoloDisplays;
 import dev.furq.holodisplays.config.DisplayConfig;
 import dev.furq.holodisplays.data.DisplayData;
 import dev.furq.holodisplays.data.HologramData;
-import dev.furq.holodisplays.data.display.BaseDisplay;
-import dev.furq.holodisplays.data.display.BlockDisplay;
-import dev.furq.holodisplays.data.display.ItemDisplay;
-import dev.furq.holodisplays.data.display.TextDisplay;
+import dev.furq.holodisplays.data.display.*;
 import dev.furq.holodisplays.handlers.ViewerHandler;
+import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode;
 import net.minecraft.server.MinecraftServer;
 import org.joml.Vector3f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
 
     public static final HoloDisplaysAPIImpl INSTANCE = new HoloDisplaysAPIImpl();
+    private static final Logger LOGGER = LoggerFactory.getLogger("HoloDisplaysAPI");
     public final Map<String, HologramData> apiHolograms = new HashMap<>();
     private final Map<String, DisplayData> apiDisplays = new HashMap<>();
 
@@ -50,7 +51,7 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
 
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Error registering hologram with ID {}: {}", id, e.getMessage(), e);
             return false;
         }
     }
@@ -70,7 +71,7 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
 
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Error unregistering hologram with ID {}: {}", id, e.getMessage(), e);
             return false;
         }
     }
@@ -100,7 +101,7 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
 
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Error updating hologram with ID {}: {}", id, e.getMessage(), e);
             return false;
         }
     }
@@ -141,6 +142,16 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
         BlockDisplayBuilderImpl blockBuilder = new BlockDisplayBuilderImpl();
         builder.accept(blockBuilder);
         BlockDisplay display = blockBuilder.build();
+        apiDisplays.put(stringId, new DisplayData(display));
+        return apiDisplays.get(stringId);
+    }
+
+    @Override
+    public DisplayData createEntityDisplay(String id, Consumer<EntityDisplayBuilder> builder) {
+        String stringId = validateId(id);
+        EntityDisplayBuilderImpl entityBuilder = new EntityDisplayBuilderImpl();
+        builder.accept(entityBuilder);
+        EntityDisplay display = entityBuilder.build();
         apiDisplays.put(stringId, new DisplayData(display));
         return apiDisplays.get(stringId);
     }
@@ -317,6 +328,35 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
         }
 
         public BlockDisplay build() {
+            return builder.build();
+        }
+    }
+
+    private static class EntityDisplayBuilderImpl extends BaseDisplayBuilder<EntityDisplay.Builder> implements EntityDisplayBuilder {
+        public EntityDisplayBuilderImpl() {
+            super(new EntityDisplay.Builder());
+        }
+
+        @Override
+        public void entity(String entityId) {
+            builder.setId(entityId);
+        }
+
+        @Override
+        public void glow(boolean glow) {
+            builder.setGlow(glow);
+        }
+
+        @Override
+        public void pose(String pose) {
+            try {
+                builder.setPose(EntityPose.valueOf(pose.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid entity pose: " + pose + ". Valid poses include: standing, crouching, sneaking, etc.");
+            }
+        }
+
+        public EntityDisplay build() {
             return builder.build();
         }
     }

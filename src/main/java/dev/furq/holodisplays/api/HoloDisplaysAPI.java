@@ -96,6 +96,16 @@ public interface HoloDisplaysAPI {
     DisplayData createBlockDisplay(String id, Consumer<BlockDisplayBuilder> builder);
 
     /**
+     * Creates an entity display with the given configuration.
+     * The ID must have a namespace other than "minecraft" (e.g., "mymod:my_display").
+     *
+     * @param id      The unique identifier for this display
+     * @param builder A consumer to configure the entity display
+     * @return The created display data
+     */
+    DisplayData createEntityDisplay(String id, Consumer<EntityDisplayBuilder> builder);
+
+    /**
      * Creates a hologram builder to fluently configure a hologram.
      *
      * @return A new hologram builder
@@ -271,6 +281,57 @@ public interface HoloDisplaysAPI {
          * @param mode The billboard mode (fixed, horizontal, vertical, center)
          */
         void billboardMode(String mode);
+
+        /**
+         * Sets the conditional placeholder for this display.
+         *
+         * @param placeholder The condition or null
+         */
+        void condition(String placeholder);
+    }
+
+    /**
+     * Builder interface for entity displays.
+     */
+    interface EntityDisplayBuilder {
+        /**
+         * Sets the entity to display.
+         *
+         * @param entityId The entity ID
+         */
+        void entity(String entityId);
+
+        /**
+         * Sets whether this entity glows.
+         *
+         * @param glow True if the entity should glow
+         */
+        void glow(boolean glow);
+
+        /**
+         * Sets the pose of this entity.
+         *
+         * @param pose The pose name (e.g., "standing", "crouching", "sneaking")
+         */
+        void pose(String pose);
+
+        /**
+         * Sets the scale of this display.
+         *
+         * @param x X scale factor
+         * @param y Y scale factor
+         * @param z Z scale factor
+         */
+        void scale(float x, float y, float z);
+
+        /**
+         * Sets the rotation of this display.
+         *
+         * @param x X rotation in degrees
+         * @param y Y rotation in degrees
+         * @param z Z rotation in degrees
+         */
+        void rotation(float x, float y, float z);
 
         /**
          * Sets the conditional placeholder for this display.
