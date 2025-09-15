@@ -1,7 +1,6 @@
 package dev.furq.holodisplays.commands
 
 import com.mojang.brigadier.arguments.BoolArgumentType
-import com.mojang.brigadier.arguments.FloatArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.ArgumentBuilder
@@ -74,9 +73,10 @@ object DisplayEditCommand : EditCommand() {
             .then(CommandManager.literal("add")
                 .then(CommandManager.argument("content", StringArgumentType.greedyString())
                     .executes { context -> executeAddTextLine(context) }))
-            .then(CommandManager.argument("lineIndex", IntegerArgumentType.integer(0))
-                .then(CommandManager.argument("content", StringArgumentType.greedyString())
-                    .executes { context -> executeEditTextLine(context) }))
+            .then(CommandManager.literal("set")
+                .then(CommandManager.argument("lineIndex", IntegerArgumentType.integer(0))
+                    .then(CommandManager.argument("content", StringArgumentType.greedyString())
+                        .executes { context -> executeEditTextLine(context) })))
             .then(CommandManager.literal("delete")
                 .then(CommandManager.argument("lineIndex", IntegerArgumentType.integer(0))
                     .executes { context -> executeDeleteTextLine(context) }))
