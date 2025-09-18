@@ -21,7 +21,7 @@ object ReloadCommand {
 
     private fun performReload(source: ServerCommandSource) {
         PacketHandler.resetEntityTracking()
-        ViewerHandler.resetHologramObservers()
+        ViewerHandler.clearTrackers()
         TickHandler.init()
         ConfigManager.reload()
         HologramHandler.reinitialize()

@@ -32,6 +32,7 @@ object TickHandler {
 
     fun init() {
         animationCache.clear()
+        textCache.clear()
         ticks = 0
     }
 
