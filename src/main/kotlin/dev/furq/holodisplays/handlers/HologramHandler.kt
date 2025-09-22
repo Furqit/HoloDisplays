@@ -31,13 +31,13 @@ object HologramHandler {
 
     fun init() {
         HologramConfig.getHolograms().forEach { (name, data) ->
-            ViewerHandler.createTracker(name, data)
+            ViewerHandler.createTracker(name)
         }
     }
 
     fun reinitialize() {
         HologramConfig.getHolograms().forEach { (name, data) ->
-            ViewerHandler.createTracker(name, data)
+            ViewerHandler.createTracker(name)
             ViewerHandler.respawnForAllObservers(name)
         }
     }
@@ -45,7 +45,7 @@ object HologramHandler {
     fun createHologram(name: String, data: HologramData) = safeCall {
         if (HologramConfig.exists(name)) throw HologramException("Hologram with name $name already exists")
         HologramConfig.saveHologram(name, data)
-        ViewerHandler.createTracker(name, data)
+        ViewerHandler.createTracker(name)
         showHologramToPlayers(name, data)
     }
 

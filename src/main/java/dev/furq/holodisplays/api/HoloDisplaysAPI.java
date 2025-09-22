@@ -130,6 +130,14 @@ public interface HoloDisplaysAPI {
     DisplayData getDisplay(String id);
 
     /**
+     * Gets a hologram by ID, checking only API-registered holograms.
+     *
+     * @param id The hologram ID to get
+     * @return The hologram data, or null if not found in API-registered holograms
+     */
+    HologramData getHologram(String id);
+
+    /**
      * Builder interface for text displays.
      */
     interface TextDisplayBuilder {

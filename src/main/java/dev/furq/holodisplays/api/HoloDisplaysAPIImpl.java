@@ -42,7 +42,7 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
             }
 
             apiHolograms.put(stringId, hologram);
-            ViewerHandler.INSTANCE.createTracker(stringId, hologram);
+            ViewerHandler.INSTANCE.createTracker(stringId);
 
             MinecraftServer server = HoloDisplays.Companion.getSERVER();
             if (server != null && server.getPlayerManager() != null) {
@@ -186,6 +186,11 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
     @Override
     public DisplayData getDisplay(String id) {
         return apiDisplays.get(id);
+    }
+
+    @Override
+    public HologramData getHologram(String id) {
+        return apiHolograms.get(id);
     }
 
     @Override

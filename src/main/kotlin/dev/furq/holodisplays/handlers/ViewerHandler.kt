@@ -13,55 +13,48 @@ import net.minecraft.util.math.Vec3d
 import java.util.*
 
 object ViewerHandler {
-    private data class TrackedHologram(
-        val hologramData: HologramData,
-        val observers: MutableSet<UUID> = mutableSetOf(),
-    )
-
-    private val trackedHolograms = mutableMapOf<String, TrackedHologram>()
+    private val observers = mutableMapOf<String, MutableSet<UUID>>()
     private val playerManager get() = HoloDisplays.SERVER?.playerManager
     private fun getPlayer(uuid: UUID): ServerPlayerEntity? = playerManager?.getPlayer(uuid)
-    private fun onlinePlayers(): List<ServerPlayerEntity> = playerManager?.playerList ?: emptyList()
-    fun isViewing(player: ServerPlayerEntity, name: String): Boolean = trackedHolograms[name]?.observers?.contains(player.uuid) == true
+    fun isViewing(player: ServerPlayerEntity, name: String): Boolean = observers[name]?.contains(player.uuid) == true
 
-    fun createTracker(name: String, data: HologramData) {
-        trackedHolograms[name] = TrackedHologram(data)
+    fun createTracker(name: String) {
+        observers.getOrPut(name) { mutableSetOf() }
     }
 
     fun removeTracker(name: String) {
-        trackedHolograms.remove(name)
+        observers.remove(name)
     }
 
     fun clearTrackers() {
-        trackedHolograms.clear()
+        observers.clear()
     }
 
     fun addViewer(player: ServerPlayerEntity, name: String) = safeCall {
-        val tracked = trackedHolograms[name] ?: throw HologramException("Hologram $name not found")
-        if (tracked.observers.add(player.uuid)) {
-            showHologramToPlayer(player, name, tracked.hologramData)
+        val hologramData = HologramConfig.getHologramOrAPI(name) ?: throw HologramException("Hologram $name not found")
+        val observerSet = observers.getOrPut(name) { mutableSetOf() }
+        if (observerSet.add(player.uuid)) {
+            showHologramToPlayer(player, name, hologramData)
         }
     }
 
     private fun removeViewer(player: ServerPlayerEntity, name: String) {
-        trackedHolograms[name]?.let { tracked ->
-            if (tracked.observers.remove(player.uuid)) {
+        observers[name]?.let { observerSet ->
+            if (observerSet.remove(player.uuid)) {
                 PacketHandler.destroyDisplayEntity(player, name)
             }
         }
     }
 
     fun clearViewers(player: ServerPlayerEntity) {
-        trackedHolograms.filterValues { it.observers.contains(player.uuid) }
-            .forEach { (name, _) ->
-                removeViewer(player, name)
-            }
+        observers.keys.forEach { name ->
+            removeViewer(player, name)
+        }
     }
 
     fun removeHologramFromAllViewers(name: String) {
-        trackedHolograms[name]?.let { tracked ->
-            val observerIds = tracked.observers.toList()
-            observerIds.forEach { uuid ->
+        observers[name]?.let { observerSet ->
+            observerSet.toList().forEach { uuid ->
                 getPlayer(uuid)?.let { player ->
                     removeViewer(player, name)
                 }
@@ -70,24 +63,24 @@ object ViewerHandler {
     }
 
     fun respawnForAllObservers(name: String) {
-        val hologramData = HologramConfig.getHologram(name) ?: return
-        val observerIds = trackedHolograms[name]?.observers?.toList() ?: return
-        observerIds.forEach { uuid ->
-            getPlayer(uuid)?.let { player ->
-                PacketHandler.destroyDisplayEntity(player, name)
-                showHologramToPlayer(player, name, hologramData)
+        val hologramData = HologramConfig.getHologramOrAPI(name) ?: return
+        observers[name]?.let { observerSet ->
+            observerSet.toList().forEach { uuid ->
+                getPlayer(uuid)?.let { player ->
+                    PacketHandler.destroyDisplayEntity(player, name)
+                    showHologramToPlayer(player, name, hologramData)
+                }
             }
         }
     }
 
     fun updateForAllObservers(name: String) = safeCall {
-        val tracked = trackedHolograms[name] ?: throw HologramException("Hologram $name not found")
-        val hologramData = HologramConfig.getHologram(name) ?: throw HologramException("Hologram $name not found in config")
-        onlinePlayers()
-            .filter { tracked.observers.contains(it.uuid) }
-            .forEach { player ->
+        val hologramData = HologramConfig.getHologramOrAPI(name) ?: throw HologramException("Hologram $name not found")
+        observers[name]?.let { observerSet ->
+            observerSet.mapNotNull { getPlayer(it) }.forEach { player ->
                 updateHologramForPlayer(player, name, hologramData)
             }
+        }
     }
 
     private fun showHologramToPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) = safeCall {
@@ -129,9 +122,9 @@ object ViewerHandler {
     fun updatePlayerVisibility(player: ServerPlayerEntity) {
         val playerWorld = player.world.registryKey.value.toString()
 
-        trackedHolograms.forEach { (name, tracked) ->
-            val hologram = tracked.hologramData
-            val isCurrentlyViewing = tracked.observers.contains(player.uuid)
+        observers.keys.forEach { name ->
+            val hologram = HologramConfig.getHologramOrAPI(name) ?: return@forEach
+            val isCurrentlyViewing = observers[name]?.contains(player.uuid) == true
 
             if (hologram.world != playerWorld) {
                 if (isCurrentlyViewing) {
@@ -142,6 +135,7 @@ object ViewerHandler {
 
             val shouldView = ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player) &&
                     HologramHandler.isPlayerInRange(player, hologram.world, hologram.position, hologram.viewRange)
+
             when {
                 shouldView && !isCurrentlyViewing -> addViewer(player, name)
                 !shouldView && isCurrentlyViewing -> removeViewer(player, name)
@@ -149,5 +143,5 @@ object ViewerHandler {
         }
     }
 
-    fun getObserverCount(name: String): Int = trackedHolograms[name]?.observers?.size ?: 0
+    fun getObserverCount(name: String): Int = observers[name]?.size ?: 0
 }
