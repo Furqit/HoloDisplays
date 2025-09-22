@@ -119,25 +119,22 @@ publishMods {
             start = lower ?: "latest"
             end = upper ?: "latest"
         }
-        requires {
-            slug = "fabric-api"
-            slug = "placeholder-api"
-            slug = "fabric-language-kotlin"
-        }
+        requires("fabric-api")
+        requires("placeholder-api")
+        requires("fabric-language-kotlin")
     }
 
     curseforge {
         projectId = "1150354"
         projectSlug = "holodisplays"
         accessToken = localProperties.getProperty("CURSEFORGE_TOKEN")
+        serverRequired = true
         minecraftVersionRange {
             start = lower ?: "latest"
             end = upper ?: "latest"
         }
-        requires {
-            slug = "fabric-api"
-            slug = "placeholder-api"
-            slug = "fabric-language-kotlin"
-        }
+        requires("fabric-api")
+        requires("text-placeholder-api")
+        requires("fabric-language-kotlin")
     }
 }
