@@ -19,7 +19,7 @@ import net.minecraft.util.Formatting
 object GuiUtils {
 
     fun createBackItem() = createGuiItem(
-        item = Items.ARROW,
+        item = Items.BARRIER,
         name = "Back",
         lore = listOf(
             Text.empty()

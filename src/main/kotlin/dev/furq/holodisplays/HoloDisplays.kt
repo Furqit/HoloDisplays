@@ -26,7 +26,7 @@ import java.util.concurrent.Executors
 class HoloDisplays : ModInitializer {
     companion object {
         const val MOD_ID = "HoloDisplays"
-        const val VERSION = "0.4.0"
+        const val VERSION = "0.4.1"
         val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
 
         var SERVER: MinecraftServer? = null
