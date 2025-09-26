@@ -1,6 +1,5 @@
 package dev.furq.holodisplays.handlers
 
-import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.api.HoloDisplaysAPIImpl
 import dev.furq.holodisplays.config.AnimationConfig
 import dev.furq.holodisplays.config.DisplayConfig
@@ -36,31 +35,24 @@ object TickHandler {
         ticks = 0
     }
 
-    fun tick() {
-        if (shouldProcessTick()) {
-            processHolograms()
-        }
+    fun tick(players: List<ServerPlayerEntity>) {
+        processHolograms(players)
         ticks++
     }
 
-    private fun shouldProcessTick(): Boolean {
-        return HoloDisplays.SERVER?.playerManager?.playerList?.isNotEmpty() == true &&
-                (HologramConfig.getHolograms().isNotEmpty() || HoloDisplaysAPIImpl.INSTANCE.apiHolograms.isNotEmpty())
-    }
-
-    private fun processHolograms() {
+    private fun processHolograms(players: List<ServerPlayerEntity>) {
         HologramConfig.getHolograms().forEach { (name, hologram) ->
             if (ViewerHandler.getObserverCount(name) == 0) return@forEach
-            processHologramDisplays(name, hologram)
+            processHologramDisplays(name, hologram, players)
         }
 
         HoloDisplaysAPIImpl.INSTANCE.apiHolograms.forEach { (name, hologram) ->
             if (ViewerHandler.getObserverCount(name) == 0) return@forEach
-            processHologramDisplays(name, hologram)
+            processHologramDisplays(name, hologram, players)
         }
     }
 
-    private fun processHologramDisplays(name: String, hologram: HologramData) {
+    private fun processHologramDisplays(name: String, hologram: HologramData, players: List<ServerPlayerEntity>) {
         hologram.displays.forEachIndexed { index, displayLine ->
             val display = DisplayConfig.getDisplayOrAPI(displayLine.displayId)?.type as? TextDisplay
                 ?: return@forEachIndexed
@@ -68,7 +60,7 @@ object TickHandler {
             val text = display.getText()
             if (!shouldUpdateDisplay(text, hologram.updateRate)) return@forEachIndexed
 
-            updateDisplayForViewers(name, displayLine.displayId, index, text)
+            updateDisplayForViewers(name, displayLine.displayId, index, text, players)
         }
     }
 
@@ -121,11 +113,8 @@ object TickHandler {
         return node.toText(PlaceholderContext.of(player))
     }
 
-    private fun updateDisplayForViewers(name: String, displayRef: String, index: Int, text: String) {
-        val viewers = HoloDisplays.SERVER?.playerManager?.playerList
-            ?.filter { ViewerHandler.isViewing(it, name) }
-            ?: return
-
+    private fun updateDisplayForViewers(name: String, displayRef: String, index: Int, text: String, players: List<ServerPlayerEntity>) {
+        val viewers = players.filter { ViewerHandler.isViewing(it, name) }
         viewers.forEach { player ->
             val processedText = processText(text, player)
             PacketHandler.updateTextMetadata(player, name, displayRef, index, processedText)
