@@ -222,8 +222,8 @@ object PacketHandler {
 
         val rotation = display.rotation ?: hologram.rotation
         val quaternion = Quaternionf()
-            .rotateX(toRadians(rotation.x))
             .rotateY(toRadians(rotation.y))
+            .rotateX(toRadians(rotation.x))
             .rotateZ(toRadians(rotation.z))
         add(createEntry(DisplayEntityAccessor.getLeftRotation(), quaternion))
 
