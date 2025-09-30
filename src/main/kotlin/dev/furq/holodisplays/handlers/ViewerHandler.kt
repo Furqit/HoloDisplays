@@ -15,25 +15,18 @@ import java.util.*
 object ViewerHandler {
     private val observers = mutableMapOf<String, MutableSet<UUID>>()
     private val playerManager get() = HoloDisplays.SERVER?.playerManager
+
     private fun getPlayer(uuid: UUID): ServerPlayerEntity? = playerManager?.getPlayer(uuid)
     fun isViewing(player: ServerPlayerEntity, name: String): Boolean = observers[name]?.contains(player.uuid) == true
+    fun createTracker(name: String) = observers.getOrPut(name) { mutableSetOf() }
+    fun removeTracker(name: String) = observers.remove(name)
+    fun clearTrackers() = observers.clear()
+    fun getObserverCount(name: String): Int = observers[name]?.size ?: 0
 
     fun resetAllObservers() {
         HologramConfig.getHolograms().keys.forEach { name ->
             removeHologramFromAllViewers(name)
         }
-    }
-
-    fun createTracker(name: String) {
-        observers.getOrPut(name) { mutableSetOf() }
-    }
-
-    fun removeTracker(name: String) {
-        observers.remove(name)
-    }
-
-    fun clearTrackers() {
-        observers.clear()
     }
 
     fun addViewer(player: ServerPlayerEntity, name: String) = safeCall {
@@ -53,39 +46,31 @@ object ViewerHandler {
     }
 
     fun clearViewers(player: ServerPlayerEntity) {
-        observers.keys.forEach { name ->
-            removeViewer(player, name)
-        }
+        observers.keys.forEach { name -> removeViewer(player, name) }
     }
 
     fun removeHologramFromAllViewers(name: String) {
-        observers[name]?.let { observerSet ->
-            observerSet.toList().forEach { uuid ->
-                getPlayer(uuid)?.let { player ->
-                    removeViewer(player, name)
-                }
+        observers[name]?.toList()?.forEach { uuid ->
+            getPlayer(uuid)?.let { player ->
+                removeViewer(player, name)
             }
         }
     }
 
     fun respawnForAllObservers(name: String) {
         val hologramData = HologramConfig.getHologramOrAPI(name) ?: return
-        observers[name]?.let { observerSet ->
-            observerSet.toList().forEach { uuid ->
-                getPlayer(uuid)?.let { player ->
-                    PacketHandler.destroyDisplayEntity(player, name)
-                    showHologramToPlayer(player, name, hologramData)
-                }
+        observers[name]?.toList()?.forEach { uuid ->
+            getPlayer(uuid)?.let { player ->
+                PacketHandler.destroyDisplayEntity(player, name)
+                showHologramToPlayer(player, name, hologramData)
             }
         }
     }
 
     fun updateForAllObservers(name: String) = safeCall {
         val hologramData = HologramConfig.getHologramOrAPI(name) ?: throw HologramException("Hologram $name not found")
-        observers[name]?.let { observerSet ->
-            observerSet.mapNotNull { getPlayer(it) }.forEach { player ->
-                updateHologramForPlayer(player, name, hologramData)
-            }
+        observers[name]?.mapNotNull { getPlayer(it) }?.forEach { player ->
+            updateHologramForPlayer(player, name, hologramData)
         }
     }
 
@@ -117,9 +102,9 @@ object ViewerHandler {
         hologram.displays.forEachIndexed { index, entity ->
             DisplayConfig.getDisplayOrAPI(entity.displayId)?.let { display ->
                 if (!ConditionEvaluator.evaluate(display.type.conditionalPlaceholder, player)) return@let
-
                 PacketHandler.updateDisplayMetadata(
-                    player, name, entity.displayId, index, processDisplayForPlayer(display), hologram
+                    player, name, entity.displayId, index,
+                    processDisplayForPlayer(display), hologram
                 )
             }
         }
@@ -148,6 +133,4 @@ object ViewerHandler {
             }
         }
     }
-
-    fun getObserverCount(name: String): Int = observers[name]?.size ?: 0
 }
