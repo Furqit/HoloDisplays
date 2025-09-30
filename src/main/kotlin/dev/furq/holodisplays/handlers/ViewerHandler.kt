@@ -18,6 +18,12 @@ object ViewerHandler {
     private fun getPlayer(uuid: UUID): ServerPlayerEntity? = playerManager?.getPlayer(uuid)
     fun isViewing(player: ServerPlayerEntity, name: String): Boolean = observers[name]?.contains(player.uuid) == true
 
+    fun resetAllObservers() {
+        HologramConfig.getHolograms().keys.forEach { name ->
+            removeHologramFromAllViewers(name)
+        }
+    }
+
     fun createTracker(name: String) {
         observers.getOrPut(name) { mutableSetOf() }
     }

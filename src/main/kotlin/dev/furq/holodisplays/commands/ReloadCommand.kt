@@ -20,6 +20,7 @@ object ReloadCommand {
         }
 
     private fun performReload(source: ServerCommandSource) {
+        ViewerHandler.resetAllObservers()
         PacketHandler.resetEntityTracking()
         ViewerHandler.clearTrackers()
         TickHandler.init()
