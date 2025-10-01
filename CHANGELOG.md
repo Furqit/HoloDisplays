@@ -1,2 +1,4 @@
 ### Updates & Improvements:
-- Fixed visual duplication of holograms on reload and few other instances.
+- Fixed rotations not working as intended.
+- Minor memory optimizations.
+- Fixed visual duplication after manual config changes and reload.
