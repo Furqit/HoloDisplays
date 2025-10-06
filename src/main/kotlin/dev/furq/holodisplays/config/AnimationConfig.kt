@@ -2,13 +2,23 @@ package dev.furq.holodisplays.config
 
 import dev.furq.holodisplays.data.AnimationData
 import dev.furq.holodisplays.handlers.ConfigException
-import org.quiltmc.parsers.json.JsonReader
-import org.quiltmc.parsers.json.JsonWriter
+import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
 import java.nio.file.Path
 
 object AnimationConfig : Config {
     override lateinit var configDir: Path
     private val animations = mutableMapOf<String, AnimationData>()
+
+    @OptIn(ExperimentalSerializationApi::class)
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        prettyPrint = true
+        allowTrailingComma = true
+        allowComments = true
+    }
 
     override fun init(baseDir: Path) {
         configDir = baseDir.resolve("animations")
@@ -17,55 +27,26 @@ object AnimationConfig : Config {
 
     override fun reload() {
         animations.clear()
-        configDir.toFile().listFiles(JsonUtils.jsonFilter)
+        configDir.toFile().listFiles { it.extension == "json" }
             ?.forEach { file ->
-                JsonReader.json5(file.inputStream().reader()).use { json ->
-                    animations[file.nameWithoutExtension] = parseAnimationData(json)
-                }
+                val jsonContent = file.readText()
+                val animationData = json.decodeFromString<AnimationData>(jsonContent)
+                animations[file.nameWithoutExtension] = animationData
             }
             ?: throw ConfigException("Failed to list animation config files")
     }
 
-    private fun parseAnimationData(json: JsonReader): AnimationData = json.run {
-        val builder = AnimationData.Builder()
-        beginObject()
-
-        while (hasNext()) {
-            when (nextName()) {
-                "frames" -> {
-                    beginArray()
-                    while (hasNext()) {
-                        builder.addFrame(nextString())
-                    }
-                    endArray()
-                }
-
-                "interval" -> builder.interval = nextInt()
-                else -> skipValue()
-            }
-        }
-        endObject()
-        builder.build()
-    }
 
     fun getAnimation(name: String) = animations[name]
     fun getAnimations() = animations.toMap()
 
-    fun saveAnimation(name: String, animation: AnimationData) {
+    fun saveAnimation(name: String, animation: AnimationData) = safeCall {
         animations[name] = animation
         val file = configDir.resolve("$name.json").toFile()
         file.parentFile.mkdirs()
 
-        file.outputStream().writer().use { writer ->
-            JsonWriter.json(writer).use { json -> writeAnimation(json, animation) }
-        }
-    }
-
-    private fun writeAnimation(json: JsonWriter, animation: AnimationData) = json.run {
-        beginObject()
-        JsonUtils.writeStringList(this, "frames", animation.frames.map { it.text })
-        name("interval").value(animation.interval)
-        endObject()
+        val jsonContent = json.encodeToString(animation)
+        file.writeText(jsonContent)
     }
 
     fun deleteAnimation(name: String) {

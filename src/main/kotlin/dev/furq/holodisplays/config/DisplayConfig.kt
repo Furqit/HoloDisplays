@@ -5,15 +5,24 @@ import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.display.*
 import dev.furq.holodisplays.handlers.ConfigException
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
-import net.minecraft.entity.EntityPose
-import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
-import org.quiltmc.parsers.json.JsonReader
-import org.quiltmc.parsers.json.JsonWriter
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.nio.file.Path
 
 object DisplayConfig : Config {
     override lateinit var configDir: Path
     private val displays = mutableMapOf<String, DisplayData>()
+
+    @OptIn(ExperimentalSerializationApi::class)
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        prettyPrint = true
+        allowTrailingComma = true
+        allowComments = true
+    }
 
     override fun init(baseDir: Path) {
         configDir = baseDir.resolve("displays")
@@ -22,115 +31,15 @@ object DisplayConfig : Config {
 
     override fun reload() {
         displays.clear()
-        configDir.toFile().listFiles(JsonUtils.jsonFilter)
+        configDir.toFile().listFiles { it.extension == "json" }
             ?.forEach { file ->
-                JsonReader.json5(file.inputStream().reader()).use { json ->
-                    displays[file.nameWithoutExtension] = parseDisplayData(json)
-                }
+                val jsonContent = file.readText()
+                val displayData = deserializeDisplayData(jsonContent)
+                displays[file.nameWithoutExtension] = displayData
             }
             ?: throw ConfigException("Failed to list display config files")
     }
 
-    private fun parseDisplayData(json: JsonReader): DisplayData = json.run {
-        beginObject()
-        lateinit var displayData: DisplayData
-
-        while (hasNext()) {
-            when (nextName()) {
-                "type" -> {
-                    displayData = when (nextString().lowercase()) {
-                        "text" -> parseTextDisplay()
-                        "item" -> parseItemDisplay()
-                        "block" -> parseBlockDisplay()
-                        "entity" -> parseEntityDisplay()
-                        else -> throw IllegalArgumentException("Invalid display type")
-                    }
-                }
-
-                else -> skipValue()
-            }
-        }
-        endObject()
-
-        displayData
-    }
-
-    private fun JsonReader.parseTextDisplay(): DisplayData {
-        val builder = TextDisplay.Builder()
-
-        while (hasNext()) {
-            when (nextName()) {
-                "lines" -> builder.lines = JsonUtils.parseStringList(this).toMutableList()
-                "rotation" -> builder.rotation = JsonUtils.parseVector3f(this)
-                "scale" -> builder.scale = JsonUtils.parseVector3f(this)
-                "lineWidth" -> builder.lineWidth = nextInt()
-                "backgroundColor" -> builder.backgroundColor = nextString()
-                "textOpacity" -> builder.textOpacity = nextInt()
-                "shadow" -> builder.shadow = nextBoolean()
-                "seeThrough" -> builder.seeThrough = nextBoolean()
-                "alignment" -> builder.alignment = TextDisplay.TextAlignment.valueOf(nextString().uppercase())
-                "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
-                "conditionalPlaceholder" -> builder.conditionalPlaceholder = nextString()
-                else -> skipValue()
-            }
-        }
-
-        return DisplayData(builder.build())
-    }
-
-    private fun JsonReader.parseItemDisplay(): DisplayData {
-        val builder = ItemDisplay.Builder()
-
-        while (hasNext()) {
-            when (nextName()) {
-                "id" -> builder.id = nextString()
-                "displayType" -> builder.itemDisplayType = nextString().lowercase()
-                "rotation" -> builder.rotation = JsonUtils.parseVector3f(this)
-                "scale" -> builder.scale = JsonUtils.parseVector3f(this)
-                "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
-                "customModelData" -> builder.customModelData = nextInt()
-                "conditionalPlaceholder" -> builder.conditionalPlaceholder = nextString()
-                else -> skipValue()
-            }
-        }
-
-        return DisplayData(builder.build())
-    }
-
-    private fun JsonReader.parseBlockDisplay(): DisplayData {
-        val builder = BlockDisplay.Builder()
-
-        while (hasNext()) {
-            when (nextName()) {
-                "id" -> builder.id = nextString()
-                "rotation" -> builder.rotation = JsonUtils.parseVector3f(this)
-                "scale" -> builder.scale = JsonUtils.parseVector3f(this)
-                "billboardMode" -> builder.billboardMode = BillboardMode.valueOf(nextString().uppercase())
-                "conditionalPlaceholder" -> builder.conditionalPlaceholder = nextString()
-                else -> skipValue()
-            }
-        }
-
-        return DisplayData(builder.build())
-    }
-
-    private fun JsonReader.parseEntityDisplay(): DisplayData {
-        val builder = EntityDisplay.Builder()
-
-        while (hasNext()) {
-            when (nextName()) {
-                "id" -> builder.id = nextString()
-                "rotation" -> builder.rotation = JsonUtils.parseVector3f(this)
-                "scale" -> builder.scale = JsonUtils.parseVector3f(this)
-                "glow" -> builder.glow = nextBoolean()
-                "pose" -> builder.pose = EntityPose.valueOf(nextString().uppercase())
-                "conditionalPlaceholder" -> builder.conditionalPlaceholder = nextString()
-                else -> skipValue()
-            }
-        }
-
-        return DisplayData(builder.build())
-    }
 
     fun getDisplay(name: String): DisplayData? = displays[name]
     fun getDisplayOrAPI(name: String): DisplayData? = displays[name] ?: HoloDisplaysAPI.get().getDisplay(name)
@@ -142,61 +51,35 @@ object DisplayConfig : Config {
         val file = configDir.resolve("$name.json").toFile()
         file.parentFile.mkdirs()
 
-        file.outputStream().writer().use { writer ->
-            JsonWriter.json(writer).use { json -> writeDisplay(json, display) }
-        }
+        val jsonContent = serializeDisplayData(display)
+        file.writeText(jsonContent)
     }
 
-    private fun writeDisplay(json: JsonWriter, displayData: DisplayData) = json.run {
-        beginObject()
+    private fun deserializeDisplayData(jsonContent: String): DisplayData {
+        val jsonElement = json.parseToJsonElement(jsonContent)
+        val type = jsonElement.jsonObject["type"]?.jsonPrimitive?.content ?: throw ConfigException("Display config missing 'type' field")
 
-        when (val display = displayData.type) {
-            is TextDisplay -> {
-                name("type").value("text")
-                JsonUtils.writeStringList(this, "lines", display.lines)
-                display.lineWidth?.let { name("lineWidth").value(it) }
-                display.backgroundColor?.let { name("backgroundColor").value(it) }
-                display.textOpacity?.let { name("textOpacity").value(it) }
-                display.shadow?.let { name("shadow").value(it) }
-                display.seeThrough?.let { name("seeThrough").value(it) }
-                display.alignment?.let { name("alignment").value(it.name) }
-                writeCommonProperties(this, display)
-            }
-
-            is ItemDisplay -> {
-                name("type").value("item")
-                name("id").value(display.id)
-                name("displayType").value(display.itemDisplayType)
-                display.customModelData?.let { name("customModelData").value(it) }
-                writeCommonProperties(this, display)
-            }
-
-            is BlockDisplay -> {
-                name("type").value("block")
-                name("id").value(display.id)
-                writeCommonProperties(this, display)
-            }
-
-            is EntityDisplay -> {
-                name("type").value("entity")
-                name("id").value(display.id)
-                display.glow?.let { name("glow").value(it) }
-                display.pose?.let { name("pose").value(it.name) }
-                display.conditionalPlaceholder?.let { name("conditionalPlaceholder").value(it) }
-                writeCommonProperties(this, display)
-            }
+        val display = when (type.lowercase()) {
+            "text" -> json.decodeFromString<TextDisplay>(jsonContent)
+            "item" -> json.decodeFromString<ItemDisplay>(jsonContent)
+            "block" -> json.decodeFromString<BlockDisplay>(jsonContent)
+            "entity" -> json.decodeFromString<EntityDisplay>(jsonContent)
+            else -> throw ConfigException("Unknown display type: $type")
         }
 
-        endObject()
+        return DisplayData(display)
     }
 
-    private fun writeCommonProperties(json: JsonWriter, display: BaseDisplay) {
-        display.rotation?.let { JsonUtils.writeVector3f(json, "rotation", it) }
-        display.scale?.let { JsonUtils.writeVector3f(json, "scale", it) }
-        if (display !is EntityDisplay) {
-            display.billboardMode?.let { json.name("billboardMode").value(it.name) }
+    private fun serializeDisplayData(displayData: DisplayData): String {
+        val displayJson = when (val display = displayData.type) {
+            is TextDisplay -> json.encodeToString(display)
+            is ItemDisplay -> json.encodeToString(display)
+            is BlockDisplay -> json.encodeToString(display)
+            is EntityDisplay -> json.encodeToString(display)
+            else -> throw ConfigException("Unknown display type: ${display::class.simpleName}")
         }
-        display.conditionalPlaceholder?.let { json.name("conditionalPlaceholder").value(it) }
+
+        return json.encodeToString(json.parseToJsonElement(displayJson))
     }
 
     fun deleteDisplay(name: String) = safeCall {

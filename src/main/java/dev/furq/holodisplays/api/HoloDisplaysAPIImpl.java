@@ -36,8 +36,8 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
             }
 
             for (HologramData.DisplayLine display : hologram.getDisplays()) {
-                if (!DisplayConfig.INSTANCE.exists(display.getDisplayId()) && !apiDisplays.containsKey(display.getDisplayId())) {
-                    throw new IllegalArgumentException("Display with ID " + display.getDisplayId() + " does not exist");
+                if (!DisplayConfig.INSTANCE.exists(display.getName()) && !apiDisplays.containsKey(display.getName())) {
+                    throw new IllegalArgumentException("Display with ID " + display.getName() + " does not exist");
                 }
             }
 
@@ -86,8 +86,8 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
             }
 
             for (HologramData.DisplayLine display : hologram.getDisplays()) {
-                if (!DisplayConfig.INSTANCE.exists(display.getDisplayId()) && !apiDisplays.containsKey(display.getDisplayId())) {
-                    throw new IllegalArgumentException("Display with ID " + display.getDisplayId() + " does not exist");
+                if (!DisplayConfig.INSTANCE.exists(display.getName()) && !apiDisplays.containsKey(display.getName())) {
+                    throw new IllegalArgumentException("Display with ID " + display.getName() + " does not exist");
                 }
             }
 
@@ -368,8 +368,7 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
 
     private static class HologramBuilderImpl implements HologramBuilder {
         private final List<HologramData.DisplayLine> displays = new ArrayList<>();
-        private Vector3f position = new Vector3f();
-        private String world = "minecraft:overworld";
+        private HologramData.Position position = new HologramData.Position("minecraft:overworld", 0.0f, 0.0f, 0.0f);
         private Vector3f scale = new Vector3f(1.0f, 1.0f, 1.0f);
         private BillboardMode billboardMode = BillboardMode.CENTER;
         private int updateRate = 20;
@@ -379,13 +378,13 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
 
         @Override
         public HologramBuilder position(float x, float y, float z) {
-            position = new Vector3f(x, y, z);
+            position = new HologramData.Position(position.getWorld(), x, y, z);
             return this;
         }
 
         @Override
         public HologramBuilder world(String worldId) {
-            world = worldId;
+            position = new HologramData.Position(worldId, position.getX(), position.getY(), position.getZ());
             return this;
         }
 
@@ -436,12 +435,11 @@ public class HoloDisplaysAPIImpl implements HoloDisplaysAPI {
             return new HologramData(
                     displays,
                     position,
-                    world,
+                    rotation,
                     scale,
                     billboardMode,
                     updateRate,
                     viewRange,
-                    rotation,
                     conditionalPlaceholder
             );
         }

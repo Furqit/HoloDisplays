@@ -54,13 +54,13 @@ object TickHandler {
 
     private fun processHologramDisplays(name: String, hologram: HologramData, players: List<ServerPlayerEntity>) {
         hologram.displays.forEachIndexed { index, displayLine ->
-            val display = DisplayConfig.getDisplayOrAPI(displayLine.displayId)?.type as? TextDisplay
+            val display = DisplayConfig.getDisplayOrAPI(displayLine.name)?.type as? TextDisplay
                 ?: return@forEachIndexed
 
             val text = display.getText()
             if (!shouldUpdateDisplay(text, hologram.updateRate)) return@forEachIndexed
 
-            updateDisplayForViewers(name, displayLine.displayId, index, text, players)
+            updateDisplayForViewers(name, displayLine.name, index, text, players)
         }
     }
 
@@ -97,7 +97,7 @@ object TickHandler {
         if (animation.frames.isEmpty()) return null
 
         val currentIndex = (currentTick / animation.interval) % animation.frames.size
-        return animation.frames[currentIndex].text
+        return animation.frames[currentIndex]
     }
 
     private fun findAnimationIntervals(text: String): List<Int> =

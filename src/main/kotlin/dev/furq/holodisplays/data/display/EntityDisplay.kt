@@ -1,9 +1,15 @@
+@file:UseSerializers(Vector3fSerializer::class)
+
 package dev.furq.holodisplays.data.display
 
+import dev.furq.holodisplays.utils.Vector3fSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
 import net.minecraft.entity.EntityPose
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import org.joml.Vector3f
 
+@Serializable
 data class EntityDisplay(
     val id: String,
     override val rotation: Vector3f? = null,

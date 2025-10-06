@@ -1,18 +1,15 @@
 package dev.furq.holodisplays.data
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class AnimationData(
-    val frames: List<Frame>,
+    val frames: List<String>,
     val interval: Int = 20,
 ) {
-    data class Frame(val text: String)
-
     class Builder {
-        private var frames = mutableListOf<Frame>()
+        private var frames = mutableListOf<String>()
         var interval: Int = 20
-
-        fun addFrame(text: String) {
-            frames.add(Frame(text))
-        }
 
         fun build() = AnimationData(frames, interval)
     }

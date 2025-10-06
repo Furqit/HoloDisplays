@@ -32,7 +32,7 @@ object HologramEdit {
                 )
             )) { _, type, _, _ ->
                 when {
-                    type.isLeft -> editPosition(player, name, hologram.position)
+                    type.isLeft -> editPosition(player, name, hologram.position.toVec3f())
                     type.isRight -> setCurrentPosition(player, name)
                 }
             }

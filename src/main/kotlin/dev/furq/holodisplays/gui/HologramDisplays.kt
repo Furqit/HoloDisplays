@@ -43,11 +43,11 @@ object HologramDisplays {
                 if (slot in listOf(17, 26, 35)) slot += 2
 
                 val display = hologram.displays[i]
-                val displayConfig = DisplayConfig.getDisplay(display.displayId)
+                val displayConfig = DisplayConfig.getDisplay(display.name)
                 val icon = GuiUtils.getDisplayIcon(displayConfig?.type)
 
                 val lore = buildList {
-                    addAll(GuiUtils.createCurrentValueLore("Display", display.displayId))
+                    addAll(GuiUtils.createCurrentValueLore("Display", display.name))
                     addAll(GuiUtils.createCurrentValueLore("Offset", "${display.offset.x}, ${display.offset.y}, ${display.offset.z}"))
                     addAll(GuiUtils.createActionLore(
                         "Left-Click to edit offset",
@@ -62,12 +62,12 @@ object HologramDisplays {
                     lore = lore
                 )) { _, type, _, _ ->
                     when {
-                        type.isMiddle -> DisplayEdit.open(player, display.displayId) {
+                        type.isMiddle -> DisplayEdit.open(player, display.name) {
                             open(player, hologramName, pageInfo.currentPage)
                         }
 
                         type.isRight -> {
-                            if (HologramManager.removeDisplayFromHologram(hologramName, display.displayId, player.commandSource)) {
+                            if (HologramManager.removeDisplayFromHologram(hologramName, display.name, player.commandSource)) {
                                 open(player, hologramName, pageInfo.currentPage)
                             }
                         }

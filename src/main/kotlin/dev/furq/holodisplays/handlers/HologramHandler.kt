@@ -21,7 +21,7 @@ object HologramHandler {
         data class BillboardMode(val mode: MinecraftBillboardMode?) : HologramProperty()
         data class ViewRange(val value: Double?) : HologramProperty()
         data class UpdateRate(val value: Int?) : HologramProperty()
-        data class Position(val position: Vector3f, val world: String) : HologramProperty()
+        data class Position(val position: HologramData.Position) : HologramProperty()
         data class Rotation(val value: Vector3f?) : HologramProperty()
         data class LineOffset(val index: Int, val offset: Vector3f) : HologramProperty()
         data class AddLine(val displayId: String, val offset: Vector3f = Vector3f()) : HologramProperty()
@@ -86,7 +86,7 @@ object HologramHandler {
         is HologramProperty.ViewRange -> hologram.copy(viewRange = property.value ?: 48.0)
         is HologramProperty.UpdateRate -> hologram.copy(updateRate = property.value ?: 20)
         is HologramProperty.ConditionalPlaceholder -> hologram.copy(conditionalPlaceholder = property.value)
-        is HologramProperty.Position -> hologram.copy(position = property.position, world = property.world)
+        is HologramProperty.Position -> hologram.copy(position = property.position)
         is HologramProperty.Rotation -> hologram.copy(rotation = property.value ?: Vector3f())
         is HologramProperty.LineOffset -> updateLineOffset(hologram, property)
         is HologramProperty.AddLine -> hologram.copy(
@@ -122,7 +122,7 @@ object HologramHandler {
     private fun getPlayersInRange(data: HologramData): List<ServerPlayerEntity> {
         return getWorld(data.world).players
             ?.filterIsInstance<ServerPlayerEntity>()
-            ?.filter { isPlayerInRange(it, data.world, data.position, data.viewRange) }
+            ?.filter { isPlayerInRange(it, data.world, data.position.toVec3f(), data.viewRange) }
             ?: emptyList()
     }
 

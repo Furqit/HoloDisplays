@@ -33,6 +33,16 @@ object HologramManager {
         "%.3f".format(Locale.US, pos.z).toFloat()
     )
 
+    private fun createPosition(pos: Vec3d, world: String): HologramData.Position {
+        val formattedPos = formatPosition(pos)
+        return HologramData.Position(
+            world = world,
+            x = formattedPos.x,
+            y = formattedPos.y,
+            z = formattedPos.z
+        )
+    }
+
     fun createHologram(name: String, player: ServerPlayerEntity) {
         if (!validateHologramName(name, player.commandSource)) return
 
@@ -42,8 +52,7 @@ object HologramManager {
 
         val hologram = HologramData(
             displays = mutableListOf(HologramData.DisplayLine(defaultDisplayName)),
-            position = formatPosition(player.pos),
-            world = player.world.registryKey.value.toString(),
+            position = createPosition(player.pos, player.world.registryKey.value.toString()),
             rotation = Vector3f(),
             scale = Vector3f(1f),
             billboardMode = BillboardMode.CENTER,
@@ -65,7 +74,8 @@ object HologramManager {
     fun updatePosition(name: String, pos: Vec3d, worldId: String, source: ServerCommandSource) {
         if (!validateHologramExists(name, source)) return
 
-        HologramHandler.updateHologramProperty(name, Position(formatPosition(pos), worldId))
+        val newPosition = createPosition(pos, worldId)
+        HologramHandler.updateHologramProperty(name, Position(newPosition))
         FeedbackManager.send(source, FeedbackType.POSITION_UPDATED, *FeedbackManager.formatVector3f(formatPosition(pos)))
     }
 
@@ -185,7 +195,7 @@ object HologramManager {
         if (!validateHologramExists(hologramName, source)) return false
 
         val hologram = HologramConfig.getHologram(hologramName)
-        if (hologram!!.displays.any { it.displayId == displayName }) {
+        if (hologram!!.displays.any { it.name == displayName }) {
             FeedbackManager.send(source, FeedbackType.DISPLAY_ALREADY_ADDED, "name" to displayName)
             return false
         }
@@ -199,7 +209,7 @@ object HologramManager {
         if (!validateHologramExists(hologramName, source)) return false
 
         val hologram = HologramConfig.getHologram(hologramName)
-        val displayIndex = hologram!!.displays.indexOfFirst { it.displayId == displayName }
+        val displayIndex = hologram!!.displays.indexOfFirst { it.name == displayName }
 
         if (displayIndex == -1) {
             FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to displayName)
@@ -215,7 +225,7 @@ object HologramManager {
         if (!validateHologramExists(hologramName, source)) return
 
         val hologram = HologramConfig.getHologram(hologramName)
-        val displayIndex = hologram!!.displays.indexOfFirst { it.displayId == displayName }
+        val displayIndex = hologram!!.displays.indexOfFirst { it.name == displayName }
 
         if (displayIndex == -1) {
             FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to displayName)

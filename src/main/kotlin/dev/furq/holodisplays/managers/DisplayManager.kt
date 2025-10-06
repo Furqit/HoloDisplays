@@ -84,9 +84,9 @@ object DisplayManager {
         if (!validateDisplayExists(name, source)) return
 
         HologramConfig.getHolograms()
-            .filterValues { hologram -> hologram.displays.any { it.displayId == name } }
+            .filterValues { hologram -> hologram.displays.any { it.name == name } }
             .forEach { (hologramName, hologram) ->
-                val indicesToRemove = hologram.displays.mapIndexedNotNull { index, displayLine -> index.takeIf { displayLine.displayId == name } }
+                val indicesToRemove = hologram.displays.mapIndexedNotNull { index, displayLine -> index.takeIf { displayLine.name == name } }
                 indicesToRemove.reversed().forEach { index ->
                     HologramHandler.updateHologramProperty(hologramName, HologramHandler.HologramProperty.RemoveLine(index))
                 }

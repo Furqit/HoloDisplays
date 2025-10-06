@@ -9,7 +9,6 @@ import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import dev.furq.holodisplays.utils.ConditionEvaluator
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.util.math.Vec3d
 import java.util.*
 
 object ViewerHandler {
@@ -78,18 +77,12 @@ object ViewerHandler {
         if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) return@safeCall
 
         hologram.displays.forEachIndexed { index, entity ->
-            val display = DisplayConfig.getDisplayOrAPI(entity.displayId) ?: throw HologramException("Display ${entity.displayId} not found")
+            val display = DisplayConfig.getDisplayOrAPI(entity.name) ?: throw HologramException("Display ${entity.name} not found")
             if (!ConditionEvaluator.evaluate(display.type.conditionalPlaceholder, player)) return@forEachIndexed
 
-            PacketHandler.spawnDisplayEntity(player, name, entity, processDisplayForPlayer(display), hologramPosition(hologram), index, hologram)
+            PacketHandler.spawnDisplayEntity(player, name, entity, processDisplayForPlayer(display), hologram.position.toVec3f(), index, hologram)
         }
     }
-
-    private fun hologramPosition(hologram: HologramData) = Vec3d(
-        hologram.position.x.toDouble(),
-        hologram.position.y.toDouble(),
-        hologram.position.z.toDouble()
-    )
 
     private fun processDisplayForPlayer(display: DisplayData): DisplayData = when (val displayType = display.type) {
         is TextDisplay -> display.copy(type = displayType.copy(lines = mutableListOf(displayType.getText())))
@@ -100,10 +93,10 @@ object ViewerHandler {
         if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) return
 
         hologram.displays.forEachIndexed { index, entity ->
-            DisplayConfig.getDisplayOrAPI(entity.displayId)?.let { display ->
+            DisplayConfig.getDisplayOrAPI(entity.name)?.let { display ->
                 if (!ConditionEvaluator.evaluate(display.type.conditionalPlaceholder, player)) return@let
                 PacketHandler.updateDisplayMetadata(
-                    player, name, entity.displayId, index,
+                    player, name, entity.name, index,
                     processDisplayForPlayer(display), hologram
                 )
             }
@@ -125,7 +118,7 @@ object ViewerHandler {
             }
 
             val shouldView = ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player) &&
-                    HologramHandler.isPlayerInRange(player, hologram.world, hologram.position, hologram.viewRange)
+                    HologramHandler.isPlayerInRange(player, hologram.world, hologram.position.toVec3f(), hologram.viewRange)
 
             when {
                 shouldView && !isCurrentlyViewing -> addViewer(player, name)

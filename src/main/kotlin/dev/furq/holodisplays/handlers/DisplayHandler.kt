@@ -45,7 +45,7 @@ object DisplayHandler {
 
         val affectedHolograms = HologramConfig.getHolograms()
             .filter { (_, hologram) ->
-                hologram.displays.any { it.displayId == displayId }
+                hologram.displays.any { it.name == displayId }
             }
 
         val needsRespawn = when (property) {

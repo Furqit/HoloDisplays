@@ -3,6 +3,7 @@ import java.util.*
 
 plugins {
     kotlin("jvm") version "2.2.+"
+    kotlin("plugin.serialization") version "2.2.+"
     id("fabric-loom") version "1.11.+"
     id("me.modmuss50.mod-publish-plugin") version "0.8.+"
 }
@@ -48,8 +49,8 @@ dependencies {
 
     modImplementation("eu.pb4", "placeholder-api", deps["placeholder-api"])
     modImplementation(include("eu.pb4", "sgui", deps["sgui"]))
-    api(include("org.quiltmc.parsers", "json", "0.3.0"))
-    api(include("org.quiltmc.parsers", "gson", "0.3.0"))
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
     vineflowerDecompilerClasspath("org.vineflower:vineflower:1.10.1")
 }

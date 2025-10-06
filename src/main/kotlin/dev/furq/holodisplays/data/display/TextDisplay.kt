@@ -1,8 +1,14 @@
+@file:UseSerializers(Vector3fSerializer::class)
+
 package dev.furq.holodisplays.data.display
 
+import dev.furq.holodisplays.utils.Vector3fSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
 import org.joml.Vector3f
 
+@Serializable
 data class TextDisplay(
     val lines: List<String>,
     val lineWidth: Int? = null,
@@ -17,6 +23,7 @@ data class TextDisplay(
     override val conditionalPlaceholder: String? = null
 ) : BaseDisplay() {
 
+    @Serializable
     enum class TextAlignment {
         LEFT, CENTER, RIGHT
     }

@@ -68,12 +68,12 @@ object PacketHandler {
         hologramName: String,
         line: HologramData.DisplayLine,
         displayData: DisplayData,
-        position: Vec3d,
+        position: Vector3f,
         lineIndex: Int,
         hologram: HologramData,
     ) = safeCall {
         val entityId = getNextEntityId()
-        val displayRef = "${line.displayId}:$lineIndex"
+        val displayRef = "${line.name}:$lineIndex"
 
         entityIds.getOrPut(player.uuid, ::mutableMapOf)
             .getOrPut(hologramName, ::mutableMapOf)[displayRef] = entityId
@@ -82,10 +82,10 @@ object PacketHandler {
         player.networkHandler.run {
             if (display is EntityDisplay) {
                 val translation = line.offset
-                val effectivePosition = Vec3d(position.x + translation.x, position.y + translation.y, position.z + translation.z)
+                val effectivePos = position.add(translation)
                 val rotation = display.rotation ?: hologram.rotation
 
-                sendPacket(createSpawnPacket(entityId, effectivePosition, display, rotation.x, rotation.y, rotation.y.toDouble()))
+                sendPacket(createSpawnPacket(entityId, effectivePos, display, rotation.x, rotation.y, rotation.y.toDouble()))
             } else {
                 sendPacket(createSpawnPacket(entityId, position, displayData.type))
             }
@@ -111,7 +111,7 @@ object PacketHandler {
 
     private fun createSpawnPacket(
         entityId: Int,
-        position: Vec3d,
+        position: Vector3f,
         display: BaseDisplay,
         pitch: Float = 0f,
         yaw: Float = 0f,
@@ -125,8 +125,9 @@ object PacketHandler {
             else -> throw DisplayException("Unknown display type")
         }
 
+        val pos = Vec3d(position)
         EntitySpawnS2CPacket(
-            entityId, UUID.randomUUID(), position.x, position.y, position.z,
+            entityId, UUID.randomUUID(), pos.x, pos.y, pos.z,
             pitch, yaw, entityType, 0, Vec3d.ZERO, headYaw
         )
     } ?: throw DisplayException("Failed to create spawn packet")

@@ -1,7 +1,9 @@
 package dev.furq.holodisplays.data
 
 import dev.furq.holodisplays.data.display.*
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class DisplayData(
     val type: BaseDisplay,
 ) {
