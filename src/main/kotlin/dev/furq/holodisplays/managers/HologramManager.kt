@@ -17,35 +17,42 @@ import org.joml.Vector3f
 import java.util.*
 
 object HologramManager {
-    private fun validateHologramName(name: String, source: ServerCommandSource): Boolean =
-        HologramConfig.exists(name).also { exists ->
-            if (exists) FeedbackManager.send(source, FeedbackType.HOLOGRAM_EXISTS, "name" to name)
-        }.not()
 
-    private fun validateHologramExists(name: String, source: ServerCommandSource): Boolean =
-        HologramConfig.exists(name).also { exists ->
-            if (!exists) FeedbackManager.send(source, FeedbackType.HOLOGRAM_NOT_FOUND, "name" to name)
-        }
-
-    private fun formatPosition(pos: Vec3d): Vector3f = Vector3f(
-        "%.3f".format(Locale.US, pos.x).toFloat(),
-        "%.3f".format(Locale.US, pos.y).toFloat(),
-        "%.3f".format(Locale.US, pos.z).toFloat()
-    )
-
-    private fun createPosition(pos: Vec3d, world: String): HologramData.Position {
-        val formattedPos = formatPosition(pos)
-        return HologramData.Position(
-            world = world,
-            x = formattedPos.x,
-            y = formattedPos.y,
-            z = formattedPos.z
-        )
+    private inline fun requireHologramExists(
+        name: String,
+        source: ServerCommandSource,
+        action: () -> Unit
+    ) {
+        if (HologramConfig.exists(name)) action()
+        else FeedbackManager.send(source, FeedbackType.HOLOGRAM_NOT_FOUND, "name" to name)
     }
 
-    fun createHologram(name: String, player: ServerPlayerEntity) {
-        if (!validateHologramName(name, player.commandSource)) return
+    private inline fun requireHologramNew(
+        name: String,
+        source: ServerCommandSource,
+        action: () -> Unit
+    ) {
+        if (!HologramConfig.exists(name)) action()
+        else FeedbackManager.send(source, FeedbackType.HOLOGRAM_EXISTS, "name" to name)
+    }
 
+    private fun createPosition(pos: Vec3d, world: String) = with(pos) {
+        fun Double.r() = String.format(Locale.US, "%.3f", this).toFloat()
+        HologramData.Position(world, x.r(), y.r(), z.r())
+    }
+
+    private fun updateProperty(
+        name: String,
+        source: ServerCommandSource,
+        property: HologramHandler.HologramProperty,
+        feedbackType: FeedbackType,
+        vararg details: Pair<String, Any>
+    ) = requireHologramExists(name, source) {
+        HologramHandler.updateHologramProperty(name, property)
+        FeedbackManager.send(source, feedbackType, *details)
+    }
+
+    fun createHologram(name: String, player: ServerPlayerEntity) = requireHologramNew(name, player.commandSource) {
         val defaultDisplayName = "${name}_text"
         val defaultDisplay = DisplayData(TextDisplay(mutableListOf("<gr #ffffff #008000>Hello, %player:name%</gr>")))
         DisplayConfig.saveDisplay(defaultDisplayName, defaultDisplay)
@@ -57,182 +64,128 @@ object HologramManager {
             scale = Vector3f(1f),
             billboardMode = BillboardMode.CENTER,
             updateRate = 20,
-            viewRange = 16.0,
+            viewRange = 16.0
         )
 
         HologramHandler.createHologram(name, hologram)
         FeedbackManager.send(player.commandSource, FeedbackType.HOLOGRAM_CREATED, "name" to name)
     }
 
-    fun deleteHologram(name: String, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source)) return
-
+    fun deleteHologram(name: String, source: ServerCommandSource) = requireHologramExists(name, source) {
         HologramHandler.deleteHologram(name)
         FeedbackManager.send(source, FeedbackType.HOLOGRAM_DELETED, "name" to name)
     }
 
     fun updatePosition(name: String, pos: Vec3d, worldId: String, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source)) return
-
-        val newPosition = createPosition(pos, worldId)
-        HologramHandler.updateHologramProperty(name, Position(newPosition))
-        FeedbackManager.send(source, FeedbackType.POSITION_UPDATED, *FeedbackManager.formatVector3f(formatPosition(pos)))
+        val property = Position(createPosition(pos, worldId))
+        updateProperty(name, source, property, FeedbackType.POSITION_UPDATED, *FeedbackManager.formatVector3f(pos.toVector3f()))
     }
 
-    private fun validateScale(scale: Vector3f, source: ServerCommandSource): Boolean =
-        (scale.x >= 0.1f && scale.y >= 0.1f && scale.z >= 0.1f).also { valid ->
-            if (!valid) FeedbackManager.send(source, FeedbackType.INVALID_SCALE)
-        }
+    fun updateScale(name: String, scale: Vector3f?, source: ServerCommandSource) {
+        requireHologramExists(name, source) {
+            val newScale = scale ?: Vector3f(1f)
 
-    private fun validateBillboardMode(billboard: String, source: ServerCommandSource): BillboardMode? =
-        try {
-            BillboardMode.valueOf(billboard.uppercase())
-        } catch (_: IllegalArgumentException) {
-            FeedbackManager.send(source, FeedbackType.INVALID_BILLBOARD)
-            null
-        }
+            if (scale != null && (newScale.x < 0.1f || newScale.y < 0.1f || newScale.z < 0.1f)) {
+                FeedbackManager.send(source, FeedbackType.INVALID_SCALE)
+                return
+            }
 
-    fun updateScale(name: String, scale: Vector3f, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source) || !validateScale(scale, source)) return
-
-        HologramHandler.updateHologramProperty(name, Scale(scale))
-        FeedbackManager.send(source, FeedbackType.SCALE_UPDATED, *FeedbackManager.formatVector3f(scale))
-    }
-
-    fun resetScale(name: String, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source)) return
-
-        HologramHandler.updateHologramProperty(name, Scale(Vector3f(1f)))
-        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "scale reset to default")
-    }
-
-    fun updateBillboard(name: String, billboard: String, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source)) return
-
-        validateBillboardMode(billboard, source)?.let { newMode ->
-            HologramHandler.updateHologramProperty(name, BillboardMode(newMode))
-            FeedbackManager.send(source, FeedbackType.BILLBOARD_UPDATED, "mode" to billboard.lowercase())
+            updateProperty(name, source, Scale(newScale),
+                FeedbackType.SCALE_UPDATED, *FeedbackManager.formatVector3f(newScale)
+            )
         }
     }
 
-    fun resetBillboard(name: String, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source)) return
+    fun updateBillboard(name: String, billboard: String?, source: ServerCommandSource) {
+        requireHologramExists(name, source) {
+            val newMode = if (billboard == null) {
+                BillboardMode.CENTER
+            } else {
+                try {
+                    BillboardMode.valueOf(billboard.uppercase())
+                } catch (_: IllegalArgumentException) {
+                    FeedbackManager.send(source, FeedbackType.INVALID_BILLBOARD)
+                    return
+                }
+            }
 
-        HologramHandler.updateHologramProperty(name, BillboardMode(BillboardMode.CENTER))
-        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "billboard mode reset to center")
+            updateProperty(name, source, BillboardMode(newMode),
+                FeedbackType.BILLBOARD_UPDATED, "mode" to (billboard?.lowercase() ?: "center")
+            )
+        }
     }
 
-    fun updateUpdateRate(name: String, rate: Int, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source)) return
+    fun updateRotation(name: String, pitch: Float?, yaw: Float?, roll: Float?, source: ServerCommandSource) {
+        requireHologramExists(name, source) {
+            val rotation = if (pitch == null || yaw == null || roll == null) Vector3f() else Vector3f(pitch, yaw, roll)
 
-        if (rate !in 1..100) {
+            if (listOf(rotation.x, rotation.y, rotation.z).any { it !in -180f..180f }) {
+                FeedbackManager.send(source, FeedbackType.INVALID_ROTATION)
+                return
+            }
+
+            updateProperty(name, source, Rotation(rotation),
+                FeedbackType.ROTATION_UPDATED, *FeedbackManager.formatRotation(rotation.x, rotation.y, rotation.z))
+        }
+    }
+
+    fun updateUpdateRate(name: String, rate: Int?, source: ServerCommandSource) {
+        val newRate = rate ?: 20
+        if (rate != null && newRate < 1) {
             FeedbackManager.send(source, FeedbackType.INVALID_UPDATE_RATE)
             return
         }
-
-        HologramHandler.updateHologramProperty(name, UpdateRate(rate))
-        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "update rate set to ${rate}t")
+        updateProperty(name, source, UpdateRate(newRate), FeedbackType.HOLOGRAM_UPDATED, "detail" to "update rate set to ${newRate}t")
     }
 
-    fun resetUpdateRate(name: String, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source)) return
-
-        HologramHandler.updateHologramProperty(name, UpdateRate(20))
-        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "update rate reset to default")
-    }
-
-    fun updateViewRange(name: String, range: Float, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source)) return
-
-        if (range !in 1f..128f) {
+    fun updateViewRange(name: String, range: Float?, source: ServerCommandSource) {
+        val newRange = range ?: 48f
+        if (range != null && newRange !in 1f..128f) {
             FeedbackManager.send(source, FeedbackType.INVALID_VIEW_RANGE)
             return
         }
-
-        HologramHandler.updateHologramProperty(name, ViewRange(range.toDouble()))
-        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "view range set to $range blocks")
-    }
-
-    fun resetViewRange(name: String, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source)) return
-
-        HologramHandler.updateHologramProperty(name, ViewRange(48.0))
-        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "view range reset to default")
-    }
-
-    fun updateRotation(name: String, pitch: Float, yaw: Float, roll: Float, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source)) return
-
-        if (pitch < -180f || pitch > 180f || yaw < -180f || yaw > 180f || roll < -180f || roll > 180f) {
-            FeedbackManager.send(source, FeedbackType.INVALID_ROTATION)
-            return
-        }
-
-        HologramHandler.updateHologramProperty(name, Rotation(Vector3f(pitch, yaw, roll)))
-        FeedbackManager.send(source, FeedbackType.ROTATION_UPDATED, *FeedbackManager.formatRotation(pitch, yaw, roll))
-    }
-
-    fun resetRotation(name: String, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source)) return
-
-        HologramHandler.updateHologramProperty(name, Rotation(Vector3f()))
-        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "rotation reset to default")
+        updateProperty(name, source, ViewRange(newRange.toDouble()), FeedbackType.HOLOGRAM_UPDATED, "detail" to "view range set to $newRange blocks")
     }
 
     fun updateCondition(name: String, condition: String?, source: ServerCommandSource) {
-        if (!validateHologramExists(name, source)) return
-
         if (condition != null && ConditionEvaluator.parseCondition(condition) == null) {
             FeedbackManager.send(source, FeedbackType.INVALID_CONDITION)
             return
         }
-
-        HologramHandler.updateHologramProperty(name, ConditionalPlaceholder(condition))
-        FeedbackManager.send(source, FeedbackType.HOLOGRAM_UPDATED, "detail" to "condition set to ${condition ?: "none"}")
+        updateProperty(name, source, ConditionalPlaceholder(condition), FeedbackType.HOLOGRAM_UPDATED, "detail" to "condition set to ${condition ?: "none"}")
     }
 
     fun addDisplayToHologram(hologramName: String, displayName: String, source: ServerCommandSource): Boolean {
-        if (!validateHologramExists(hologramName, source)) return false
-
         val hologram = HologramConfig.getHologram(hologramName)
         if (hologram!!.displays.any { it.name == displayName }) {
             FeedbackManager.send(source, FeedbackType.DISPLAY_ALREADY_ADDED, "name" to displayName)
             return false
         }
-
-        HologramHandler.updateHologramProperty(hologramName, AddLine(displayName))
-        FeedbackManager.send(source, FeedbackType.DISPLAY_ADDED, "name" to displayName)
+        updateProperty(hologramName, source, AddLine(displayName), FeedbackType.DISPLAY_ADDED, "name" to displayName)
         return true
     }
 
     fun removeDisplayFromHologram(hologramName: String, displayName: String, source: ServerCommandSource): Boolean {
-        if (!validateHologramExists(hologramName, source)) return false
-
         val hologram = HologramConfig.getHologram(hologramName)
-        val displayIndex = hologram!!.displays.indexOfFirst { it.name == displayName }
-
-        if (displayIndex == -1) {
+        val index = hologram!!.displays.indexOfFirst { it.name == displayName }
+        if (index == -1) {
             FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to displayName)
             return false
         }
 
-        HologramHandler.updateHologramProperty(hologramName, RemoveLine(displayIndex))
-        FeedbackManager.send(source, FeedbackType.DISPLAY_REMOVED, "name" to displayName)
+        updateProperty(hologramName, source, RemoveLine(index), FeedbackType.DISPLAY_REMOVED, "name" to displayName)
         return true
     }
 
+
     fun updateDisplayOffset(hologramName: String, displayName: String, offset: Vector3f, source: ServerCommandSource) {
-        if (!validateHologramExists(hologramName, source)) return
-
         val hologram = HologramConfig.getHologram(hologramName)
-        val displayIndex = hologram!!.displays.indexOfFirst { it.name == displayName }
+        val index = hologram!!.displays.indexOfFirst { it.name == displayName }
 
-        if (displayIndex == -1) {
+        if (index == -1) {
             FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to displayName)
             return
         }
-
-        HologramHandler.updateHologramProperty(hologramName, LineOffset(displayIndex, offset))
-        FeedbackManager.send(source, FeedbackType.OFFSET_UPDATED, *FeedbackManager.formatVector3f(offset))
+        updateProperty(hologramName, source, LineOffset(index, offset), FeedbackType.OFFSET_UPDATED, *FeedbackManager.formatVector3f(offset))
     }
 }

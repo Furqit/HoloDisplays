@@ -71,7 +71,7 @@ object TextDisplayEditor {
                 when {
                     type.isLeft -> editBackgroundColor(player, name, returnCallback)
                     type.isRight -> {
-                        DisplayManager.resetBackground(name, player.commandSource)
+                        DisplayManager.updateBackground(name, null, null, player.commandSource)
                         open(player, name, returnCallback)
                     }
                 }
@@ -151,7 +151,7 @@ object TextDisplayEditor {
     private fun editBackgroundColor(player: ServerPlayerEntity, name: String, returnCallback: () -> Unit) {
         AnvilInput.open(player, "Enter Color (hex)", "FFFFFF",
             onSubmit = { color ->
-                AnvilInput.open(player, "Enter Opacity (1-100)", "100",
+                AnvilInput.open(player, "Enter Opacity (0-100)", "100",
                     onSubmit = { opacity ->
                         DisplayManager.updateBackground(name, color, opacity.toInt(), player.commandSource)
                         open(player, name, returnCallback)

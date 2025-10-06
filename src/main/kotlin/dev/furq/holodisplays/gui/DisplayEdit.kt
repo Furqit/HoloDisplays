@@ -38,7 +38,7 @@ object DisplayEdit {
             )) { _, type, _, _ ->
                 when {
                     type.isRight -> {
-                        DisplayManager.resetScale(name, player.commandSource)
+                        DisplayManager.updateScale(name, null, player.commandSource)
                         open(player, name, returnCallback)
                     }
 
@@ -59,7 +59,7 @@ object DisplayEdit {
                 )) { _, type, _, _ ->
                     when {
                         type.isRight -> {
-                            DisplayManager.resetBillboard(name, player.commandSource)
+                            DisplayManager.updateBillboard(name, null, player.commandSource)
                             open(player, name, returnCallback)
                         }
 
@@ -88,7 +88,7 @@ object DisplayEdit {
             )) { _, type, _, _ ->
                 when {
                     type.isRight -> {
-                        DisplayManager.resetRotation(name, player.commandSource)
+                        DisplayManager.updateRotation(name, null, null, null, player.commandSource)
                         open(player, name, returnCallback)
                     }
 

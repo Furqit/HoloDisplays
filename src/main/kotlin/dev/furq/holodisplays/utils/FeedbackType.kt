@@ -40,7 +40,7 @@ enum class FeedbackType(private val template: String, val isError: Boolean = fal
     INVALID_BLOCK("Invalid block ID. Block does not exist in the game", true),
     INVALID_ENTITY("Invalid entity ID. Entity does not exist in the game", true),
     INVALID_TEXT_OPACITY("Invalid text opacity. Must be between 1 and 100", true),
-    INVALID_UPDATE_RATE("Invalid update rate. Must be between 1 and 100 ticks", true),
+    INVALID_UPDATE_RATE("Invalid update rate. Must be at least 1 tick", true),
     INVALID_ROTATION("Invalid rotation values. Must be valid angles", true),
     INVALID_CONDITION("Invalid condition format. Use: %placeholder% operator value", true),
     DISPLAY_ALREADY_ADDED("Display '{name}' is already added to this hologram", true),

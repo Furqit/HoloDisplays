@@ -20,11 +20,11 @@ import org.joml.Vector3f
 
 object DisplayEditCommand : EditCommand() {
     override fun updateScale(name: String, scale: Vector3f, source: ServerCommandSource) = DisplayManager.updateScale(name, scale, source)
-    override fun resetScale(name: String, source: ServerCommandSource) = DisplayManager.resetScale(name, source)
+    override fun resetScale(name: String, source: ServerCommandSource) = DisplayManager.updateScale(name, null, source)
     override fun updateBillboard(name: String, mode: String, source: ServerCommandSource) = DisplayManager.updateBillboard(name, mode, source)
-    override fun resetBillboard(name: String, source: ServerCommandSource) = DisplayManager.resetBillboard(name, source)
+    override fun resetBillboard(name: String, source: ServerCommandSource) = DisplayManager.updateRotation(name, null, null, null, source)
     override fun updateRotation(name: String, pitch: Float, yaw: Float, roll: Float, source: ServerCommandSource) = DisplayManager.updateRotation(name, pitch, yaw, roll, source)
-    override fun resetRotation(name: String, source: ServerCommandSource) = DisplayManager.resetRotation(name, source)
+    override fun resetRotation(name: String, source: ServerCommandSource) = DisplayManager.updateRotation(name, null, null, null, source)
     override fun updateCondition(name: String, condition: String?, source: ServerCommandSource) = DisplayManager.updateCondition(name, condition, source)
     override fun openEditGui(player: net.minecraft.server.network.ServerPlayerEntity, name: String) = DisplayEdit.open(player, name)
 
@@ -89,7 +89,7 @@ object DisplayEditCommand : EditCommand() {
                     builder.suggest("FFFFFF")
                     builder.buildFuture()
                 }
-                .then(CommandManager.argument("opacity", IntegerArgumentType.integer(1, 100))
+                .then(CommandManager.argument("opacity", IntegerArgumentType.integer(0, 100))
                     .executes { context -> executeBackgroundColor(context) }))
             .then(CommandManager.literal("reset")
                 .executes { context -> executeResetBackground(context) })
@@ -197,7 +197,7 @@ object DisplayEditCommand : EditCommand() {
 
     private fun executeResetBackground(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
-        DisplayManager.resetBackground(name, context.source)
+        DisplayManager.updateBackground(name, null, null, context.source)
         return 1
     }
 
@@ -287,7 +287,7 @@ object DisplayEditCommand : EditCommand() {
 
     private fun executeResetEntityPose(context: CommandContext<ServerCommandSource>): Int {
         val name = StringArgumentType.getString(context, "name")
-        DisplayManager.resetEntityPose(name, context.source)
+        DisplayManager.updateEntityPose(name, null, context.source)
         return 1
     }
 }
