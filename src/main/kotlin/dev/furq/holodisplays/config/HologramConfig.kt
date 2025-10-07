@@ -1,6 +1,6 @@
 package dev.furq.holodisplays.config
 
-import dev.furq.holodisplays.api.HoloDisplaysAPI
+import dev.furq.holodisplays.api.HoloDisplaysAPIInternal
 import dev.furq.holodisplays.data.HologramData
 import dev.furq.holodisplays.handlers.ConfigException
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
@@ -39,7 +39,7 @@ object HologramConfig : Config {
 
 
     fun getHologram(name: String): HologramData? = holograms[name]
-    fun getHologramOrAPI(name: String): HologramData? = holograms[name] ?: HoloDisplaysAPI.get().getHologram(name)
+    fun getHologramOrAPI(name: String): HologramData? = holograms[name] ?: HoloDisplaysAPIInternal.getHologram(name)
     fun getHolograms(): Map<String, HologramData> = holograms
     fun exists(name: String): Boolean = holograms.containsKey(name)
 

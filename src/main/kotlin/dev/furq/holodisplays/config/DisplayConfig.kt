@@ -1,6 +1,6 @@
 package dev.furq.holodisplays.config
 
-import dev.furq.holodisplays.api.HoloDisplaysAPI
+import dev.furq.holodisplays.api.HoloDisplaysAPIInternal
 import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.display.*
 import dev.furq.holodisplays.handlers.ConfigException
@@ -42,7 +42,7 @@ object DisplayConfig : Config {
 
 
     fun getDisplay(name: String): DisplayData? = displays[name]
-    fun getDisplayOrAPI(name: String): DisplayData? = displays[name] ?: HoloDisplaysAPI.get().getDisplay(name)
+    fun getDisplayOrAPI(name: String): DisplayData? = displays[name] ?: HoloDisplaysAPIInternal.getDisplay(name)
     fun getDisplays(): Map<String, DisplayData> = displays
     fun exists(name: String): Boolean = displays.containsKey(name)
 

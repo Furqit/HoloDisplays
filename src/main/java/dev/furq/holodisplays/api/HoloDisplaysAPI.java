@@ -11,15 +11,14 @@ import java.util.function.Consumer;
  */
 public interface HoloDisplaysAPI {
     /**
-     * Gets the instance of the HoloDisplays API.
-     * Always use this method to access the API rather than attempting
-     * to call methods statically on the interface or directly instantiating
-     * an implementation.
+     * Gets an instance of the HoloDisplays API for your mod.
+     * The mod ID will be used as the namespace for all holograms and displays created through this instance.
      *
-     * @return The API instance (singleton)
+     * @param modId Your mod's ID (e.g., "mymod")
+     * @return The API instance for your mod
      */
-    static HoloDisplaysAPI get() {
-        return HoloDisplaysAPIImpl.INSTANCE;
+    static HoloDisplaysAPI get(String modId) {
+        return new HoloDisplaysAPIImpl(modId);
     }
 
     /**
@@ -32,9 +31,9 @@ public interface HoloDisplaysAPI {
     /**
      * Registers a hologram with the given ID and data.
      * The hologram will be managed by HoloDisplays but not saved to the config file.
-     * The ID must have a namespace other than "minecraft" (e.g., "mymod:my_hologram").
+     * The mod's namespace will be automatically prepended to the ID.
      *
-     * @param id       The unique identifier for this hologram (must include namespace)
+     * @param id       The unique identifier for this hologram (e.g., "my_hologram")
      * @param hologram The hologram data
      * @return True if registration was successful, false otherwise
      */
@@ -67,9 +66,9 @@ public interface HoloDisplaysAPI {
 
     /**
      * Creates a text display with the given configuration.
-     * The ID must have a namespace other than "minecraft" (e.g., "mymod:my_display").
+     * The mod's namespace will be automatically prepended to the ID.
      *
-     * @param id      The unique identifier for this display
+     * @param id      The unique identifier for this display (e.g., "my_display")
      * @param builder A consumer to configure the text display
      * @return The created display data
      */
@@ -77,9 +76,9 @@ public interface HoloDisplaysAPI {
 
     /**
      * Creates an item display with the given configuration.
-     * The ID must have a namespace other than "minecraft" (e.g., "mymod:my_display").
+     * The mod's namespace will be automatically prepended to the ID.
      *
-     * @param id      The unique identifier for this display
+     * @param id      The unique identifier for this display (e.g., "my_display")
      * @param builder A consumer to configure the item display
      * @return The created display data
      */
@@ -87,9 +86,9 @@ public interface HoloDisplaysAPI {
 
     /**
      * Creates a block display with the given configuration.
-     * The ID must have a namespace other than "minecraft" (e.g., "mymod:my_display").
+     * The mod's namespace will be automatically prepended to the ID.
      *
-     * @param id      The unique identifier for this display
+     * @param id      The unique identifier for this display (e.g., "my_display")
      * @param builder A consumer to configure the block display
      * @return The created display data
      */
@@ -97,9 +96,9 @@ public interface HoloDisplaysAPI {
 
     /**
      * Creates an entity display with the given configuration.
-     * The ID must have a namespace other than "minecraft" (e.g., "mymod:my_display").
+     * The mod's namespace will be automatically prepended to the ID.
      *
-     * @param id      The unique identifier for this display
+     * @param id      The unique identifier for this display (e.g., "my_display")
      * @param builder A consumer to configure the entity display
      * @return The created display data
      */
@@ -113,13 +112,20 @@ public interface HoloDisplaysAPI {
     HologramBuilder createHologramBuilder();
 
     /**
-     * Unregisters all holograms with a specific namespace.
+     * Unregisters all holograms created by this mod.
      * This is useful for cleanup when your mod is being unloaded.
      *
-     * @param namespace The namespace to unregister holograms for
      * @return The number of holograms that were unregistered
      */
-    int unregisterAllHolograms(String namespace);
+    int unregisterAllHolograms();
+
+    /**
+     * Unregisters all displays created by this mod.
+     * This is useful for cleanup when your mod is being unloaded.
+     *
+     * @return The number of displays that were unregistered
+     */
+    int unregisterAllDisplays();
 
     /**
      * Gets a display by ID, checking only API-registered displays.
@@ -136,6 +142,34 @@ public interface HoloDisplaysAPI {
      * @return The hologram data, or null if not found in API-registered holograms
      */
     HologramData getHologram(String id);
+
+    /**
+     * Updates a registered display with new data.
+     * Uses efficient metadata updates when possible, only respawning entities when necessary.
+     * Automatically updates all holograms that use this display.
+     *
+     * @param id      The unique identifier of the display to update
+     * @param display The new display data
+     * @return True if update was successful, false if display not found or update failed
+     */
+    boolean updateDisplay(String id, DisplayData display);
+
+    /**
+     * Checks if a display with the given ID is registered.
+     *
+     * @param id The unique identifier to check
+     * @return True if a display with this ID exists, false otherwise
+     */
+    boolean isDisplayRegistered(String id);
+
+    /**
+     * Unregisters a previously registered display.
+     * This will affect all holograms using this display.
+     *
+     * @param id The unique identifier of the display to unregister
+     * @return True if unregistration was successful, false if display not found
+     */
+    boolean unregisterDisplay(String id);
 
     /**
      * Builder interface for text displays.

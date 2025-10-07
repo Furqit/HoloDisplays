@@ -1,8 +1,7 @@
 package dev.furq.holodisplays
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import dev.furq.holodisplays.api.HoloDisplaysAPI
-import dev.furq.holodisplays.api.HoloDisplaysAPIImpl
+import dev.furq.holodisplays.api.HoloDisplaysAPIInternal
 import dev.furq.holodisplays.commands.MainCommand
 import dev.furq.holodisplays.config.ConfigManager
 import dev.furq.holodisplays.config.HologramConfig
@@ -48,7 +47,7 @@ class HoloDisplays : ModInitializer {
 
     private fun handleServerTick(server: MinecraftServer) {
         val players = server.playerManager.playerList
-        if (players.isNotEmpty() && (HologramConfig.getHolograms().isNotEmpty() || HoloDisplaysAPIImpl.INSTANCE.apiHolograms.isNotEmpty())) {
+        if (players.isNotEmpty() && (HologramConfig.getHolograms().isNotEmpty() || HoloDisplaysAPIInternal.hasApiHolograms())) {
             TickHandler.tick(players)
             players.forEach { player ->
                 ViewerHandler.updatePlayerVisibility(player)
@@ -70,7 +69,7 @@ class HoloDisplays : ModInitializer {
         }
 
         ServerLifecycleEvents.SERVER_STOPPING.register {
-            HoloDisplaysAPI.get().clearAll()
+            HoloDisplaysAPIInternal.clearAll()
         }
     }
 

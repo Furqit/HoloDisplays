@@ -1,6 +1,6 @@
 package dev.furq.holodisplays.handlers
 
-import dev.furq.holodisplays.api.HoloDisplaysAPIImpl
+import dev.furq.holodisplays.api.HoloDisplaysAPIInternal
 import dev.furq.holodisplays.config.AnimationConfig
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
@@ -46,8 +46,8 @@ object TickHandler {
             processHologramDisplays(name, hologram, players)
         }
 
-        HoloDisplaysAPIImpl.INSTANCE.apiHolograms.forEach { (name, hologram) ->
-            if (ViewerHandler.getObserverCount(name) == 0) return@forEach
+        HoloDisplaysAPIInternal.forEachApiHologram { name, hologram ->
+            if (ViewerHandler.getObserverCount(name) == 0) return@forEachApiHologram
             processHologramDisplays(name, hologram, players)
         }
     }
