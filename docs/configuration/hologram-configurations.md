@@ -21,7 +21,7 @@ Holograms group displays and are saved in `holograms/<name>.json`. They define p
   rotation: [0.0, 0.0, 0.0],  // Hologram rotation
   scale: [1.0, 1.0, 1.0],  // Overall scale
   billboardMode: "center",  // fixed, horizontal, vertical, center
-  updateRate: 20,  // Ticks (1-100)
+  updateRate: 20,  // Ticks
   viewRange: 48.0,  // Blocks (1-128)
   conditionalPlaceholder: "%player:group% == admin"  // Optional
 }

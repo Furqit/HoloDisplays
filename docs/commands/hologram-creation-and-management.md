@@ -67,7 +67,7 @@ These commands handle holograms: creating, listing, deleting, editing, moving, a
     * `rotation reset`: \[0,0,0].
     * `condition <placeholder>`: e.g., "%player:group% == admin".
     * `condition remove`: Remove.
-    * `updateRate <ticks>`: 1-100.
+    * `updateRate <ticks>`: Any positive integer.
     * `updateRate reset`: 20.
     * `viewRange <blocks>`: 1-128.
     * `viewRange reset`: 48.

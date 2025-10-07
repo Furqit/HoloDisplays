@@ -16,7 +16,7 @@ For messages with formatting.
 * **lines**: Array of strings (multi-line; `<gr #ff0000 #00ff00>Gradient</gr>`).
 * **lineWidth**: Int (1-200).
 * **backgroundColor**: String (hex with alpha, "FFFFFF80").
-* **textOpacity**: Int (1-100).
+* **textOpacity**: Int (0-100).
 * **shadow**: Bool.
 * **seeThrough**: Bool.
 * **alignment**: String (left, right, center).

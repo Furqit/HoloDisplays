@@ -5,6 +5,8 @@ Use the fluent HologramBuilder to configure and build `HologramData`, then regis
 ## Hologram Builder
 
 ```java
+HoloDisplaysAPI api = HoloDisplaysAPI.get("mymod");
+
 HologramData hologram = api.createHologramBuilder()
     .world("minecraft:overworld")
     .position(100f, 64f, 200f)
@@ -14,12 +16,12 @@ HologramData hologram = api.createHologramBuilder()
     .viewRange(48.0)  // Blocks
     .rotation(0f, 0f, 0f)
     .condition("%server_tps% > 19")
-    .addDisplay("mymod:mytext", 0f, 0f, 0f)  // ID + offset [x, y, z]
-    .addDisplay("mymod:mysword", 0f, -0.5f, 0f)
+    .addDisplay("my_text", 0f, 0f, 0f)  // Display ID + offset [x, y, z]
+    .addDisplay("my_sword", 0f, -0.5f, 0f)
     .build();
 
 // Register for rendering
-api.registerHologram("mymod:myhologram", hologram);
+api.registerHologram("my_hologram", hologram);
 ```
 
 * **Methods**:
