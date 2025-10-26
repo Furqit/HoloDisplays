@@ -8,12 +8,13 @@ import dev.furq.holodisplays.handlers.TickHandler
 import dev.furq.holodisplays.handlers.ViewerHandler
 import dev.furq.holodisplays.managers.FeedbackManager
 import dev.furq.holodisplays.utils.FeedbackType
+import me.lucko.fabric.api.permissions.v0.Permissions
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
 
 object ReloadCommand {
     fun register(): ArgumentBuilder<ServerCommandSource, *> = CommandManager.literal("reload")
-        .requires { it.hasPermissionLevel(2) }
+        .requires(Permissions.require("holodisplays.admin", 2))
         .executes { context ->
             performReload(context.source)
             1

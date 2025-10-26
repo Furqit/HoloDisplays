@@ -49,6 +49,7 @@ dependencies {
 
     modImplementation("eu.pb4", "placeholder-api", deps["placeholder-api"])
     modImplementation(include("eu.pb4", "sgui", deps["sgui"]))
+    modImplementation(include("me.lucko", "fabric-permissions-api", deps["permissions-api"]))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
@@ -56,6 +57,10 @@ dependencies {
 }
 
 loom {
+    if (mcVersion == "1.21.10") {
+        accessWidenerPath = rootProject.file("src/main/resources/accesswideners/1.21.10.accesswidener")
+    }
+
     decompilers {
         get("vineflower").apply {
             options.put("mark-corresponding-synthetics", "1")
@@ -86,14 +91,21 @@ tasks.processResources {
     inputs.property("version", mod.version)
     inputs.property("mcdep", mcDep)
 
+    val accessWidenerEntry = if (mcVersion == "1.21.10") ",\n  \"accessWidener\": \"accesswideners/1.21.10.accesswidener\",\n  " else ",\n  "
+
     val map = mapOf(
         "id" to mod.id,
         "name" to mod.name,
         "version" to mod.version,
-        "mcdep" to mcDep
+        "mcdep" to mcDep,
+        "accessWidenerEntry" to accessWidenerEntry
     )
 
     filesMatching("fabric.mod.json") { expand(map) }
+    
+    if (mcVersion != "1.21.10") {
+        exclude("accesswideners/**")
+    }
 }
 
 tasks.register<Copy>("buildAndCollect") {

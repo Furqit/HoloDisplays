@@ -8,6 +8,11 @@ tasks.register("chiseledBuild") {
     dependsOn(stonecutter.tasks.named("buildAndCollect"))
 }
 
+tasks.register("chiseledRun") {
+    group = "build"
+    dependsOn(stonecutter.tasks.named("runServer"))
+}
+
 tasks.register("publishAll") {
     group = "publishing"
     dependsOn(stonecutter.tasks.named("publishMods"))

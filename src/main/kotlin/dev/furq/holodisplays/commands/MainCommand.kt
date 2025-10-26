@@ -5,6 +5,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.gui.MainMenu
 import dev.furq.holodisplays.utils.CommandUtils.requirePlayer
+import me.lucko.fabric.api.permissions.v0.Permissions
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
 
@@ -23,7 +24,7 @@ object MainCommand {
 
     private fun buildCommand(alias: String): LiteralArgumentBuilder<ServerCommandSource> {
         return CommandManager.literal(alias)
-            .requires { it.hasPermissionLevel(2) }
+            .requires(Permissions.require("holodisplays.admin", 2))
             .executes { context ->
                 requirePlayer(context)?.let {
                     MainMenu.openMainMenu(it)
