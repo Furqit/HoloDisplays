@@ -6,9 +6,7 @@ import dev.furq.holodisplays.data.display.*
 import dev.furq.holodisplays.handlers.ConfigException
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.*
 import java.nio.file.Path
 
 object DisplayConfig : Config {
@@ -33,13 +31,14 @@ object DisplayConfig : Config {
         displays.clear()
         configDir.toFile().listFiles { it.extension == "json" }
             ?.forEach { file ->
-                val jsonContent = file.readText()
-                val displayData = deserializeDisplayData(jsonContent)
-                displays[file.nameWithoutExtension] = displayData
+                safeCall {
+                    val jsonContent = file.readText()
+                    val displayData = deserializeDisplayData(jsonContent)
+                    displays[file.nameWithoutExtension] = displayData
+                }
             }
             ?: throw ConfigException("Failed to list display config files")
     }
-
 
     fun getDisplay(name: String): DisplayData? = displays[name]
     fun getDisplayOrAPI(name: String): DisplayData? = displays[name] ?: HoloDisplaysAPIInternal.getDisplay(name)
@@ -71,15 +70,17 @@ object DisplayConfig : Config {
     }
 
     private fun serializeDisplayData(displayData: DisplayData): String {
-        val displayJson = when (val display = displayData.type) {
-            is TextDisplay -> json.encodeToString(display)
-            is ItemDisplay -> json.encodeToString(display)
-            is BlockDisplay -> json.encodeToString(display)
-            is EntityDisplay -> json.encodeToString(display)
+        val (displayJson, typeName) = when (val display = displayData.type) {
+            is TextDisplay -> json.encodeToString(TextDisplay.serializer(), display) to "text"
+            is ItemDisplay -> json.encodeToString(ItemDisplay.serializer(), display) to "item"
+            is BlockDisplay -> json.encodeToString(BlockDisplay.serializer(), display) to "block"
+            is EntityDisplay -> json.encodeToString(EntityDisplay.serializer(), display) to "entity"
             else -> throw ConfigException("Unknown display type: ${display::class.simpleName}")
         }
 
-        return json.encodeToString(json.parseToJsonElement(displayJson))
+        return json.encodeToString(
+            JsonObject(json.parseToJsonElement(displayJson).jsonObject + ("type" to JsonPrimitive(typeName)))
+        )
     }
 
     fun deleteDisplay(name: String) = safeCall {
