@@ -29,7 +29,7 @@ object ViewerHandler {
     }
 
     fun addViewer(player: ServerPlayerEntity, name: String) = safeCall {
-        val hologramData = HologramConfig.getHologramOrAPI(name) ?: throw HologramException("Hologram $name not found")
+        val hologramData = HologramConfig.getHologramOrAPI(name) ?: return@safeCall
         val observerSet = observers.getOrPut(name) { mutableSetOf() }
         if (observerSet.add(player.uuid)) {
             showHologramToPlayer(player, name, hologramData)
@@ -67,7 +67,7 @@ object ViewerHandler {
     }
 
     fun updateForAllObservers(name: String) = safeCall {
-        val hologramData = HologramConfig.getHologramOrAPI(name) ?: throw HologramException("Hologram $name not found")
+        val hologramData = HologramConfig.getHologramOrAPI(name) ?: return@safeCall
         observers[name]?.mapNotNull { getPlayer(it) }?.forEach { player ->
             updateHologramForPlayer(player, name, hologramData)
         }
@@ -77,7 +77,7 @@ object ViewerHandler {
         if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) return@safeCall
 
         hologram.displays.forEachIndexed { index, entity ->
-            val display = DisplayConfig.getDisplayOrAPI(entity.name) ?: throw HologramException("Display ${entity.name} not found")
+            val display = DisplayConfig.getDisplayOrAPI(entity.name) ?: return@forEachIndexed
             if (!ConditionEvaluator.evaluate(display.type.conditionalPlaceholder, player)) return@forEachIndexed
 
             PacketHandler.spawnDisplayEntity(player, name, entity, processDisplayForPlayer(display), hologram.position.toVec3f(), index, hologram)
