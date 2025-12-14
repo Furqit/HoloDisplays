@@ -1,11 +1,13 @@
-@file:UseSerializers(Vector3fSerializer::class)
+@file:UseSerializers(Vector3fSerializer::class, QuaternionfSerializer::class)
 
 package dev.furq.holodisplays.data
 
+import dev.furq.holodisplays.utils.QuaternionfSerializer
 import dev.furq.holodisplays.utils.Vector3fSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
+import org.joml.Quaternionf
 import org.joml.Vector3f
 
 @Serializable
@@ -13,6 +15,8 @@ data class HologramData(
     val displays: List<DisplayLine>,
     val position: Position,
     val rotation: Vector3f = Vector3f(),
+    val leftRotation: Quaternionf? = null,
+    val rightRotation: Quaternionf? = null,
     val scale: Vector3f = Vector3f(1.0f),
     val billboardMode: BillboardMode = BillboardMode.CENTER,
     val updateRate: Int = 20,
@@ -41,6 +45,8 @@ data class HologramData(
         var displays = mutableListOf<DisplayLine>()
         var position: Position = Position(world = "minecraft:overworld", x = 0.0f, y = 0.0f, z = 0.0f)
         var rotation: Vector3f = Vector3f()
+        var leftRotation: Quaternionf? = null
+        var rightRotation: Quaternionf? = null
         var scale: Vector3f = Vector3f(1.0f)
         var billboardMode: BillboardMode = BillboardMode.CENTER
         var updateRate: Int = 20
@@ -51,6 +57,8 @@ data class HologramData(
             displays.toList(),
             position,
             rotation,
+            leftRotation,
+            rightRotation,
             scale,
             billboardMode,
             updateRate,

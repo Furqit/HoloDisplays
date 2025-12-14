@@ -25,6 +25,11 @@ public interface DisplayEntityAccessor {
         throw new AssertionError();
     }
 
+    @Accessor("RIGHT_ROTATION")
+    static TrackedData<Quaternionf> getRightRotation() {
+        throw new AssertionError();
+    }
+
     @Accessor("TRANSLATION")
     static TrackedData<Vector3f> getTranslation() {
         throw new AssertionError();

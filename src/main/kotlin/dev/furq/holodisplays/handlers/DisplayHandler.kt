@@ -28,6 +28,7 @@ object DisplayHandler {
         data class ItemDisplayType(val value: String) : DisplayProperty()
         data class ItemCustomModelData(val value: Int?) : DisplayProperty()
         data class BlockId(val value: String) : DisplayProperty()
+        data class BlockProperties(val value: Map<String, String>) : DisplayProperty()
         data class EntityId(val value: String) : DisplayProperty()
         data class EntityGlow(val value: Boolean?) : DisplayProperty()
         data class EntityPose(val value: MinecraftEntityPose?) : DisplayProperty()
@@ -109,6 +110,7 @@ object DisplayHandler {
         is DisplayProperty.BillboardMode -> display.copy(billboardMode = property.mode)
         is DisplayProperty.Rotation -> display.copy(rotation = property.value)
         is DisplayProperty.BlockId -> display.copy(id = property.value)
+        is DisplayProperty.BlockProperties -> display.copy(properties = property.value)
         is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
         else -> null
     }

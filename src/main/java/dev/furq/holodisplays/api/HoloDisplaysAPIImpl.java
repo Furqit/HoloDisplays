@@ -10,6 +10,7 @@ import dev.furq.holodisplays.handlers.ViewerHandler;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.decoration.DisplayEntity.BillboardMode;
 import net.minecraft.server.MinecraftServer;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -218,7 +219,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
         displaysToRemove.forEach(id -> {
             List<String> affectedHolograms = findHologramsUsingDisplay(id);
             apiDisplays.remove(id);
-            
+
             for (String hologramId : affectedHolograms) {
                 if (apiHolograms.containsKey(hologramId)) {
                     ViewerHandler.INSTANCE.respawnForAllObservers(hologramId);
@@ -351,17 +352,23 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
 
         return switch (oldType) {
             case TextDisplay ignored -> !Objects.equals(oldType.getRotation(), newType.getRotation()) ||
+                    !Objects.equals(oldType.getLeftRotation(), newType.getLeftRotation()) ||
+                    !Objects.equals(oldType.getRightRotation(), newType.getRightRotation()) ||
                     !Objects.equals(oldType.getConditionalPlaceholder(), newType.getConditionalPlaceholder());
             case ItemDisplay oldItem -> {
                 ItemDisplay newItem = (ItemDisplay) newType;
                 yield !oldItem.getId().equals(newItem.getId()) ||
                         !Objects.equals(oldType.getRotation(), newType.getRotation()) ||
+                        !Objects.equals(oldType.getLeftRotation(), newType.getLeftRotation()) ||
+                        !Objects.equals(oldType.getRightRotation(), newType.getRightRotation()) ||
                         !Objects.equals(oldType.getConditionalPlaceholder(), newType.getConditionalPlaceholder());
             }
             case BlockDisplay oldBlock -> {
                 BlockDisplay newBlock = (BlockDisplay) newType;
                 yield !oldBlock.getId().equals(newBlock.getId()) ||
                         !Objects.equals(oldType.getRotation(), newType.getRotation()) ||
+                        !Objects.equals(oldType.getLeftRotation(), newType.getLeftRotation()) ||
+                        !Objects.equals(oldType.getRightRotation(), newType.getRightRotation()) ||
                         !Objects.equals(oldType.getConditionalPlaceholder(), newType.getConditionalPlaceholder());
             }
             case EntityDisplay oldEntity -> {
@@ -369,6 +376,8 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
                 yield !oldEntity.getId().equals(newEntity.getId()) ||
                         !Objects.equals(oldType.getScale(), newType.getScale()) ||
                         !Objects.equals(oldType.getRotation(), newType.getRotation()) ||
+                        !Objects.equals(oldType.getLeftRotation(), newType.getLeftRotation()) ||
+                        !Objects.equals(oldType.getRightRotation(), newType.getRightRotation()) ||
                         !Objects.equals(oldType.getConditionalPlaceholder(), newType.getConditionalPlaceholder());
             }
             default -> false;
@@ -401,6 +410,14 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
 
         public void rotation(float x, float y, float z) {
             builder.setRotation(new Vector3f(x, y, z));
+        }
+
+        public void leftRotation(float x, float y, float z, float w) {
+            builder.setLeftRotation(new Quaternionf(x, y, z, w));
+        }
+
+        public void rightRotation(float x, float y, float z, float w) {
+            builder.setRightRotation(new Quaternionf(x, y, z, w));
         }
 
         public void billboardMode(String mode) {
@@ -487,6 +504,11 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
             builder.setId(blockId);
         }
 
+        @Override
+        public void properties(Map<String, String> properties) {
+            builder.setProperties(properties == null ? new HashMap<>() : properties);
+        }
+
         public BlockDisplay build() {
             return builder.build();
         }
@@ -536,6 +558,8 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
         private int updateRate = 20;
         private double viewRange = 48.0;
         private Vector3f rotation = new Vector3f();
+        private Quaternionf leftRotation = null;
+        private Quaternionf rightRotation = null;
         private String conditionalPlaceholder = null;
 
         HologramBuilderImpl(String modId) {
@@ -588,6 +612,18 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
         }
 
         @Override
+        public HologramBuilder leftRotation(float x, float y, float z, float w) {
+            leftRotation = new Quaternionf(x, y, z, w);
+            return this;
+        }
+
+        @Override
+        public HologramBuilder rightRotation(float x, float y, float z, float w) {
+            rightRotation = new Quaternionf(x, y, z, w);
+            return this;
+        }
+
+        @Override
         public HologramBuilder condition(String placeholder) {
             conditionalPlaceholder = placeholder;
             return this;
@@ -609,6 +645,8 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
                     displays,
                     position,
                     rotation,
+                    leftRotation,
+                    rightRotation,
                     scale,
                     billboardMode,
                     updateRate,

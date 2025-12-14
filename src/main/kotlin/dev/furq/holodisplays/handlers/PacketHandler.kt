@@ -6,6 +6,7 @@ import dev.furq.holodisplays.data.display.*
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import dev.furq.holodisplays.mixin.*
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import net.minecraft.block.BlockState
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.component.type.CustomModelDataComponent
 import net.minecraft.entity.EntityType
@@ -20,6 +21,7 @@ import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket
 import net.minecraft.network.packet.s2c.play.EntityTrackerUpdateS2CPacket
 import net.minecraft.registry.Registries
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.state.property.Property
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.Vec3d
@@ -27,6 +29,7 @@ import org.joml.Math.toRadians
 import org.joml.Quaternionf
 import org.joml.Vector3f
 import java.util.*
+import dev.furq.holodisplays.api.HoloDisplaysAPIInternal
 import kotlin.experimental.or
 
 object PacketHandler {
@@ -53,8 +56,8 @@ object PacketHandler {
     private fun <T> createEntry(trackedData: TrackedData<T>, value: T):
             DataTracker.SerializedEntry<T> = DataTracker.SerializedEntry(trackedData.id, trackedData.dataType, value)
 
-    private fun calculateTranslation(display: BaseDisplay, offset: Vector3f, scale: Vector3f): Vector3f = Vector3f(offset).apply {
-        if (display is BlockDisplay) add(-0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z)
+    private fun calculateTranslation(display: BaseDisplay, offset: Vector3f, scale: Vector3f, isFromApi: Boolean): Vector3f = Vector3f(offset).apply {
+        if (display is BlockDisplay && !isFromApi) add(-0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z)
     }
 
     fun resetEntityTracking() {
@@ -221,14 +224,25 @@ object PacketHandler {
         val billboardOrdinal = (display.billboardMode ?: hologram.billboardMode).ordinal.toByte()
         add(createEntry(DisplayEntityAccessor.getBillboard(), billboardOrdinal))
 
-        val rotation = display.rotation ?: hologram.rotation
-        val quaternion = Quaternionf()
-            .rotateY(toRadians(rotation.y))
-            .rotateX(toRadians(rotation.x))
-            .rotateZ(toRadians(rotation.z))
-        add(createEntry(DisplayEntityAccessor.getLeftRotation(), quaternion))
+        val rawLeftRotation = display.leftRotation ?: hologram.leftRotation
+        val leftRotation = if (rawLeftRotation != null) {
+            rawLeftRotation
+        } else {
+            val rotation = display.rotation ?: hologram.rotation
+            Quaternionf()
+                .rotateY(toRadians(rotation.y))
+                .rotateX(toRadians(rotation.x))
+                .rotateZ(toRadians(rotation.z))
+        }
+        add(createEntry(DisplayEntityAccessor.getLeftRotation(), leftRotation))
 
-        val translation = calculateTranslation(display, line.offset, scale)
+        val rightRotation = display.rightRotation ?: hologram.rightRotation
+        if (rightRotation != null) {
+            add(createEntry(DisplayEntityAccessor.getRightRotation(), rightRotation))
+        }
+
+        val isFromApi = HoloDisplaysAPIInternal.getDisplay(line.name) != null
+        val translation = calculateTranslation(display, line.offset, scale, isFromApi)
         add(createEntry(DisplayEntityAccessor.getTranslation(), translation))
 
     }
@@ -291,9 +305,24 @@ object PacketHandler {
         buildList {
             val block = Identifier.tryParse(display.id)?.let(Registries.BLOCK::get)
                 ?: throw DisplayException("Invalid block identifier: ${display.id}")
-            add(createEntry(BlockDisplayEntityAccessor.getBlockState(), block.defaultState))
+
+            var blockState = block.defaultState
+            if (display.properties.isNotEmpty()) {
+                val stateManager = block.stateManager
+                display.properties.forEach { (key, value) ->
+                    val property = stateManager.getProperty(key)
+                    if (property != null) {
+                        blockState = withProperty(blockState, property, value)
+                    }
+                }
+            }
+            add(createEntry(BlockDisplayEntityAccessor.getBlockState(), blockState))
         }
     } ?: emptyList()
+
+    private fun <T : Comparable<T>> withProperty(state: BlockState, property: Property<T>, valueString: String): BlockState {
+        return property.parse(valueString).map { value -> state.with(property, value) }.orElse(state)
+    }
 
     private fun entityDisplayProperties(display: EntityDisplay): List<DataTracker.SerializedEntry<*>> = buildList {
         display.glow?.also { glow ->

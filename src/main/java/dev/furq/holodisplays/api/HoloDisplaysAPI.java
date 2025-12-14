@@ -3,6 +3,7 @@ package dev.furq.holodisplays.api;
 import dev.furq.holodisplays.data.DisplayData;
 import dev.furq.holodisplays.data.HologramData;
 
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -208,6 +209,26 @@ public interface HoloDisplaysAPI {
         void billboardMode(String mode);
 
         /**
+         * Sets the left rotation of this display using raw quaternion values.
+         *
+         * @param x X component
+         * @param y Y component
+         * @param z Z component
+         * @param w W component
+         */
+        void leftRotation(float x, float y, float z, float w);
+
+        /**
+         * Sets the right rotation of this display using raw quaternion values.
+         *
+         * @param x X component
+         * @param y Y component
+         * @param z Z component
+         * @param w W component
+         */
+        void rightRotation(float x, float y, float z, float w);
+
+        /**
          * Sets the conditional placeholder for this display.
          *
          * @param placeholder The condition or null
@@ -281,6 +302,26 @@ public interface HoloDisplaysAPI {
         void billboardMode(String mode);
 
         /**
+         * Sets the left rotation of this display using raw quaternion values.
+         *
+         * @param x X component
+         * @param y Y component
+         * @param z Z component
+         * @param w W component
+         */
+        void leftRotation(float x, float y, float z, float w);
+
+        /**
+         * Sets the right rotation of this display using raw quaternion values.
+         *
+         * @param x X component
+         * @param y Y component
+         * @param z Z component
+         * @param w W component
+         */
+        void rightRotation(float x, float y, float z, float w);
+
+        /**
          * Sets the conditional placeholder for this display.
          *
          * @param placeholder The condition or null
@@ -298,6 +339,13 @@ public interface HoloDisplaysAPI {
          * @param blockId The block ID
          */
         void block(String blockId);
+
+        /**
+         * Sets the block properties (block states).
+         *
+         * @param properties The properties map (e.g., "facing" -> "north")
+         */
+        void properties(Map<String, String> properties);
 
         /**
          * Sets the scale of this display.
@@ -323,6 +371,26 @@ public interface HoloDisplaysAPI {
          * @param mode The billboard mode (fixed, horizontal, vertical, center)
          */
         void billboardMode(String mode);
+
+        /**
+         * Sets the left rotation of this display using raw quaternion values.
+         *
+         * @param x X component
+         * @param y Y component
+         * @param z Z component
+         * @param w W component
+         */
+        void leftRotation(float x, float y, float z, float w);
+
+        /**
+         * Sets the right rotation of this display using raw quaternion values.
+         *
+         * @param x X component
+         * @param y Y component
+         * @param z Z component
+         * @param w W component
+         */
+        void rightRotation(float x, float y, float z, float w);
 
         /**
          * Sets the conditional placeholder for this display.
@@ -374,6 +442,26 @@ public interface HoloDisplaysAPI {
          * @param z Z rotation in degrees
          */
         void rotation(float x, float y, float z);
+
+        /**
+         * Sets the left rotation of this display using raw quaternion values.
+         *
+         * @param x X component
+         * @param y Y component
+         * @param z Z component
+         * @param w W component
+         */
+        void leftRotation(float x, float y, float z, float w);
+
+        /**
+         * Sets the right rotation of this display using raw quaternion values.
+         *
+         * @param x X component
+         * @param y Y component
+         * @param z Z component
+         * @param w W component
+         */
+        void rightRotation(float x, float y, float z, float w);
 
         /**
          * Sets the conditional placeholder for this display.
@@ -448,6 +536,28 @@ public interface HoloDisplaysAPI {
          * @return This builder for chaining
          */
         HologramBuilder rotation(float x, float y, float z);
+
+        /**
+         * Sets the left rotation of this hologram using raw quaternion values.
+         *
+         * @param x X component
+         * @param y Y component
+         * @param z Z component
+         * @param w W component
+         * @return This builder for chaining
+         */
+        HologramBuilder leftRotation(float x, float y, float z, float w);
+
+        /**
+         * Sets the right rotation of this hologram using raw quaternion values.
+         *
+         * @param x X component
+         * @param y Y component
+         * @param z Z component
+         * @param w W component
+         * @return This builder for chaining
+         */
+        HologramBuilder rightRotation(float x, float y, float z, float w);
 
         /**
          * Sets the conditional placeholder for this hologram.

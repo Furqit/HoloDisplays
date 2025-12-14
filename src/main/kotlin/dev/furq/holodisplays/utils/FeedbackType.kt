@@ -20,10 +20,11 @@ enum class FeedbackType(private val template: String, val isError: Boolean = fal
     RELOAD_SUCCESS("All configurations reloaded successfully"),
     LINE_WIDTH_UPDATED("Line width set to {width}"),
     SEE_THROUGH_UPDATED("See-through mode {enabled}"),
-    ITEM_ID_UPDATED("Item ID changed to {id}"),
-    BLOCK_ID_UPDATED("Block ID changed to {id}"),
-    ENTITY_ID_UPDATED("Entity ID changed to {id}"),
-    OFFSET_UPDATED("Offset updated to x: {x}, y: {y}, z: {z}"),
+    ITEM_ID_UPDATED("Item ID updated to {id}."),
+    BLOCK_ID_UPDATED("Block ID updated to {id}."),
+    BLOCK_PROPERTIES_UPDATED("Block properties updated."),
+    ENTITY_ID_UPDATED("Entity ID updated to {id}."),
+    OFFSET_UPDATED("Offset updated to <gray>x: {x}, y: {y}, z: {z}"),
 
     // Error Messages
     HOLOGRAM_EXISTS("Hologram '{name}' already exists. Choose a different name", true),

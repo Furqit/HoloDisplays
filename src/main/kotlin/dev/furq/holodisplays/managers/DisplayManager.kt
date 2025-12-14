@@ -271,6 +271,18 @@ object DisplayManager {
         }
     }
 
+    fun updateBlockProperties(displayName: String, properties: Map<String, String>, source: ServerCommandSource) {
+        requireDisplayExists(displayName, source) {
+            val display = DisplayConfig.getDisplay(displayName)
+            if (display?.type !is BlockDisplay) {
+                FeedbackManager.send(source, FeedbackType.INVALID_DISPLAY_TYPE, "type" to "block")
+                return
+            }
+
+            updateProperty(displayName, source, BlockProperties(properties), FeedbackType.BLOCK_PROPERTIES_UPDATED)
+        }
+    }
+
     fun updateEntityId(displayName: String, entityId: String, source: ServerCommandSource) {
         requireDisplayExists(displayName, source) {
             val display = DisplayConfig.getDisplay(displayName)

@@ -1,2 +1,4 @@
 ### Updates & Improvements
-- Fixed permission api version for 1.20.5-1.21.1
+- API Improvements:
+  - Added leftRotation and rightRotation variables display entities, allowing advanced control of rotations through quaternion.
+  - Added properties variable to Block Display to allow blockstate control.
