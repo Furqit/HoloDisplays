@@ -23,6 +23,8 @@ DisplayData textDisplay = api.createTextDisplay("my_text", builder -> {
   * `text(String... lines)`: Set lines (formatting supported).
   * `scale(float x, y, z)`: Scale.
   * `rotation(float x, y, z)`: Rotation.
+  * `leftRotation(float x, y, z, w)`: Left rotation (quaternion).
+  * `rightRotation(float x, y, z, w)`: Right rotation (quaternion).
   * `billboardMode(String mode)`: fixed/horizontal/vertical/center.
   * `condition(String placeholder)`: Or null.
   * `backgroundColor(String hex, int opacity)`: Hex (6 chars), opacity 0-100.
@@ -42,19 +44,20 @@ DisplayData itemDisplay = api.createItemDisplay("my_sword", builder -> {
 });
 ```
 
-* **Methods**: `item(String id)`, plus common (scale, rotation, billboard, condition).
+* **Methods**: `item(String id)`, plus common (scale, rotation, leftRotation, rightRotation, billboard, condition).
 
 ## Block Display
 
 ```java
 DisplayData blockDisplay = api.createBlockDisplay("my_stone", builder -> {
     builder.block("minecraft:stone");
+    builder.properties(Map.of("faced", "north"));
     builder.scale(1f, 1f, 1f);
     builder.rotation(0f, 0f, 0f);
 });
 ```
 
-* **Methods**: `block(String id)`, plus common.
+* **Methods**: `block(String id)`, `properties(Map<String, String>)`, plus common.
 
 ## Entity Display
 
@@ -73,7 +76,7 @@ DisplayData entityDisplay = api.createEntityDisplay("my_zombie", builder -> {
   * `entity(String id)`: Entity registry ID (e.g., "minecraft:zombie").
   * `glow(boolean)`: Glowing outline effect.
   * `pose(String)`: Entity pose (e.g., "standing", "crouching", "sneaking").
-  * Plus common (scale, rotation, condition).
+  * Plus common (scale, rotation, leftRotation, rightRotation, condition).
 * **Notes**: Entity displays do not support billboardMode.
 
 ## DisplayData

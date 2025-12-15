@@ -2,7 +2,9 @@
 
 Displays are visual elements (text, item, block, entity) saved in `displays/<name>.json`. They are referenced by holograms. All types share:
 
-* **rotation**: Array \[x, y, z] (degrees).
+* **rotation**: Array [x, y, z] (degrees).
+* **leftRotation**: Array [x, y, z, w] (quaternion).
+* **rightRotation**: Array [x, y, z, w] (quaternion).
 * **scale**: Array \[x, y, z] (default \[1,1,1]).
 * **billboardMode**: String (fixed, horizontal, vertical, center; except entity).
 * **conditionalPlaceholder**: String (e.g., "%player:group% == admin").
@@ -23,7 +25,7 @@ For messages with formatting.
 
 ### Example
 
-```json5
+```json
 {
   "type": "text",
   "lines": ["Hello!", "%player:name%"],
@@ -47,16 +49,16 @@ For messages with formatting.
 ### Properties
 
 * **id**: String (e.g., "minecraft:diamond").
-* **displayType**: String (none, thirdperson\_lefthand, etc.).
+* **itemDisplayType**: String (none, thirdperson_lefthand, etc., default: ground).
 * **customModelData**: Int (>=1).
 
 ### Example
 
-```json5
+```json
 {
   "type": "item",
   "id": "minecraft:diamond",
-  "displayType": "gui",
+  "itemDisplayType": "gui",
   "customModelData": 1,
   "rotation": [0, 90, 0],
   "scale": [2, 2, 2],
@@ -71,13 +73,17 @@ For messages with formatting.
 ### Properties
 
 * **id**: String (e.g., "minecraft:stone").
+* **properties**: Map of strings (e.g., `{"facing": "north"}`).
 
 ### Example
 
-```json5
+```json
 {
   "type": "block",
   "id": "minecraft:stone",
+  "properties": {
+    "facing": "north"
+  },
   "rotation": [0, 0, 0],
   "scale": [1, 1, 1],
   "billboardMode": "center"
@@ -96,7 +102,7 @@ Mobs/entities.
 
 ### Example
 
-```json5
+```json
 {
   "type": "entity",
   "id": "minecraft:zombie",

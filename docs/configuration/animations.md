@@ -4,14 +4,15 @@ Animations cycle text frames in text displays. Saved in `animations/<name>.json`
 
 ## Format
 
-```json5
+```json
 {
-  frames: [  // Array of text frames
+  "frames": [
+    // Array of text frames
     "Loading.",
     "Loading..",
     "Loading..."
   ],
-  interval: 10  // Ticks between frames (default 20)
+  "interval": 10 // Ticks between frames (default 20)
 }
 ```
 
@@ -24,13 +25,10 @@ Animations cycle text frames in text displays. Saved in `animations/<name>.json`
 
 `animations/loading.json`:
 
-```json5
+```json
 {
-  frames: [
-    "Frame 1",
-    "Frame 2"
-  ],
-  interval: 40
+  "frames": ["Frame 1", "Frame 2"],
+  "interval": 40
 }
 ```
 

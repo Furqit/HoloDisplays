@@ -6,33 +6,42 @@ HoloDisplays provides a public Java API for other mods to create and manage holo
 
 ### Add Dependency
 
-**1. Download HoloDisplays JAR**
+**1. Add Modrinth Maven**
 
-Download the latest release from [Modrinth](https://modrinth.com/mod/holodisplays) and place it in your project's `libs/` folder.
+Add the repository and dependency to your `build.gradle` (Groovy) or `build.gradle.kts` (Kotlin).
 
-**2. Add to Gradle**
-
-Since HoloDisplays is not published to a Maven repository, use a file-based dependency in your `build.gradle` or `build.gradle.kts`:
+**Groovy DSL**:
 
 ```groovy
-// build.gradle
+repositories {
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
+}
+
 dependencies {
-    modImplementation files('libs/holodisplays-<version>+<mc-version>.jar')
+    modImplementation "maven.modrinth:holodisplays:<version>"
 }
 ```
 
-Or for Kotlin DSL:
+**Kotlin DSL**:
 
 ```kotlin
-// build.gradle.kts
+repositories {
+    maven("https://api.modrinth.com/maven")
+}
+
 dependencies {
-    modImplementation(files("libs/holodisplays-<version>+<mc-version>.jar"))
+    modImplementation("maven.modrinth:holodisplays:<version>")
 }
 ```
 
-> **Important**: Use `modImplementation` (not `include`). HoloDisplays must be installed separately by users - do not bundle it with your mod.
+> **Note**: Replace `<version>` with the specific version tag (e.g., `0.4.7-1.20.6`). See [Modrinth Versions](https://modrinth.com/mod/holodisplays/versions) for available versions.
 
-**3. Add to fabric.mod.json**
+> **Important**: Use `modImplementation` (not `include`). HoloDisplays must be installed separately by users * do not bundle it with your mod.
+
+**2. Add to fabric.mod.json**
 
 ```json
 "depends": {

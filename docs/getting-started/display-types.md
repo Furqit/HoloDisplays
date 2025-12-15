@@ -25,13 +25,10 @@ Ideal for messages, signs, or dynamic info with placeholders.
 
 ### JSON Format
 
-```json5
+```json
 {
   "type": "text",
-  "lines": [
-    "Hello World!",
-    "%player:name%"
-  ],
+  "lines": ["Hello World!", "%player:name%"],
   "lineWidth": 100,
   "backgroundColor": "FFFFFF80",
   "textOpacity": 100,
@@ -55,13 +52,13 @@ Displays 3D items with customizable render modes (e.g., as held, on ground).
 
 ### Properties
 
-* **id**: String (item registry ID, e.g., "minecraft:diamond\_sword").
-* **displayType**: String (none, thirdperson\_lefthand, thirdperson\_righthand, firstperson\_lefthand, firstperson\_righthand, head, gui, ground, fixed).
+* **id**: String (item registry ID, e.g., "minecraft:diamond_sword").
+* **displayType**: String (none, thirdperson_lefthand, thirdperson_righthand, firstperson_lefthand, firstperson_righthand, head, gui, ground, fixed).
 * **customModelData**: Integer (>=1; optional for custom models).
 
 ### JSON Format
 
-```json5
+```json
 {
   "type": "item",
   "id": "minecraft:diamond",
@@ -88,7 +85,7 @@ Shows 3D blocks, useful for signs or decorations.
 
 ### JSON Format
 
-```json5
+```json
 {
   "type": "block",
   "id": "minecraft:stone",
@@ -117,13 +114,13 @@ Renders mobs or entities with poses and glow.
 
 ```json5
 {
-  "type": "entity",
-  "id": "minecraft:zombie",
-  "glow": true,
-  "pose": "STANDING",
-  "rotation": [0, 180, 0],
-  "scale": [0.5, 0.5, 0.5],
-  "conditionalPlaceholder": "%player:health% < 10"
+  type: "entity",
+  id: "minecraft:zombie",
+  glow: true,
+  pose: "STANDING",
+  rotation: [0, 180, 0],
+  scale: [0.5, 0.5, 0.5],
+  conditionalPlaceholder: "%player:health% < 10",
 }
 ```
 

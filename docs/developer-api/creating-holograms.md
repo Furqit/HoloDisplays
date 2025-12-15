@@ -15,6 +15,8 @@ HologramData hologram = api.createHologramBuilder()
     .updateRate(20)  // Ticks
     .viewRange(48.0)  // Blocks
     .rotation(0f, 0f, 0f)
+    .leftRotation(0f, 0f, 0f, 1f)
+    .rightRotation(0f, 0f, 0f, 1f)
     .condition("%server_tps% > 19")
     .addDisplay("my_text", 0f, 0f, 0f)  // Display ID + offset [x, y, z]
     .addDisplay("my_sword", 0f, -0.5f, 0f)
@@ -31,7 +33,9 @@ api.registerHologram("my_hologram", hologram);
   * `billboardMode(String mode)`: fixed/horizontal/vertical/center.
   * `updateRate(int ticks)`: Refresh rate (default 20).
   * `viewRange(double blocks)`: Visibility distance (default 48.0).
-  * `rotation(float x, y, z)`: Hologram rotation (default \[0,0,0]).
+  * `rotation(float x, y, z)`: Hologram rotation (default [0,0,0]).
+  * `leftRotation(float x, y, z, w)`: Left rotation (quaternion).
+  * `rightRotation(float x, y, z, w)`: Right rotation (quaternion).
   * `condition(String placeholder)`: Visibility or null.
   * `addDisplay(String id, float x, y, z)`: Add with offset (or without for \[0,0,0]).
   * `build()`: Returns HologramData.
@@ -45,7 +49,9 @@ api.registerHologram("my_hologram", hologram);
 * `billboardMode`: BillboardMode (CENTER default).
 * `updateRate`: Int.
 * `viewRange`: Double.
-* `rotation`: \[x, y, z] array.
+* `rotation`: [x, y, z] array.
+* `leftRotation`: [x, y, z, w] array (quaternion).
+* `rightRotation`: [x, y, z, w] array (quaternion).
 * `conditionalPlaceholder`: String?.
 
 Register to make visible; updates respawn displays for viewers.
