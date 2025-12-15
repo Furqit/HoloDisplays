@@ -32,12 +32,14 @@ object HologramHandler {
     fun init() {
         HologramConfig.getHolograms().forEach { (name, data) ->
             ViewerHandler.createTracker(name)
+            ViewerHandler.updateHologramIndex(name, data.position)
         }
     }
 
     fun reinitialize() {
         HologramConfig.getHolograms().forEach { (name, data) ->
             ViewerHandler.createTracker(name)
+            ViewerHandler.updateHologramIndex(name, data.position)
             ViewerHandler.respawnForAllObservers(name)
         }
     }
@@ -46,6 +48,7 @@ object HologramHandler {
         if (HologramConfig.exists(name)) throw HologramException("Hologram with name $name already exists")
         HologramConfig.saveHologram(name, data)
         ViewerHandler.createTracker(name)
+        ViewerHandler.updateHologramIndex(name, data.position)
         showHologramToPlayers(name, data)
     }
 
@@ -63,7 +66,10 @@ object HologramHandler {
         HologramConfig.saveHologram(name, updatedHologram)
 
         val needsRespawn = when (property) {
-            is HologramProperty.Position,
+            is HologramProperty.Position -> {
+                ViewerHandler.updateHologramIndex(name, property.position)
+                true
+            }
             is HologramProperty.Rotation,
             is HologramProperty.ConditionalPlaceholder,
             is HologramProperty.LineOffset,
@@ -117,6 +123,7 @@ object HologramHandler {
         ViewerHandler.removeHologramFromAllViewers(name)
         HologramConfig.deleteHologram(name)
         ViewerHandler.removeTracker(name)
+        ViewerHandler.removeHologramIndex(name)
     }
 
     private fun getPlayersInRange(data: HologramData): List<ServerPlayerEntity> {

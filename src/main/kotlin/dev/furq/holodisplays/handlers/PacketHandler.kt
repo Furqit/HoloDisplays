@@ -1,11 +1,13 @@
 package dev.furq.holodisplays.handlers
 
+import dev.furq.holodisplays.api.HoloDisplaysAPIInternal
 import dev.furq.holodisplays.data.DisplayData
 import dev.furq.holodisplays.data.HologramData
 import dev.furq.holodisplays.data.display.*
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import dev.furq.holodisplays.mixin.*
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.minecraft.block.BlockState
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.component.type.CustomModelDataComponent
@@ -15,6 +17,7 @@ import net.minecraft.entity.attribute.EntityAttributes
 import net.minecraft.entity.data.DataTracker
 import net.minecraft.entity.data.TrackedData
 import net.minecraft.item.ItemStack
+import net.minecraft.network.packet.Packet
 import net.minecraft.network.packet.s2c.play.EntitiesDestroyS2CPacket
 import net.minecraft.network.packet.s2c.play.EntityAttributesS2CPacket
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket
@@ -29,14 +32,13 @@ import org.joml.Math.toRadians
 import org.joml.Quaternionf
 import org.joml.Vector3f
 import java.util.*
-import dev.furq.holodisplays.api.HoloDisplaysAPIInternal
 import kotlin.experimental.or
 
 object PacketHandler {
     private const val INITIAL_ENTITY_ID = -1
     private var nextEntityId = INITIAL_ENTITY_ID
     private val recycledIds = mutableSetOf<Int>()
-    private val entityIds = mutableMapOf<UUID, MutableMap<String, MutableMap<String, Int>>>()
+    private val entityIds = mutableMapOf<UUID, Object2IntOpenHashMap<String>>()
     private val hexColorPattern = "^[0-9A-Fa-f]{2}[0-9A-Fa-f]{6}$".toRegex()
 
     private val itemDisplayTypeMap = mapOf(
@@ -60,6 +62,8 @@ object PacketHandler {
         if (display is BlockDisplay && !isFromApi) add(-0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z)
     }
 
+    private fun getCompositeKey(hologramName: String, displayRef: String): String = "$hologramName/$displayRef"
+
     fun resetEntityTracking() {
         entityIds.clear()
         nextEntityId = INITIAL_ENTITY_ID
@@ -74,40 +78,48 @@ object PacketHandler {
         position: Vector3f,
         lineIndex: Int,
         hologram: HologramData,
+        packetConsumer: (Packet<*>) -> Unit = { player.networkHandler.sendPacket(it) }
     ) = safeCall {
         val entityId = getNextEntityId()
         val displayRef = "${line.name}:$lineIndex"
+        val compositeKey = getCompositeKey(hologramName, displayRef)
 
-        entityIds.getOrPut(player.uuid, ::mutableMapOf)
-            .getOrPut(hologramName, ::mutableMapOf)[displayRef] = entityId
+        entityIds.getOrPut(player.uuid) { Object2IntOpenHashMap() }
+            .put(compositeKey, entityId)
 
         val display = displayData.type
-        player.networkHandler.run {
-            if (display is EntityDisplay) {
-                val translation = line.offset
-                val effectivePos = position.add(translation)
-                val rotation = display.rotation ?: hologram.rotation
+        if (display is EntityDisplay) {
+            val translation = line.offset
+            val effectivePos = position.add(translation)
+            val rotation = display.rotation ?: hologram.rotation
 
-                sendPacket(createSpawnPacket(entityId, effectivePos, display, rotation.x, rotation.y, rotation.y.toDouble()))
-            } else {
-                sendPacket(createSpawnPacket(entityId, position, displayData.type))
-            }
-            sendDisplayMetadata(player, entityId, displayData, hologram, line)
+            packetConsumer(createSpawnPacket(entityId, effectivePos, display, rotation.x, rotation.y, rotation.y.toDouble()))
+        } else {
+            packetConsumer(createSpawnPacket(entityId, position, displayData.type))
         }
+        sendDisplayMetadata(player, entityId, displayData, hologram, line, packetConsumer)
     }
 
     fun destroyDisplayEntity(player: ServerPlayerEntity, hologramName: String) {
-        val playerHolograms = entityIds[player.uuid] ?: return
-        val hologramIds = playerHolograms[hologramName] ?: return
-        val idsToDestroy = hologramIds.values.toList()
+        val playerEntities = entityIds[player.uuid] ?: return
+        val prefix = "$hologramName/"
+        val iterator = playerEntities.object2IntEntrySet().iterator()
+        val idsToDestroy = IntArrayList()
 
-        if (idsToDestroy.isNotEmpty()) {
-            player.networkHandler.sendPacket(EntitiesDestroyS2CPacket(IntArrayList(idsToDestroy)))
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            if (entry.key.startsWith(prefix)) {
+                idsToDestroy.add(entry.intValue)
+                iterator.remove()
+            }
+        }
+
+        if (!idsToDestroy.isEmpty) {
+            player.networkHandler.sendPacket(EntitiesDestroyS2CPacket(idsToDestroy))
             recycledIds.addAll(idsToDestroy)
         }
 
-        playerHolograms.remove(hologramName)
-        if (playerHolograms.isEmpty()) {
+        if (playerEntities.isEmpty()) {
             entityIds.remove(player.uuid)
         }
     }
@@ -141,15 +153,16 @@ object PacketHandler {
         displayData: DisplayData,
         hologram: HologramData,
         line: HologramData.DisplayLine,
+        packetConsumer: (Packet<*>) -> Unit
     ) = safeCall {
         val entries = buildDisplayMetadata(displayData, hologram, line, player)
-        player.networkHandler.sendPacket(EntityTrackerUpdateS2CPacket(entityId, entries))
+        packetConsumer(EntityTrackerUpdateS2CPacket(entityId, entries))
 
         if (displayData.type is EntityDisplay) {
             val scaleAttr = EntityAttributeInstance(/*? if 1.20.6 {*/ EntityAttributes.GENERIC_SCALE /*?}*//*? if >=1.21.3 {*/ /*EntityAttributes.SCALE *//*?}*/) { }
             scaleAttr.baseValue = displayData.type.scale?.x()?.toDouble() ?: 1.0
             val scalePacket = EntityAttributesS2CPacket(entityId, listOf(scaleAttr))
-            player.networkHandler.sendPacket(scalePacket)
+            packetConsumer(scalePacket)
         }
     }
 
@@ -187,7 +200,10 @@ object PacketHandler {
         displayRef: String,
         metadata: List<DataTracker.SerializedEntry<*>>,
     ) = safeCall {
-        val entityId = entityIds[player.uuid]?.get(hologramName)?.get(displayRef) ?: return@safeCall
+        val compositeKey = getCompositeKey(hologramName, displayRef)
+        val entityId = entityIds[player.uuid]?.getInt(compositeKey) ?: return@safeCall
+        if (!entityIds[player.uuid]!!.containsKey(compositeKey)) return@safeCall
+
         player.networkHandler.sendPacket(EntityTrackerUpdateS2CPacket(entityId, metadata))
     }
 

@@ -45,6 +45,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
         apiHolograms.keySet().forEach(id -> {
             ViewerHandler.INSTANCE.removeHologramFromAllViewers(id);
             ViewerHandler.INSTANCE.removeTracker(id);
+            ViewerHandler.INSTANCE.removeHologramIndex(id);
         });
         apiHolograms.clear();
         apiDisplays.clear();
@@ -88,6 +89,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
 
             apiHolograms.put(fullId, hologram);
             ViewerHandler.INSTANCE.createTracker(fullId);
+            ViewerHandler.INSTANCE.updateHologramIndex(fullId, hologram.getPosition());
 
             MinecraftServer server = HoloDisplays.Companion.getSERVER();
             if (server != null && server.getPlayerManager() != null) {
@@ -112,6 +114,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
 
             ViewerHandler.INSTANCE.removeHologramFromAllViewers(fullId);
             ViewerHandler.INSTANCE.removeTracker(fullId);
+            ViewerHandler.INSTANCE.removeHologramIndex(fullId);
             apiHolograms.remove(fullId);
 
             return true;
@@ -137,6 +140,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
             }
 
             apiHolograms.put(fullId, hologram);
+            ViewerHandler.INSTANCE.updateHologramIndex(fullId, hologram.getPosition());
             ViewerHandler.INSTANCE.respawnForAllObservers(fullId);
 
             MinecraftServer server = HoloDisplays.Companion.getSERVER();
@@ -203,6 +207,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
         hologramsToRemove.forEach(id -> {
             ViewerHandler.INSTANCE.removeHologramFromAllViewers(id);
             ViewerHandler.INSTANCE.removeTracker(id);
+            ViewerHandler.INSTANCE.removeHologramIndex(id);
             apiHolograms.remove(id);
         });
 
@@ -295,6 +300,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
         apiHolograms.keySet().forEach(id -> {
             ViewerHandler.INSTANCE.removeHologramFromAllViewers(id);
             ViewerHandler.INSTANCE.removeTracker(id);
+            ViewerHandler.INSTANCE.removeHologramIndex(id);
         });
         apiHolograms.clear();
         apiDisplays.clear();

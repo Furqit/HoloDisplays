@@ -4,7 +4,7 @@ import java.util.*
 plugins {
     kotlin("jvm") version "2.2.+"
     kotlin("plugin.serialization") version "2.2.+"
-    id("fabric-loom") version "1.11.+"
+    id("fabric-loom") version "1.14.+"
     id("me.modmuss50.mod-publish-plugin") version "0.8.+"
 }
 

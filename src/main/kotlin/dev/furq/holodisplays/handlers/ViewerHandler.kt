@@ -8,11 +8,16 @@ import dev.furq.holodisplays.data.HologramData
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import dev.furq.holodisplays.utils.ConditionEvaluator
+import net.minecraft.network.listener.ClientPlayPacketListener
+import net.minecraft.network.packet.Packet
+import net.minecraft.network.packet.s2c.play.BundleS2CPacket
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.util.math.ChunkPos
 import java.util.*
 
 object ViewerHandler {
     private val observers = mutableMapOf<String, MutableSet<UUID>>()
+    private val hologramChunkMap = mutableMapOf<Long, MutableSet<String>>()
     private val playerManager get() = HoloDisplays.SERVER?.playerManager
 
     private fun getPlayer(uuid: UUID): ServerPlayerEntity? = playerManager?.getPlayer(uuid)
@@ -25,6 +30,25 @@ object ViewerHandler {
     fun resetAllObservers() {
         HologramConfig.getHolograms().keys.forEach { name ->
             removeHologramFromAllViewers(name)
+        }
+        hologramChunkMap.clear()
+    }
+
+    fun updateHologramIndex(name: String, position: HologramData.Position) {
+        removeHologramIndex(name)
+        val chunkLong = net.minecraft.util.math.ChunkPos.toLong(
+            position.x.toInt() shr 4,
+            position.z.toInt() shr 4
+        )
+        hologramChunkMap.getOrPut(chunkLong) { mutableSetOf() }.add(name)
+    }
+
+    fun removeHologramIndex(name: String) {
+        val iterator = hologramChunkMap.values.iterator()
+        while (iterator.hasNext()) {
+            val set = iterator.next()
+            set.remove(name)
+            if (set.isEmpty()) iterator.remove()
         }
     }
 
@@ -76,11 +100,21 @@ object ViewerHandler {
     private fun showHologramToPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) = safeCall {
         if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) return@safeCall
 
+        val packets = mutableListOf<Packet<in ClientPlayPacketListener>>()
+        val packetConsumer: (Packet<*>) -> Unit = {
+            @Suppress("UNCHECKED_CAST")
+            packets.add(it as Packet<in ClientPlayPacketListener>)
+        }
+
         hologram.displays.forEachIndexed { index, entity ->
             val display = DisplayConfig.getDisplayOrAPI(entity.name) ?: return@forEachIndexed
             if (!ConditionEvaluator.evaluate(display.type.conditionalPlaceholder, player)) return@forEachIndexed
 
-            PacketHandler.spawnDisplayEntity(player, name, entity, processDisplayForPlayer(display), hologram.position.toVec3f(), index, hologram)
+            PacketHandler.spawnDisplayEntity(player, name, entity, processDisplayForPlayer(display), hologram.position.toVec3f(), index, hologram, packetConsumer)
+        }
+
+        if (packets.isNotEmpty()) {
+             player.networkHandler.sendPacket(BundleS2CPacket(packets))
         }
     }
 
@@ -105,10 +139,24 @@ object ViewerHandler {
 
     fun updatePlayerVisibility(player: ServerPlayerEntity) {
         val playerWorld = player.world.registryKey.value.toString()
+        val playerChunkX = player.chunkPos.x
+        val playerChunkZ = player.chunkPos.z
+        
+        val viewDistance = playerManager?.viewDistance ?: 10
+        
+        val nearbyHolograms = mutableSetOf<String>()
+        for (x in -viewDistance..viewDistance) {
+            for (z in -viewDistance..viewDistance) {
+                val chunkLong = ChunkPos.toLong(playerChunkX + x, playerChunkZ + z)
+                hologramChunkMap[chunkLong]?.let { nearbyHolograms.addAll(it) }
+            }
+        }
 
-        observers.keys.forEach { name ->
+        val potentialHolograms = nearbyHolograms + (observers.entries.filter { it.value.contains(player.uuid) }.map { it.key })
+
+        potentialHolograms.forEach { name ->
             val hologram = HologramConfig.getHologramOrAPI(name) ?: return@forEach
-            val isCurrentlyViewing = observers[name]?.contains(player.uuid) == true
+            val isCurrentlyViewing = isViewing(player, name)
 
             if (hologram.world != playerWorld) {
                 if (isCurrentlyViewing) {
