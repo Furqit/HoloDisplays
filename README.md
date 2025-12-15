@@ -4,7 +4,7 @@
 
 A high-performance, packet-based hologram system utilizing Minecraft’s display entities for optimal efficiency and flexibility.
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.20.5--1.21.8-green.svg)](https://minecraft.net)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.20.5--1.21.10-green.svg)](https://minecraft.net)
 [![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue.svg)](https://fabricmc.net)
 [![License](https://img.shields.io/badge/License-GPL%203.0-red.svg)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Furq's%20Den-7289DA?logo=discord&logoColor=white)](https://discord.gg/XhZzmvzPDV)
@@ -25,7 +25,7 @@ A high-performance, packet-based hologram system utilizing Minecraft’s display
 |---------------------------|------------------------------------------------------------------------------|
 | Packet-Based Architecture | Utilizes network packets instead of real entities to minimize server load.   |
 | Animation Support         | Enables smooth, dynamic text animations.                                     |
-| Multiple Display Types    | Supports text, item, and block displays with full customization.             |
+| Multiple Display Types    | Supports text, item, block, and entity displays with full customization.     |
 | Placeholder Integration   | Fully compatible with the Text Placeholder API.                              |
 | Advanced Text Formatting  | Includes gradient support, color codes, and QuickText formatting.            |
 | GUI Display Manager       | Intuitive GUI for creating, editing, and managing displays.                  |
@@ -38,7 +38,6 @@ A high-performance, packet-based hologram system utilizing Minecraft’s display
 
 | Feature                 | Description                                                   | Status   |
 |-------------------------|---------------------------------------------------------------|----------|
-| Entity Display Support  | Show mob entities with configurable properties.               | Planned  |
 | Block & Item Animations | Enable animations such as rotation, scaling, and translation. | Planned  |
 | Particle Effects        | Integrate with Snowstorm for advanced particle visuals.       | Possible |
 
