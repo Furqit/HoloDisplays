@@ -83,6 +83,7 @@ java {
     val javaVersion = JavaVersion.VERSION_21
     targetCompatibility = javaVersion
     sourceCompatibility = javaVersion
+    withSourcesJar()
 }
 
 tasks.processResources {
@@ -117,6 +118,7 @@ tasks.register<Copy>("buildAndCollect") {
 
 publishMods {
     file = tasks.remapJar.get().archiveFile
+    additionalFiles.from(tasks.named("sourcesJar").get().outputs.files)
     displayName = "${mod.name} ${mod.version}"
     version = mod.version
     changelog = rootProject.file("CHANGELOG.md").readText()
