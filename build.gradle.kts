@@ -57,8 +57,8 @@ dependencies {
 }
 
 loom {
-    if (mcVersion == "1.21.10") {
-        accessWidenerPath = rootProject.file("src/main/resources/accesswideners/1.21.10.accesswidener")
+    if (mcVersion == "1.21.10" || mcVersion == "1.21.11") {
+        accessWidenerPath = rootProject.file("src/main/resources/accesswideners/$mcVersion.accesswidener")
     }
 
     decompilers {
@@ -92,7 +92,7 @@ tasks.processResources {
     inputs.property("version", mod.version)
     inputs.property("mcdep", mcDep)
 
-    val accessWidenerEntry = if (mcVersion == "1.21.10") ",\n  \"accessWidener\": \"accesswideners/1.21.10.accesswidener\",\n  " else ",\n  "
+    val accessWidenerEntry = if (mcVersion == "1.21.10" || mcVersion == "1.21.11") ",\n  \"accessWidener\": \"accesswideners/$mcVersion.accesswidener\",\n  " else ",\n  "
 
     val map = mapOf(
         "id" to mod.id,
@@ -104,7 +104,7 @@ tasks.processResources {
 
     filesMatching("fabric.mod.json") { expand(map) }
     
-    if (mcVersion != "1.21.10") {
+    if (mcVersion != "1.21.10" && mcVersion != "1.21.11") {
         exclude("accesswideners/**")
     }
 }

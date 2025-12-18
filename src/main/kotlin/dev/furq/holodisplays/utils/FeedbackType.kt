@@ -25,6 +25,7 @@ enum class FeedbackType(private val template: String, val isError: Boolean = fal
     BLOCK_PROPERTIES_UPDATED("Block properties updated."),
     ENTITY_ID_UPDATED("Entity ID updated to {id}."),
     OFFSET_UPDATED("Offset updated to <gray>x: {x}, y: {y}, z: {z}"),
+    NO_HOLOGRAMS_NEAR("No holograms found within {radius} blocks", true),
 
     // Error Messages
     HOLOGRAM_EXISTS("Hologram '{name}' already exists. Choose a different name", true),

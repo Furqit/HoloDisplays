@@ -3,7 +3,7 @@
   "id": "${id}",
   "version": "${version}",
   "name": "${name}",
-  "description": "A powerful packet-based hologram system built with Minecraft's display entities for better performance and flexibility.",
+  "description": "A high-performance, packet-based hologram system utilizing Minecraft’s display entities for optimal efficiency and flexibility.",
   "authors": ["Furq"],
   "contact": {
     "homepage": "https://modrinth.com/mod/holodisplays",

@@ -1,8 +1,12 @@
 package dev.furq.holodisplays.managers
 
 import dev.furq.holodisplays.utils.FeedbackType
+import net.minecraft.network.packet.s2c.play.PlaySoundS2CPacket
+import net.minecraft.registry.Registries
 import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.sound.SoundCategory
+import net.minecraft.sound.SoundEvent
 import net.minecraft.sound.SoundEvents
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
@@ -62,4 +66,26 @@ object FeedbackManager {
             1f
         )
     }
+
+    //? if >=1.21.11 {
+    fun ServerPlayerEntity.playSoundToPlayer(
+        sound: SoundEvent?,
+        category: SoundCategory?,
+        volume: Float,
+        pitch: Float
+    ) {
+        this.networkHandler.sendPacket(
+            PlaySoundS2CPacket(
+                Registries.SOUND_EVENT.getEntry(sound),
+                category,
+                this.x,
+                this.y,
+                this.z,
+                volume,
+                pitch,
+                this.random.nextLong()
+            )
+        )
+    }
+    //?}
 }

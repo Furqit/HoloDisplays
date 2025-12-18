@@ -52,5 +52,6 @@ object MainCommand {
             .then(MoveCommand.register())
             .then(HologramEditCommand.register())
             .then(LineCommand.register())
+            .then(NearCommand.register())
     }
 }

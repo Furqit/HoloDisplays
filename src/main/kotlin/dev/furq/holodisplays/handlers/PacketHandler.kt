@@ -159,7 +159,7 @@ object PacketHandler {
         packetConsumer(EntityTrackerUpdateS2CPacket(entityId, entries))
 
         if (displayData.type is EntityDisplay) {
-            val scaleAttr = EntityAttributeInstance(/*? if 1.20.6 {*/ EntityAttributes.GENERIC_SCALE /*?}*//*? if >=1.21.3 {*/ /*EntityAttributes.SCALE *//*?}*/) { }
+            val scaleAttr = EntityAttributeInstance(/*? if 1.20.6 {*/ /*EntityAttributes.GENERIC_SCALE *//*?}*//*? if >=1.21.3 {*/ EntityAttributes.SCALE /*?}*/) { }
             scaleAttr.baseValue = displayData.type.scale?.x()?.toDouble() ?: 1.0
             val scalePacket = EntityAttributesS2CPacket(entityId, listOf(scaleAttr))
             packetConsumer(scalePacket)
@@ -306,7 +306,7 @@ object PacketHandler {
             val itemStack = ItemStack(item)
             display.customModelData?.also { cmd ->
                 itemStack.set(
-                    DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelDataComponent(/*? if <=1.21.3 {*/cmd/*?}*//*? if >1.21.3 {*//*listOf(cmd.toFloat()), listOf(), listOf(), listOf()*//*?}*/)
+                    DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelDataComponent(/*? if <=1.21.3 {*//*cmd*//*?}*//*? if >1.21.3 {*/listOf(cmd.toFloat()), listOf(), listOf(), listOf()/*?}*/)
                 )
             }
 
