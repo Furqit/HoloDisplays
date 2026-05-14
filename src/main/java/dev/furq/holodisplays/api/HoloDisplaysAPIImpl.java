@@ -474,6 +474,11 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
             builder.setTextOpacity((int) (opacity * 255));
         }
 
+        @Override
+        public void lineWidth(int lineWidth) {
+            builder.setLineWidth(lineWidth);
+        }
+
         public TextDisplay build() {
             return builder.build();
         }

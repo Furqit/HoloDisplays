@@ -263,6 +263,13 @@ public interface HoloDisplaysAPI {
          * @param opacity Opacity value from 0.0 to 1.0
          */
         void opacity(float opacity);
+
+        /**
+         * Sets the line width of this display.
+         *
+         * @param lineWidth Line width value from 1 to 200
+         */
+        void lineWidth(int lineWidth);
     }
 
     /**
