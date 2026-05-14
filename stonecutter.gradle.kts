@@ -1,7 +1,25 @@
 plugins {
     id("dev.kikugie.stonecutter")
 }
-stonecutter active "1.21.11" /* [SC] DO NOT EDIT */
+stonecutter active "26.1" /* [SC] DO NOT EDIT */
+
+// See https://stonecutter.kikugie.dev/wiki/config/params
+stonecutter parameters {
+    swaps["mod_version"] = "\"${property("mod.version")}\";"
+    swaps["minecraft"] = "\"${node.metadata.version}\";"
+    constants["release"] = property("mod.id") != "template"
+    dependencies["fapi"] = node.project.property("deps.fabric_api") as String
+
+    replacements {
+        // Handle accessWidener injection
+        string(current.version == "1.21.10" || current.version == "1.21.11") {
+            replace("\"__AW__\": \"\"", "\"accessWidener\": \"accesswideners/${current.version}.accesswidener\"")
+        }
+        string(current.version != "1.21.10" && current.version != "1.21.11") {
+            replace("\"__AW__\": \"\"", "\"__comment\": \"no aw\"")
+        }
+    }
+}
 
 tasks.register("chiseledBuild") {
     group = "build"

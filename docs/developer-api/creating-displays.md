@@ -11,7 +11,7 @@ DisplayData textDisplay = api.createTextDisplay("my_text", builder -> {
     builder.scale(1.5f, 1.5f, 1.5f);
     builder.rotation(0f, 45f, 0f);
     builder.billboardMode("center");
-    builder.condition("%player:group% == vip");
+    builder.condition("%player:group% = vip");
     builder.backgroundColor("FFFFFF", 50);  // White, 50% opacity
     builder.shadow(true);
     builder.seeThrough(true);

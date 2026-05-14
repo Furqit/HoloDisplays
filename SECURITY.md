@@ -5,7 +5,7 @@
 Only the latest version receives security updates.
 
 | Version | Supported          | Minecraft Versions |
-| ------- | ------------------ | ------------------ |
+|---------|--------------------|--------------------|
 | 0.4.x   | :white_check_mark: | 1.20.6 - 1.21.9    |
 | < 0.4   | :x:                | -                  |
 

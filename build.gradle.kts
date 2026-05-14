@@ -1,11 +1,12 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
 
 plugins {
-    kotlin("jvm") version "2.2.+"
-    kotlin("plugin.serialization") version "2.2.+"
-    id("fabric-loom") version "1.14.+"
-    id("me.modmuss50.mod-publish-plugin") version "0.8.+"
+    kotlin("jvm") version "2.3.+"
+    kotlin("plugin.serialization") version "2.3.+"
+    id("dev.kikugie.loom-back-compat")
+    id("me.modmuss50.mod-publish-plugin") version "2.0.0-beta.1"
 }
 
 val localProperties = Properties().apply {
@@ -14,42 +15,46 @@ val localProperties = Properties().apply {
     }
 }
 
-class ModData {
-    val id = property("mod.id").toString()
-    val name = property("mod.name").toString()
-    val version = property("mod.version").toString()
-    val group = property("mod.group").toString()
-}
+val modId: String = sc.properties["mod.id"]
+val modVersion: String = sc.properties["mod.version"]
 
-class ModDependencies {
-    operator fun get(name: String) = property("deps.$name").toString()
-}
+version = "${modVersion}+${sc.current.version}"
+group = sc.properties["mod.group"] as String
+base.archivesName = modId
 
-val mod = ModData()
-val deps = ModDependencies()
 val mcVersion = stonecutter.current.version
-val mcDep = property("mod.mc_dep").toString()
+val mcDep: String = property("mod.mc_dep") as String
 
-version = "${mod.version}+$mcVersion"
-group = mod.group
-base { archivesName.set(mod.id) }
+val requiredJava: JavaVersion = when {
+    sc.current.parsed >= "26.1" -> JavaVersion.VERSION_25
+    sc.current.parsed >= "1.20.5" -> JavaVersion.VERSION_21
+    sc.current.parsed >= "1.18" -> JavaVersion.VERSION_17
+    sc.current.parsed >= "1.17" -> JavaVersion.VERSION_16
+    else -> JavaVersion.VERSION_1_8
+}
+
+val compatibleVersions: List<String> = sc.properties.rawOrNull("mod", "mc_releases") ?.asList().orEmpty().map { it.toString() }
 
 repositories {
-    maven("https://maven.quiltmc.org/repository/release")
-    maven("https://maven.nucleoid.xyz/") { name = "Nucleoid" }
+    maven("https://maven.nucleoid.xyz")
     mavenCentral()
 }
 
 dependencies {
     minecraft("com.mojang:minecraft:${mcVersion}")
-    mappings("net.fabricmc:yarn:${mcVersion}+build.${deps["yarn_build"]}:v2")
-    modImplementation("net.fabricmc:fabric-loader:${deps["fabric_loader"]}")
-    modImplementation("net.fabricmc:fabric-language-kotlin:${deps["kotlin_version"]}")
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${deps["fabric_api"]}")
+    if (sc.current.parsed >= "26.1") {
+        loomx.applyMojangMappings()
+    } else {
+        mappings("net.fabricmc:yarn:${mcVersion}+build.${property("deps.yarn_build")}:v2")
+    }
+    modImplementation("net.fabricmc:fabric-loader:${property("deps.fabric_loader")}")
+    modImplementation("net.fabricmc:fabric-language-kotlin:${property("deps.kotlin_version")}")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:${property("deps.fabric_api")}")
 
-    modImplementation("eu.pb4", "placeholder-api", deps["placeholder-api"])
-    modImplementation(include("eu.pb4", "sgui", deps["sgui"]))
-    modImplementation(include("me.lucko", "fabric-permissions-api", deps["permissions-api"]))
+    modImplementation("eu.pb4", "placeholder-api", property("deps.placeholder-api") as String)
+    modImplementation(include("eu.pb4", "sgui", property("deps.sgui") as String))
+    modImplementation(include("me.lucko", "fabric-permissions-api", property("deps.permissions-api") as String))
+
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
@@ -61,10 +66,8 @@ loom {
         accessWidenerPath = rootProject.file("src/main/resources/accesswideners/$mcVersion.accesswidener")
     }
 
-    decompilers {
-        get("vineflower").apply {
-            options.put("mark-corresponding-synthetics", "1")
-        }
+    decompilerOptions.named("vineflower") {
+        options.put("mark-corresponding-synthetics", "1")
     }
 
     runConfigs.all {
@@ -75,55 +78,56 @@ loom {
 
 tasks.withType<KotlinCompile> {
     compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+        jvmTarget.set(when (requiredJava) {
+            JavaVersion.VERSION_25 -> JvmTarget.JVM_25
+            JavaVersion.VERSION_21 -> JvmTarget.JVM_21
+            JavaVersion.VERSION_17 -> JvmTarget.JVM_17
+            else -> JvmTarget.JVM_1_8
+        })
     }
 }
 
 java {
-    val javaVersion = JavaVersion.VERSION_21
-    targetCompatibility = javaVersion
-    sourceCompatibility = javaVersion
-    withSourcesJar()
+    targetCompatibility = requiredJava
+    sourceCompatibility = requiredJava
+
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(requiredJava.majorVersion))
+    }
 }
 
 tasks.processResources {
-    inputs.property("id", mod.id)
-    inputs.property("name", mod.name)
-    inputs.property("version", mod.version)
-    inputs.property("mcdep", mcDep)
-
-    val accessWidenerEntry = if (mcVersion == "1.21.10" || mcVersion == "1.21.11") ",\n  \"accessWidener\": \"accesswideners/$mcVersion.accesswidener\",\n  " else ",\n  "
-
-    val map = mapOf(
-        "id" to mod.id,
-        "name" to mod.name,
-        "version" to mod.version,
-        "mcdep" to mcDep,
-        "accessWidenerEntry" to accessWidenerEntry
+    val props = mapOf(
+        "id" to modId,
+        "name" to modName,
+        "version" to modVersion,
+        "mcdep" to mcDep
     )
 
-    filesMatching("fabric.mod.json") { expand(map) }
-    
+    filesMatching("fabric.mod.json") { expand(props) }
+
     if (mcVersion != "1.21.10" && mcVersion != "1.21.11") {
         exclude("accesswideners/**")
     }
 }
 
+val modName: String = sc.properties["mod.name"]
+
 tasks.register<Copy>("buildAndCollect") {
     group = "build"
-    from(tasks.remapJar.get().archiveFile)
-    into(rootProject.layout.buildDirectory.file("libs/${mod.version}"))
+    from(loomx.modJar.map { it.archiveFile })
+    into(rootProject.layout.buildDirectory.file("libs/${modVersion}"))
     dependsOn("build")
 }
 
 publishMods {
-    file = tasks.remapJar.get().archiveFile
-    additionalFiles.from(tasks.named("sourcesJar").get().outputs.files)
-    displayName = "${mod.name} ${mod.version}"
-    version = mod.version
+    file.set(loomx.modJar.flatMap { it.archiveFile })
+    displayName = "$modName $modVersion"
+    version = modVersion
     changelog = rootProject.file("CHANGELOG.md").readText()
     type = STABLE
     modLoaders.add("fabric")
+
     val lower = """>=\s*([0-9.]+)""".toRegex().find(mcDep)?.groupValues?.get(1)
     val upper = """<=\s*([0-9.]+)""".toRegex().find(mcDep)?.groupValues?.get(1)
 
