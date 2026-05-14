@@ -1,40 +1,40 @@
 package dev.furq.holodisplays.managers
 
 import dev.furq.holodisplays.utils.FeedbackType
-import net.minecraft.network.packet.s2c.play.PlaySoundS2CPacket
-import net.minecraft.registry.Registries
-import net.minecraft.server.command.ServerCommandSource
-import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.sound.SoundCategory
-import net.minecraft.sound.SoundEvent
-import net.minecraft.sound.SoundEvents
-import net.minecraft.text.Text
-import net.minecraft.util.Formatting
+import net.minecraft.ChatFormatting
+import net.minecraft.commands.CommandSourceStack
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.network.chat.Component
+import net.minecraft.network.protocol.game.ClientboundSoundPacket
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.sounds.SoundEvent
+import net.minecraft.sounds.SoundEvents
+import net.minecraft.sounds.SoundSource
 import org.joml.Vector3f
 
 object FeedbackManager {
     private const val PREFIX = "§8[§bHoloDisplays§8]§r "
 
-    fun send(source: ServerCommandSource, type: FeedbackType, vararg params: Pair<String, Any>) {
+    fun send(source: CommandSourceStack, type: FeedbackType, vararg params: Pair<String, Any>) {
         val message = type.format(*params)
         val formattedMessage = formatMessage(type, message)
 
         when {
             type.isError -> {
-                source.sendError(formattedMessage)
+                source.sendFailure(formattedMessage)
                 playErrorSound(source)
             }
 
             else -> {
-                source.sendFeedback({ formattedMessage }, false)
+                source.sendSuccess({ formattedMessage }, false)
                 playSuccessSound(source)
             }
         }
     }
 
-    private fun formatMessage(type: FeedbackType, message: String): Text {
-        val color = if (type.isError) Formatting.RED else Formatting.GREEN
-        return Text.literal(PREFIX + message).formatted(color)
+    private fun formatMessage(type: FeedbackType, message: String): Component {
+        val color = if (type.isError) ChatFormatting.RED else ChatFormatting.GREEN
+        return Component.literal(PREFIX + message).withStyle(color)
     }
 
     fun formatVector3f(vector: Vector3f): Array<Pair<String, Any>> = arrayOf(
@@ -49,35 +49,35 @@ object FeedbackManager {
         "roll" to "%.2f".format(roll)
     )
 
-    private fun playSuccessSound(source: ServerCommandSource) {
+    private fun playSuccessSound(source: CommandSourceStack) {
         source.player?.playSoundToPlayer(
-            SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
-            SoundCategory.MASTER,
+            SoundEvents.EXPERIENCE_ORB_PICKUP,
+            SoundSource.MASTER,
             0.5f,
             1f
         )
     }
 
-    private fun playErrorSound(source: ServerCommandSource) {
+    private fun playErrorSound(source: CommandSourceStack) {
         source.player?.playSoundToPlayer(
-            SoundEvents.ENTITY_VILLAGER_NO,
-            SoundCategory.MASTER,
+            SoundEvents.VILLAGER_NO,
+            SoundSource.MASTER,
             0.5f,
             1f
         )
     }
 
-    //? if >=1.21.11 {
-    fun ServerPlayerEntity.playSoundToPlayer(
+    fun ServerPlayer.playSoundToPlayer(
         sound: SoundEvent?,
-        category: SoundCategory?,
+        category: SoundSource?,
         volume: Float,
         pitch: Float
     ) {
-        this.networkHandler.sendPacket(
-            PlaySoundS2CPacket(
-                Registries.SOUND_EVENT.getEntry(sound),
-                category,
+        if (sound == null) return
+        this.connection.send(
+            ClientboundSoundPacket(
+                BuiltInRegistries.SOUND_EVENT.wrapAsHolder(sound),
+                category ?: SoundSource.MASTER,
                 this.x,
                 this.y,
                 this.z,
@@ -87,5 +87,4 @@ object FeedbackManager {
             )
         )
     }
-    //?}
 }

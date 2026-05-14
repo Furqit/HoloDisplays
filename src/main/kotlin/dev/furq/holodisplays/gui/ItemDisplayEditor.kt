@@ -4,9 +4,10 @@ import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.utils.GuiUtils
-import net.minecraft.item.Items
-import net.minecraft.screen.ScreenHandlerType
-import net.minecraft.server.network.ServerPlayerEntity
+import dev.furq.holodisplays.utils.GuiUtils.isRightClick
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.item.Items
 
 object ItemDisplayEditor {
 
@@ -17,13 +18,13 @@ object ItemDisplayEditor {
     )
 
     fun open(
-        player: ServerPlayerEntity,
+        player: ServerPlayer,
         name: String,
         returnCallback: () -> Unit = { DisplayEdit.open(player, name) }
     ) {
         val display = DisplayConfig.getDisplay(name)?.type as? ItemDisplay ?: return
         val gui = GuiUtils.createGui(
-            type = ScreenHandlerType.GENERIC_3X3,
+            type = MenuType.GENERIC_3x3,
             player = player,
             title = "Edit Item Display",
             size = 9,
@@ -41,7 +42,7 @@ object ItemDisplayEditor {
                     title = "Enter Item ID",
                     defaultText = display.id,
                     onSubmit = { itemId ->
-                        DisplayManager.updateItemId(name, itemId, player.commandSource)
+                        DisplayManager.updateItemId(name, itemId, player.createCommandSourceStack())
                         open(player, name, returnCallback)
                     },
                     onCancel = { open(player, name, returnCallback) }
@@ -64,7 +65,7 @@ object ItemDisplayEditor {
             )) { _, _, _, _ ->
                 val currentIndex = displayModes.indexOf(display.itemDisplayType.lowercase())
                 val nextMode = displayModes[(currentIndex + 1) % displayModes.size]
-                DisplayManager.updateItemDisplayType(name, nextMode, player.commandSource)
+                DisplayManager.updateItemDisplayType(name, nextMode, player.createCommandSourceStack())
                 open(player, name, returnCallback)
             }
 
@@ -83,15 +84,15 @@ object ItemDisplayEditor {
                         defaultText = display.customModelData?.toString() ?: "1",
                         onSubmit = { input ->
                             input.toIntOrNull()?.takeIf { it > 0 }?.let { cmd ->
-                                DisplayManager.updateCustomModelData(name, cmd, player.commandSource)
+                                DisplayManager.updateCustomModelData(name, cmd, player.createCommandSourceStack())
                             }
                             open(player, name, returnCallback)
                         },
                         onCancel = { open(player, name, returnCallback) }
                     )
 
-                    type.isRight -> {
-                        DisplayManager.updateCustomModelData(name, null, player.commandSource)
+                    type.isRightClick() -> {
+                        DisplayManager.updateCustomModelData(name, null, player.createCommandSourceStack())
                         open(player, name, returnCallback)
                     }
                 }

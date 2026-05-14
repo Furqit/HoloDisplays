@@ -8,23 +8,24 @@ import com.mojang.brigadier.context.CommandContext
 import dev.furq.holodisplays.gui.HologramEdit
 import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.CommandUtils
-import net.minecraft.server.command.CommandManager
-import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.commands.CommandSourceStack
+import net.minecraft.commands.Commands
+import net.minecraft.server.level.ServerPlayer
 import org.joml.Vector3f
 
 object HologramEditCommand : EditCommand() {
-    override fun updateScale(name: String, scale: Vector3f, source: ServerCommandSource) = HologramManager.updateScale(name, scale, source)
-    override fun resetScale(name: String, source: ServerCommandSource) = HologramManager.updateScale(name, null, source)
-    override fun updateBillboard(name: String, mode: String, source: ServerCommandSource) = HologramManager.updateBillboard(name, mode, source)
-    override fun resetBillboard(name: String, source: ServerCommandSource) = HologramManager.updateBillboard(name, null, source)
-    override fun updateRotation(name: String, pitch: Float, yaw: Float, roll: Float, source: ServerCommandSource) = HologramManager.updateRotation(name, pitch, yaw, roll, source)
-    override fun resetRotation(name: String, source: ServerCommandSource) = HologramManager.updateRotation(name, null, null, null, source)
-    override fun updateCondition(name: String, condition: String?, source: ServerCommandSource) = HologramManager.updateCondition(name, condition, source)
-    override fun openEditGui(player: net.minecraft.server.network.ServerPlayerEntity, name: String) = HologramEdit.open(player, name)
+    override fun updateScale(name: String, scale: Vector3f, source: CommandSourceStack) = HologramManager.updateScale(name, scale, source)
+    override fun resetScale(name: String, source: CommandSourceStack) = HologramManager.updateScale(name, null, source)
+    override fun updateBillboard(name: String, mode: String, source: CommandSourceStack) = HologramManager.updateBillboard(name, mode, source)
+    override fun resetBillboard(name: String, source: CommandSourceStack) = HologramManager.updateBillboard(name, null, source)
+    override fun updateRotation(name: String, pitch: Float, yaw: Float, roll: Float, source: CommandSourceStack) = HologramManager.updateRotation(name, pitch, yaw, roll, source)
+    override fun resetRotation(name: String, source: CommandSourceStack) = HologramManager.updateRotation(name, null, null, null, source)
+    override fun updateCondition(name: String, condition: String?, source: CommandSourceStack) = HologramManager.updateCondition(name, condition, source)
+    override fun openEditGui(player: ServerPlayer, name: String) = HologramEdit.open(player, name)
 
-    fun register(): ArgumentBuilder<ServerCommandSource, *> = CommandManager
+    fun register(): ArgumentBuilder<CommandSourceStack, *> = Commands
         .literal("edit")
-        .then(CommandManager.argument("name", StringArgumentType.word())
+        .then(Commands.argument("name", StringArgumentType.word())
             .suggests { _, builder -> CommandUtils.suggestHolograms(builder) }
             .executes { context -> executeEdit(context) }
             .then(buildScaleCommands())
@@ -35,43 +36,43 @@ object HologramEditCommand : EditCommand() {
             .then(buildConditionCommands())
         )
 
-    private fun buildUpdateRateCommands(): ArgumentBuilder<ServerCommandSource, *> {
-        return CommandManager.literal("updateRate")
-            .then(CommandManager.argument("ticks", IntegerArgumentType.integer(1))
+    private fun buildUpdateRateCommands(): ArgumentBuilder<CommandSourceStack, *> {
+        return Commands.literal("updateRate")
+            .then(Commands.argument("ticks", IntegerArgumentType.integer(1))
                 .executes { context -> executeUpdateRate(context) })
-            .then(CommandManager.literal("reset")
+            .then(Commands.literal("reset")
                 .executes { context -> executeResetUpdateRate(context) })
     }
 
-    private fun buildViewRangeCommands(): ArgumentBuilder<ServerCommandSource, *> {
-        return CommandManager.literal("viewRange")
-            .then(CommandManager.argument("blocks", FloatArgumentType.floatArg(1f, 128f))
+    private fun buildViewRangeCommands(): ArgumentBuilder<CommandSourceStack, *> {
+        return Commands.literal("viewRange")
+            .then(Commands.argument("blocks", FloatArgumentType.floatArg(1f, 128f))
                 .executes { context -> executeViewRange(context) })
-            .then(CommandManager.literal("reset")
+            .then(Commands.literal("reset")
                 .executes { context -> executeResetViewRange(context) })
     }
 
-    private fun executeUpdateRate(context: CommandContext<ServerCommandSource>): Int {
+    private fun executeUpdateRate(context: CommandContext<CommandSourceStack>): Int {
         val name = StringArgumentType.getString(context, "name")
         val ticks = IntegerArgumentType.getInteger(context, "ticks")
         HologramManager.updateUpdateRate(name, ticks, context.source)
         return 1
     }
 
-    private fun executeResetUpdateRate(context: CommandContext<ServerCommandSource>): Int {
+    private fun executeResetUpdateRate(context: CommandContext<CommandSourceStack>): Int {
         val name = StringArgumentType.getString(context, "name")
         HologramManager.updateUpdateRate(name, null, context.source)
         return 1
     }
 
-    private fun executeViewRange(context: CommandContext<ServerCommandSource>): Int {
+    private fun executeViewRange(context: CommandContext<CommandSourceStack>): Int {
         val name = StringArgumentType.getString(context, "name")
         val blocks = FloatArgumentType.getFloat(context, "blocks")
         HologramManager.updateViewRange(name, blocks, context.source)
         return 1
     }
 
-    private fun executeResetViewRange(context: CommandContext<ServerCommandSource>): Int {
+    private fun executeResetViewRange(context: CommandContext<CommandSourceStack>): Int {
         val name = StringArgumentType.getString(context, "name")
         HologramManager.updateViewRange(name, null, context.source)
         return 1

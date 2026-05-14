@@ -7,20 +7,19 @@ import dev.furq.holodisplays.data.display.*
 import dev.furq.holodisplays.handlers.DisplayHandler
 import dev.furq.holodisplays.handlers.DisplayHandler.DisplayProperty.*
 import dev.furq.holodisplays.handlers.HologramHandler
+import dev.furq.holodisplays.handlers.McRegistries
 import dev.furq.holodisplays.utils.ConditionEvaluator
 import dev.furq.holodisplays.utils.FeedbackType
-import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
-import net.minecraft.registry.Registries
-import net.minecraft.server.command.ServerCommandSource
-import net.minecraft.util.Identifier
+import net.minecraft.commands.CommandSourceStack
+import net.minecraft.world.entity.Display.BillboardConstraints
 import org.joml.Vector3f
-import net.minecraft.entity.EntityPose as MinecraftEntityPose
+import net.minecraft.world.entity.Pose as EntityPose
 
 object DisplayManager {
 
     private inline fun requireDisplayExists(
         name: String,
-        source: ServerCommandSource,
+        source: CommandSourceStack,
         action: () -> Unit
     ) {
         if (DisplayConfig.exists(name)) action()
@@ -29,7 +28,7 @@ object DisplayManager {
 
     private inline fun requireDisplayNew(
         name: String,
-        source: ServerCommandSource,
+        source: CommandSourceStack,
         action: () -> Unit
     ) {
         if (!DisplayConfig.exists(name)) action()
@@ -38,7 +37,7 @@ object DisplayManager {
 
     private fun updateProperty(
         name: String,
-        source: ServerCommandSource,
+        source: CommandSourceStack,
         property: DisplayHandler.DisplayProperty,
         feedbackType: FeedbackType,
         vararg details: Pair<String, Any>
@@ -47,7 +46,7 @@ object DisplayManager {
         FeedbackManager.send(source, feedbackType, *details)
     }
 
-    private fun createDisplay(name: String, display: BaseDisplay, type: String, source: ServerCommandSource): Boolean {
+    private fun createDisplay(name: String, display: BaseDisplay, type: String, source: CommandSourceStack): Boolean {
         var created = false
         requireDisplayNew(name, source) {
             DisplayConfig.saveDisplay(name, DisplayData(display))
@@ -57,14 +56,13 @@ object DisplayManager {
         return created
     }
 
-    fun createTextDisplay(name: String, text: String, source: ServerCommandSource): Boolean =
+    fun createTextDisplay(name: String, text: String, source: CommandSourceStack): Boolean =
         createDisplay(name, TextDisplay(mutableListOf(text)), "text", source)
 
-    fun createItemDisplay(name: String, itemId: String, source: ServerCommandSource): Boolean {
+    fun createItemDisplay(name: String, itemId: String, source: CommandSourceStack): Boolean {
         val fullItemId = if (!itemId.contains(":")) "minecraft:$itemId" else itemId
-        val itemIdentifier = Identifier.tryParse(fullItemId)
-
-        if (itemIdentifier == null || !Registries.ITEM.containsId(itemIdentifier)) {
+        val itemIdentifier = McRegistries.parseId(fullItemId)
+        if (!McRegistries.itemExists(itemIdentifier)) {
             FeedbackManager.send(source, FeedbackType.INVALID_ITEM)
             return false
         }
@@ -72,11 +70,11 @@ object DisplayManager {
         return createDisplay(name, ItemDisplay(id = fullItemId), "item", source)
     }
 
-    fun createBlockDisplay(name: String, blockId: String, source: ServerCommandSource): Boolean {
+    fun createBlockDisplay(name: String, blockId: String, source: CommandSourceStack): Boolean {
         val fullBlockId = if (!blockId.contains(":")) "minecraft:$blockId" else blockId
-        val blockIdentifier = Identifier.tryParse(fullBlockId)
+        val blockIdentifier = McRegistries.parseId(fullBlockId)
 
-        if (blockIdentifier == null || !Registries.BLOCK.containsId(blockIdentifier)) {
+        if (!McRegistries.blockExists(blockIdentifier)) {
             FeedbackManager.send(source, FeedbackType.INVALID_BLOCK)
             return false
         }
@@ -84,11 +82,11 @@ object DisplayManager {
         return createDisplay(name, BlockDisplay(id = fullBlockId), "block", source)
     }
 
-    fun createEntityDisplay(name: String, entityId: String, source: ServerCommandSource): Boolean {
+    fun createEntityDisplay(name: String, entityId: String, source: CommandSourceStack): Boolean {
         val fullEntityId = if (!entityId.contains(":")) "minecraft:$entityId" else entityId
-        val entityIdentifier = Identifier.tryParse(fullEntityId)
+        val entityIdentifier = McRegistries.parseId(fullEntityId)
 
-        if (entityIdentifier == null || !Registries.ENTITY_TYPE.containsId(entityIdentifier)) {
+        if (!McRegistries.entityTypeExists(entityIdentifier)) {
             FeedbackManager.send(source, FeedbackType.INVALID_ENTITY)
             return false
         }
@@ -96,7 +94,7 @@ object DisplayManager {
         return createDisplay(name, EntityDisplay(id = fullEntityId), "entity", source)
     }
 
-    fun deleteDisplay(name: String, source: ServerCommandSource) = requireDisplayExists(name, source) {
+    fun deleteDisplay(name: String, source: CommandSourceStack) = requireDisplayExists(name, source) {
         HologramConfig.getHolograms()
             .filterValues { hologram -> hologram.displays.any { it.name == name } }
             .forEach { (hologramName, hologram) ->
@@ -110,7 +108,7 @@ object DisplayManager {
         FeedbackManager.send(source, FeedbackType.DISPLAY_DELETED, "name" to name)
     }
 
-    fun updateScale(name: String, scale: Vector3f?, source: ServerCommandSource) {
+    fun updateScale(name: String, scale: Vector3f?, source: CommandSourceStack) {
         requireDisplayExists(name, source) {
             val newScale = scale ?: Vector3f(1f)
 
@@ -125,13 +123,13 @@ object DisplayManager {
         }
     }
 
-    fun updateBillboard(name: String, billboard: String?, source: ServerCommandSource) {
+    fun updateBillboard(name: String, billboard: String?, source: CommandSourceStack) {
         requireDisplayExists(name, source) {
             val newMode = if (billboard == null) {
-                BillboardMode.CENTER
+                BillboardConstraints.CENTER
             } else {
                 try {
-                    BillboardMode.valueOf(billboard.uppercase())
+                    BillboardConstraints.valueOf(billboard.uppercase())
                 } catch (_: IllegalArgumentException) {
                     FeedbackManager.send(source, FeedbackType.INVALID_BILLBOARD)
                     return
@@ -144,7 +142,7 @@ object DisplayManager {
         }
     }
 
-    fun updateRotation(name: String, pitch: Float?, yaw: Float?, roll: Float?, source: ServerCommandSource) {
+    fun updateRotation(name: String, pitch: Float?, yaw: Float?, roll: Float?, source: CommandSourceStack) {
         requireDisplayExists(name, source) {
             val rotation = if (pitch == null || yaw == null || roll == null) Vector3f() else Vector3f(pitch, yaw, roll)
 
@@ -158,7 +156,7 @@ object DisplayManager {
         }
     }
 
-    fun updateBackground(name: String, color: String?, opacity: Int?, source: ServerCommandSource) {
+    fun updateBackground(name: String, color: String?, opacity: Int?, source: CommandSourceStack) {
         requireDisplayExists(name, source) {
             if (color != null) {
                 if (!color.matches(Regex("^[0-9A-Fa-f]{6}$"))) {
@@ -179,7 +177,7 @@ object DisplayManager {
         }
     }
 
-    fun updateTextOpacity(name: String, opacity: Int, source: ServerCommandSource) {
+    fun updateTextOpacity(name: String, opacity: Int, source: CommandSourceStack) {
         requireDisplayExists(name, source) {
             if (opacity !in 1..100) {
                 FeedbackManager.send(source, FeedbackType.INVALID_TEXT_OPACITY)
@@ -190,10 +188,10 @@ object DisplayManager {
         }
     }
 
-    fun updateShadow(name: String, shadow: Boolean, source: ServerCommandSource) =
+    fun updateShadow(name: String, shadow: Boolean, source: CommandSourceStack) =
         updateProperty(name, source, TextShadow(shadow), FeedbackType.DISPLAY_UPDATED, "detail" to "shadow ${if (shadow) "enabled" else "disabled"}")
 
-    fun updateAlignment(name: String, alignment: String, source: ServerCommandSource) {
+    fun updateAlignment(name: String, alignment: String, source: CommandSourceStack) {
         requireDisplayExists(name, source) {
             val textAlignment = try {
                 TextDisplay.TextAlignment.valueOf(alignment.uppercase())
@@ -206,13 +204,13 @@ object DisplayManager {
         }
     }
 
-    fun updateItemDisplayType(name: String, type: String, source: ServerCommandSource) =
+    fun updateItemDisplayType(name: String, type: String, source: CommandSourceStack) =
         updateProperty(name, source, ItemDisplayType(type), FeedbackType.DISPLAY_UPDATED, "detail" to "item display type set to $type")
 
-    fun updateCustomModelData(name: String, customModelData: Int?, source: ServerCommandSource) =
+    fun updateCustomModelData(name: String, customModelData: Int?, source: CommandSourceStack) =
         updateProperty(name, source, ItemCustomModelData(customModelData), FeedbackType.DISPLAY_UPDATED, "detail" to "custom model data set to ${customModelData ?: "none"}")
 
-    fun updateCondition(name: String, condition: String?, source: ServerCommandSource) {
+    fun updateCondition(name: String, condition: String?, source: CommandSourceStack) {
         requireDisplayExists(name, source) {
             if (condition != null && ConditionEvaluator.parseCondition(condition) == null) {
                 FeedbackManager.send(source, FeedbackType.INVALID_CONDITION)
@@ -223,7 +221,7 @@ object DisplayManager {
         }
     }
 
-    fun updateLineWidth(displayName: String, width: Int, source: ServerCommandSource) {
+    fun updateLineWidth(displayName: String, width: Int, source: CommandSourceStack) {
         requireDisplayExists(displayName, source) {
             val display = DisplayConfig.getDisplay(displayName)
             if (display?.type !is TextDisplay) {
@@ -235,7 +233,7 @@ object DisplayManager {
         }
     }
 
-    fun updateSeeThrough(displayName: String, seeThrough: Boolean, source: ServerCommandSource) {
+    fun updateSeeThrough(displayName: String, seeThrough: Boolean, source: CommandSourceStack) {
         requireDisplayExists(displayName, source) {
             val display = DisplayConfig.getDisplay(displayName)
             if (display?.type !is TextDisplay) {
@@ -247,7 +245,7 @@ object DisplayManager {
         }
     }
 
-    fun updateItemId(displayName: String, itemId: String, source: ServerCommandSource) {
+    fun updateItemId(displayName: String, itemId: String, source: CommandSourceStack) {
         requireDisplayExists(displayName, source) {
             val display = DisplayConfig.getDisplay(displayName)
             if (display?.type !is ItemDisplay) {
@@ -259,7 +257,7 @@ object DisplayManager {
         }
     }
 
-    fun updateBlockId(displayName: String, blockId: String, source: ServerCommandSource) {
+    fun updateBlockId(displayName: String, blockId: String, source: CommandSourceStack) {
         requireDisplayExists(displayName, source) {
             val display = DisplayConfig.getDisplay(displayName)
             if (display?.type !is BlockDisplay) {
@@ -271,7 +269,7 @@ object DisplayManager {
         }
     }
 
-    fun updateBlockProperties(displayName: String, properties: Map<String, String>, source: ServerCommandSource) {
+    fun updateBlockProperties(displayName: String, properties: Map<String, String>, source: CommandSourceStack) {
         requireDisplayExists(displayName, source) {
             val display = DisplayConfig.getDisplay(displayName)
             if (display?.type !is BlockDisplay) {
@@ -283,7 +281,7 @@ object DisplayManager {
         }
     }
 
-    fun updateEntityId(displayName: String, entityId: String, source: ServerCommandSource) {
+    fun updateEntityId(displayName: String, entityId: String, source: CommandSourceStack) {
         requireDisplayExists(displayName, source) {
             val display = DisplayConfig.getDisplay(displayName)
             if (display?.type !is EntityDisplay) {
@@ -295,7 +293,7 @@ object DisplayManager {
         }
     }
 
-    fun updateEntityGlow(displayName: String, glow: Boolean, source: ServerCommandSource) {
+    fun updateEntityGlow(displayName: String, glow: Boolean, source: CommandSourceStack) {
         requireDisplayExists(displayName, source) {
             val display = DisplayConfig.getDisplay(displayName)
             if (display?.type !is EntityDisplay) {
@@ -307,7 +305,7 @@ object DisplayManager {
         }
     }
 
-    fun updateEntityPose(displayName: String, pose: MinecraftEntityPose?, source: ServerCommandSource) {
+    fun updateEntityPose(displayName: String, pose: EntityPose?, source: CommandSourceStack) {
         requireDisplayExists(displayName, source) {
             val display = DisplayConfig.getDisplay(displayName)
             if (display?.type !is EntityDisplay) {
@@ -315,7 +313,7 @@ object DisplayManager {
                 return
             }
 
-            updateProperty(displayName, source, EntityPose(pose), FeedbackType.DISPLAY_UPDATED)
+            updateProperty(displayName, source, Pose(pose), FeedbackType.DISPLAY_UPDATED)
         }
     }
 }

@@ -46,7 +46,7 @@ class HoloDisplays : ModInitializer {
     }
 
     private fun handleServerTick(server: MinecraftServer) {
-        val players = server.playerManager.playerList
+        val players = server.playerList.players
         if (players.isNotEmpty() && (HologramConfig.getHolograms().isNotEmpty() || HoloDisplaysAPIInternal.hasApiHolograms())) {
             TickHandler.tick(players)
             players.forEach { player ->

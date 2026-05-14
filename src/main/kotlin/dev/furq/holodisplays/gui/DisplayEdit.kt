@@ -1,22 +1,26 @@
 package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.DisplayConfig
-import dev.furq.holodisplays.data.display.*
+import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.data.display.EntityDisplay
+import dev.furq.holodisplays.data.display.ItemDisplay
+import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.utils.GuiUtils
-import net.minecraft.item.Items
-import net.minecraft.screen.ScreenHandlerType
-import net.minecraft.server.network.ServerPlayerEntity
+import dev.furq.holodisplays.utils.GuiUtils.isRightClick
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.item.Items
 import org.joml.Vector3f
 
 object DisplayEdit {
     private val billboardModes = listOf("HORIZONTAL", "VERTICAL", "CENTER", "FIXED")
 
-    fun open(player: ServerPlayerEntity, name: String, returnCallback: () -> Unit = { DisplayList.open(player) }) {
+    fun open(player: ServerPlayer, name: String, returnCallback: () -> Unit = { DisplayList.open(player) }) {
         val display = DisplayConfig.getDisplay(name) ?: return
         val isEntity = display.type is EntityDisplay
         val gui = GuiUtils.createGui(
-            type = ScreenHandlerType.GENERIC_9X5,
+            type = MenuType.GENERIC_9x5,
             player = player,
             title = "Edit Display",
             size = 45,
@@ -37,8 +41,8 @@ object DisplayEdit {
                 )
             )) { _, type, _, _ ->
                 when {
-                    type.isRight -> {
-                        DisplayManager.updateScale(name, null, player.commandSource)
+                    type.isRightClick() -> {
+                        DisplayManager.updateScale(name, null, player.createCommandSourceStack())
                         open(player, name, returnCallback)
                     }
 
@@ -58,8 +62,8 @@ object DisplayEdit {
                     }
                 )) { _, type, _, _ ->
                     when {
-                        type.isRight -> {
-                            DisplayManager.updateBillboard(name, null, player.commandSource)
+                        type.isRightClick() -> {
+                            DisplayManager.updateBillboard(name, null, player.createCommandSourceStack())
                             open(player, name, returnCallback)
                         }
 
@@ -67,7 +71,7 @@ object DisplayEdit {
                             val currentMode = display.type.billboardMode?.name ?: "FIXED"
                             val currentIndex = billboardModes.indexOf(currentMode)
                             val nextMode = billboardModes[(currentIndex + 1) % billboardModes.size]
-                            DisplayManager.updateBillboard(name, nextMode.lowercase(), player.commandSource)
+                            DisplayManager.updateBillboard(name, nextMode.lowercase(), player.createCommandSourceStack())
                             open(player, name, returnCallback)
                         }
                     }
@@ -87,8 +91,8 @@ object DisplayEdit {
                 )
             )) { _, type, _, _ ->
                 when {
-                    type.isRight -> {
-                        DisplayManager.updateRotation(name, null, null, null, player.commandSource)
+                    type.isRightClick() -> {
+                        DisplayManager.updateRotation(name, null, null, null, player.createCommandSourceStack())
                         open(player, name, returnCallback)
                     }
 
@@ -106,8 +110,8 @@ object DisplayEdit {
             )) { _, type, _, _ ->
                 when {
                     type.isLeft -> editCondition(player, name, returnCallback)
-                    type.isRight -> {
-                        DisplayManager.updateCondition(name, null, player.commandSource)
+                    type.isRightClick() -> {
+                        DisplayManager.updateCondition(name, null, player.createCommandSourceStack())
                         open(player, name, returnCallback)
                     }
                 }
@@ -134,14 +138,14 @@ object DisplayEdit {
         }
     }
 
-    private fun editScale(player: ServerPlayerEntity, name: String, currentScale: Vector3f?, isEntity: Boolean, returnCallback: () -> Unit) {
+    private fun editScale(player: ServerPlayer, name: String, currentScale: Vector3f?, isEntity: Boolean, returnCallback: () -> Unit) {
         if (isEntity) {
             AnvilInput.open(player, "Enter Scale", currentScale?.x?.toString() ?: "1.0",
                 onSubmit = { x ->
                     DisplayManager.updateScale(
                         name,
                         Vector3f(x.toFloat()),
-                        player.commandSource
+                        player.createCommandSourceStack()
                     )
                     open(player, name, returnCallback)
                 },
@@ -157,7 +161,7 @@ object DisplayEdit {
                                     DisplayManager.updateScale(
                                         name,
                                         Vector3f(x.toFloat(), y.toFloat(), z.toFloat()),
-                                        player.commandSource
+                                        player.createCommandSourceStack()
                                     )
                                     open(player, name, returnCallback)
                                 },
@@ -172,7 +176,7 @@ object DisplayEdit {
         }
     }
 
-    private fun editRotation(player: ServerPlayerEntity, name: String, currentRotation: Vector3f?, isEntity: Boolean, returnCallback: () -> Unit) {
+    private fun editRotation(player: ServerPlayer, name: String, currentRotation: Vector3f?, isEntity: Boolean, returnCallback: () -> Unit) {
         if (isEntity) {
             AnvilInput.open(player, "Enter Pitch", currentRotation?.x?.toString() ?: "0",
                 onSubmit = { pitch ->
@@ -183,7 +187,7 @@ object DisplayEdit {
                                 pitch.toFloat(),
                                 yaw.toFloat(),
                                 0f,
-                                player.commandSource
+                                player.createCommandSourceStack()
                             )
                             open(player, name, returnCallback)
                         },
@@ -204,7 +208,7 @@ object DisplayEdit {
                                         pitch.toFloat(),
                                         yaw.toFloat(),
                                         roll.toFloat(),
-                                        player.commandSource
+                                        player.createCommandSourceStack()
                                     )
                                     open(player, name, returnCallback)
                                 },
@@ -219,7 +223,7 @@ object DisplayEdit {
         }
     }
 
-    private fun editCondition(player: ServerPlayerEntity, name: String, returnCallback: () -> Unit) {
+    private fun editCondition(player: ServerPlayer, name: String, returnCallback: () -> Unit) {
         AnvilInput.open(
             player = player,
             title = "Enter Value 1",
@@ -236,7 +240,7 @@ object DisplayEdit {
                             defaultText = "Furq_",
                             onSubmit = { target ->
                                 val condition = "$placeholder $operator $target"
-                                DisplayManager.updateCondition(name, condition, player.commandSource)
+                                DisplayManager.updateCondition(name, condition, player.createCommandSourceStack())
                                 open(player, name, returnCallback)
                             },
                             onCancel = { open(player, name, returnCallback) }

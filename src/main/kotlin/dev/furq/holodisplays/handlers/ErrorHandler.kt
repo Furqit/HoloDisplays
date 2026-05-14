@@ -1,12 +1,12 @@
 package dev.furq.holodisplays.handlers
 
 import dev.furq.holodisplays.HoloDisplays
-import net.minecraft.server.command.ServerCommandSource
-import net.minecraft.text.Text
+import net.minecraft.commands.CommandSourceStack
+import net.minecraft.network.chat.Component
 
 object ErrorHandler {
 
-    fun handle(exception: Exception, source: ServerCommandSource? = null) {
+    fun handle(exception: Exception, source: CommandSourceStack? = null) {
         val errorType = when (exception) {
             is HoloDisplaysException -> exception::class.simpleName?.removeSuffix("Exception") ?: "Error"
             else -> "Unexpected"
@@ -20,7 +20,7 @@ object ErrorHandler {
             HoloDisplays.LOGGER.error(logMessage, exception)
         }
 
-        source?.sendError(Text.literal(
+        source?.sendFailure(Component.literal(
             when (exception) {
                 is HoloDisplaysException -> "§c$errorType: ${exception.message}"
                 else -> "§cAn unexpected error occurred. Check console for details"
@@ -29,7 +29,7 @@ object ErrorHandler {
     }
 
     inline fun <T> safeCall(
-        source: ServerCommandSource? = null,
+        source: CommandSourceStack? = null,
         default: T? = null,
         block: () -> T
     ): T? {

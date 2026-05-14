@@ -2,20 +2,20 @@ package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.utils.GuiUtils
-import eu.pb4.sgui.api.elements.GuiElement
-import net.minecraft.item.Items
-import net.minecraft.screen.ScreenHandlerType
-import net.minecraft.server.network.ServerPlayerEntity
+import dev.furq.holodisplays.utils.GuiUtils.isRightClick
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.item.Items
 
 object HologramList {
     private const val ITEMS_PER_PAGE = 21
 
-    fun open(player: ServerPlayerEntity, page: Int = 0) {
+    fun open(player: ServerPlayer, page: Int = 0) {
         val holograms = HologramConfig.getHolograms().toList()
         val pageInfo = GuiUtils.calculatePageInfo(holograms.size, page, ITEMS_PER_PAGE)
 
         val gui = GuiUtils.createGui(
-            type = ScreenHandlerType.GENERIC_9X5,
+            type = MenuType.GENERIC_9x5,
             player = player,
             title = GuiUtils.createPagedTitle("Holograms", pageInfo),
             size = 45,
@@ -42,17 +42,15 @@ object HologramList {
                 val (name) = holograms[i]
                 val lore = GuiUtils.createActionLore("Left-Click to edit", "Right-Click to delete")
 
-                setSlot(slot, GuiElement(
-                    GuiUtils.createGuiItem(item = Items.BOOK, name = name, lore = lore)
-                ) { _, type, _, _ ->
+                setSlot(slot, GuiUtils.createGuiItem(item = Items.BOOK, name = name, lore = lore)) { _, type, _, _ ->
                     when {
-                        type.isRight -> DeleteConfirmation.open(player, name, "hologram") {
+                        type.isRightClick() -> DeleteConfirmation.open(player, name, "hologram") {
                             open(player, pageInfo.currentPage)
                         }
 
                         else -> HologramEdit.open(player, name)
                     }
-                })
+                }
                 slot++
             }
 

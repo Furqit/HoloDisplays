@@ -1,15 +1,15 @@
 package dev.furq.holodisplays.mixin;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.decoration.DisplayEntity.BlockDisplayEntity;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.world.entity.Display.BlockDisplay;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(BlockDisplayEntity.class)
+@Mixin(BlockDisplay.class)
 public interface BlockDisplayEntityAccessor {
-    @Accessor("BLOCK_STATE")
-    static TrackedData<BlockState> getBlockState() {
+    @Accessor("DATA_BLOCK_STATE_ID")
+    static EntityDataAccessor<BlockState> getBlockState() {
         throw new AssertionError();
     }
 }

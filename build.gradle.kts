@@ -17,8 +17,9 @@ val localProperties = Properties().apply {
 
 val modId: String = sc.properties["mod.id"]
 val modVersion: String = sc.properties["mod.version"]
+val compatibleVersions: List<String> = sc.properties.rawOrNull("mod", "mc_releases")?.asList().orEmpty().map { it.toString() }
 
-version = "${modVersion}+${sc.current.version}"
+version = "${modVersion}+${compatibleVersions.first()}${if (compatibleVersions.size > 1) "-${compatibleVersions.last()}" else ""}"
 group = sc.properties["mod.group"] as String
 base.archivesName = modId
 
@@ -33,8 +34,6 @@ val requiredJava: JavaVersion = when {
     else -> JavaVersion.VERSION_1_8
 }
 
-val compatibleVersions: List<String> = sc.properties.rawOrNull("mod", "mc_releases") ?.asList().orEmpty().map { it.toString() }
-
 repositories {
     maven("https://maven.nucleoid.xyz")
     mavenCentral()
@@ -42,11 +41,7 @@ repositories {
 
 dependencies {
     minecraft("com.mojang:minecraft:${mcVersion}")
-    if (sc.current.parsed >= "26.1") {
-        loomx.applyMojangMappings()
-    } else {
-        mappings("net.fabricmc:yarn:${mcVersion}+build.${property("deps.yarn_build")}:v2")
-    }
+    loomx.applyMojangMappings()
     modImplementation("net.fabricmc:fabric-loader:${property("deps.fabric_loader")}")
     modImplementation("net.fabricmc:fabric-language-kotlin:${property("deps.kotlin_version")}")
     modImplementation("net.fabricmc.fabric-api:fabric-api:${property("deps.fabric_api")}")
@@ -62,10 +57,6 @@ dependencies {
 }
 
 loom {
-    if (mcVersion == "1.21.10" || mcVersion == "1.21.11") {
-        accessWidenerPath = rootProject.file("src/main/resources/accesswideners/$mcVersion.accesswidener")
-    }
-
     decompilerOptions.named("vineflower") {
         options.put("mark-corresponding-synthetics", "1")
     }
@@ -105,10 +96,6 @@ tasks.processResources {
     )
 
     filesMatching("fabric.mod.json") { expand(props) }
-
-    if (mcVersion != "1.21.10" && mcVersion != "1.21.11") {
-        exclude("accesswideners/**")
-    }
 }
 
 val modName: String = sc.properties["mod.name"]

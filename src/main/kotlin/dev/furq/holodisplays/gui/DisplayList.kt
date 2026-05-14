@@ -2,15 +2,15 @@ package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.utils.GuiUtils
-import eu.pb4.sgui.api.elements.GuiElement
-import net.minecraft.screen.ScreenHandlerType
-import net.minecraft.server.network.ServerPlayerEntity
+import dev.furq.holodisplays.utils.GuiUtils.isRightClick
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.inventory.MenuType
 
 object DisplayList {
     private const val ITEMS_PER_PAGE = 21
 
     fun open(
-        player: ServerPlayerEntity,
+        player: ServerPlayer,
         page: Int = 0,
         selectionMode: Boolean = false,
         hologramName: String? = null,
@@ -20,7 +20,7 @@ object DisplayList {
         val pageInfo = GuiUtils.calculatePageInfo(displays.size, page, ITEMS_PER_PAGE)
 
         val gui = GuiUtils.createGui(
-            type = ScreenHandlerType.GENERIC_9X5,
+            type = MenuType.GENERIC_9x5,
             player = player,
             title = GuiUtils.createPagedTitle("Displays", pageInfo),
             size = 45,
@@ -64,18 +64,16 @@ object DisplayList {
                     )
                 }
 
-                setSlot(slot, GuiElement(
-                    GuiUtils.createGuiItem(item = icon, name = name, lore = lore)
-                ) { _, type, _, _ ->
+                setSlot(slot, GuiUtils.createGuiItem(item = icon, name = name, lore = lore)) { _, type, _, _ ->
                     when {
                         selectionMode -> onSelect?.invoke(name)
-                        type.isRight -> DeleteConfirmation.open(player, name, "display") {
+                        type.isRightClick() -> DeleteConfirmation.open(player, name, "display") {
                             open(player, pageInfo.currentPage)
                         }
 
                         else -> DisplayEdit.open(player, name)
                     }
-                })
+                }
                 slot++
             }
 

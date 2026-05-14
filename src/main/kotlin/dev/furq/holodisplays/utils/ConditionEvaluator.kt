@@ -4,15 +4,18 @@ import eu.pb4.placeholders.api.PlaceholderContext
 import eu.pb4.placeholders.api.Placeholders
 import eu.pb4.placeholders.api.parsers.NodeParser
 import eu.pb4.placeholders.api.parsers.TagParser
-import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.level.ServerPlayer
+//? if >=26.1
+import eu.pb4.placeholders.api.ServerPlaceholderContext
 
 object ConditionEvaluator {
     private val operatorRegex = "\\s(=|!=|>|<|>=|<=|contains|!contains|startsWith|endsWith)\\s".toRegex()
     private val placeholderParser by lazy {
-        NodeParser.merge(TagParser.DEFAULT, Placeholders.DEFAULT_PLACEHOLDER_PARSER)
+        //~ if >=26.1 'DEFAULT_PLACEHOLDER_PARSER' -> 'SERVER_PLACEHOLDER_PARSER'
+        NodeParser.merge(TagParser.DEFAULT, Placeholders.SERVER_PLACEHOLDER_PARSER)
     }
 
-    fun evaluate(condition: String?, player: ServerPlayerEntity): Boolean {
+    fun evaluate(condition: String?, player: ServerPlayer): Boolean {
         condition ?: return true
 
         val (placeholder, operator, value) = parseCondition(condition) ?: return true
@@ -46,6 +49,8 @@ object ConditionEvaluator {
         return if (parts.size == 2) Triple(parts[0], operator, parts[1]) else null
     }
 
-    private fun resolvePlaceholder(placeholder: String, player: ServerPlayerEntity): String =
-        placeholderParser.parseNode(placeholder).toText(PlaceholderContext.of(player)).string
+    private fun resolvePlaceholder(placeholder: String, player: ServerPlayer): String =
+        placeholderParser.parseNode(placeholder)
+            //~ if >=26.1 'toText(PlaceholderContext.of(player)).string' -> 'toComponent(ServerPlaceholderContext.of(player)).string'
+            .toComponent(ServerPlaceholderContext.of(player)).string
 }

@@ -6,7 +6,7 @@ import dev.furq.holodisplays.utils.QuaternionfSerializer
 import dev.furq.holodisplays.utils.Vector3fSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
+import net.minecraft.world.entity.Display.BillboardConstraints
 import org.joml.Quaternionf
 import org.joml.Vector3f
 
@@ -16,7 +16,7 @@ abstract class BaseDisplay {
     abstract val rotation: Vector3f?
     abstract val leftRotation: Quaternionf?
     abstract val rightRotation: Quaternionf?
-    abstract val billboardMode: BillboardMode?
+    abstract val billboardMode: BillboardConstraints?
     abstract val conditionalPlaceholder: String?
 
     interface Builder<T : BaseDisplay> {
@@ -24,7 +24,7 @@ abstract class BaseDisplay {
         var rotation: Vector3f?
         var leftRotation: Quaternionf?
         var rightRotation: Quaternionf?
-        var billboardMode: BillboardMode?
+        var billboardMode: BillboardConstraints?
         var conditionalPlaceholder: String?
 
         fun build(): T

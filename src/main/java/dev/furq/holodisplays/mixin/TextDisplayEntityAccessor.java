@@ -1,59 +1,59 @@
 package dev.furq.holodisplays.mixin;
 
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.decoration.DisplayEntity.TextDisplayEntity;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.world.entity.Display.TextDisplay;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(TextDisplayEntity.class)
+@Mixin(TextDisplay.class)
 public interface TextDisplayEntityAccessor {
-    @Accessor("TEXT")
-    static TrackedData<Text> getText() {
+    @Accessor("DATA_TEXT_ID")
+    static EntityDataAccessor<Component> getText() {
         throw new AssertionError();
     }
 
-    @Accessor("LINE_WIDTH")
-    static TrackedData<Integer> getLineWidth() {
+    @Accessor("DATA_LINE_WIDTH_ID")
+    static EntityDataAccessor<Integer> getLineWidth() {
         throw new AssertionError();
     }
 
-    @Accessor("TEXT_OPACITY")
-    static TrackedData<Byte> getTextOpacity() {
+    @Accessor("DATA_TEXT_OPACITY_ID")
+    static EntityDataAccessor<Byte> getTextOpacity() {
         throw new AssertionError();
     }
 
-    @Accessor("BACKGROUND")
-    static TrackedData<Integer> getBackground() {
+    @Accessor("DATA_BACKGROUND_COLOR_ID")
+    static EntityDataAccessor<Integer> getBackground() {
         throw new AssertionError();
     }
 
-    @Accessor("TEXT_DISPLAY_FLAGS")
-    static TrackedData<Byte> getTextDisplayFlags() {
+    @Accessor("DATA_STYLE_FLAGS_ID")
+    static EntityDataAccessor<Byte> getTextDisplayFlags() {
         throw new AssertionError();
     }
 
-    @Accessor("SHADOW_FLAG")
+    @Accessor("FLAG_SHADOW")
     static byte getShadowFlag() {
         throw new AssertionError();
     }
 
-    @Accessor("SEE_THROUGH_FLAG")
+    @Accessor("FLAG_SEE_THROUGH")
     static byte getSeeThroughFlag() {
         throw new AssertionError();
     }
 
-    @Accessor("DEFAULT_BACKGROUND_FLAG")
+    @Accessor("FLAG_USE_DEFAULT_BACKGROUND")
     static byte getDefaultBackgroundFlag() {
         throw new AssertionError();
     }
 
-    @Accessor("LEFT_ALIGNMENT_FLAG")
+    @Accessor("FLAG_ALIGN_LEFT")
     static byte getLeftAlignmentFlag() {
         throw new AssertionError();
     }
 
-    @Accessor("RIGHT_ALIGNMENT_FLAG")
+    @Accessor("FLAG_ALIGN_RIGHT")
     static byte getRightAlignmentFlag() {
         throw new AssertionError();
     }

@@ -6,11 +6,13 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.managers.FeedbackManager
-import net.minecraft.registry.Registries
-import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.commands.CommandSourceStack
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.server.level.ServerPlayer
 import java.util.concurrent.CompletableFuture
 
 object CommandUtils {
+
     fun suggestHolograms(builder: SuggestionsBuilder): CompletableFuture<Suggestions> =
         builder.apply { HologramConfig.getHolograms().keys.forEach(::suggest) }.buildFuture()
 
@@ -18,15 +20,21 @@ object CommandUtils {
         builder.apply { DisplayConfig.getDisplays().keys.forEach(::suggest) }.buildFuture()
 
     fun suggestItemIds(builder: SuggestionsBuilder): CompletableFuture<Suggestions> =
-        builder.apply { Registries.ITEM.ids.forEach { suggest(it.toString()) } }.buildFuture()
+        builder.apply {
+            BuiltInRegistries.ITEM.keySet().forEach { suggest(it.toString()) }
+        }.buildFuture()
 
     fun suggestBlockIds(builder: SuggestionsBuilder): CompletableFuture<Suggestions> =
-        builder.apply { Registries.BLOCK.ids.forEach { suggest(it.toString()) } }.buildFuture()
+        builder.apply {
+            BuiltInRegistries.BLOCK.keySet().forEach { suggest(it.toString()) }
+        }.buildFuture()
 
     fun suggestEntityIds(builder: SuggestionsBuilder): CompletableFuture<Suggestions> =
-        builder.apply { Registries.ENTITY_TYPE.ids.forEach { suggest(it.toString()) } }.buildFuture()
+        builder.apply {
+            BuiltInRegistries.ENTITY_TYPE.keySet().forEach { suggest(it.toString()) }
+        }.buildFuture()
 
-    fun requirePlayer(context: CommandContext<ServerCommandSource>): net.minecraft.server.network.ServerPlayerEntity? {
+    fun requirePlayer(context: CommandContext<CommandSourceStack>): ServerPlayer? {
         return context.source.player ?: run {
             FeedbackManager.send(context.source, FeedbackType.PLAYER_ONLY)
             null

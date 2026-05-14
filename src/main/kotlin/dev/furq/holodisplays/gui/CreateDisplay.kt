@@ -3,15 +3,15 @@ package dev.furq.holodisplays.gui
 import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiUtils
-import net.minecraft.item.Items
-import net.minecraft.screen.ScreenHandlerType
-import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.item.Items
 
 object CreateDisplay {
 
-    fun open(player: ServerPlayerEntity, hologramName: String? = null) {
+    fun open(player: ServerPlayer, hologramName: String? = null) {
         val gui = GuiUtils.createGui(
-            type = ScreenHandlerType.GENERIC_3X3,
+            type = MenuType.GENERIC_3x3,
             player = player,
             title = "Create Display",
             size = 9,
@@ -20,7 +20,7 @@ object CreateDisplay {
 
         gui.apply {
             setSlot(1, GuiUtils.createGuiItem(
-                name = "Text Display",
+                name = "Component Display",
                 item = Items.PAPER,
                 lore = GuiUtils.createActionLore("Click to create a new text display")
             )) { _, _, _, _ ->
@@ -62,14 +62,14 @@ object CreateDisplay {
         }
     }
 
-    private fun createDisplay(player: ServerPlayerEntity, hologramName: String?, type: String, defaultName: String, defaultValue: String) {
+    private fun createDisplay(player: ServerPlayer, hologramName: String?, type: String, defaultName: String, defaultValue: String) {
         AnvilInput.open(
             player = player,
             title = "Enter Display Name",
             defaultText = defaultName,
             onSubmit = { name ->
                 val (title, default) = when (type) {
-                    "text" -> "Enter Text" to defaultValue
+                    "text" -> "Enter Component" to defaultValue
                     "item" -> "Enter Item ID" to defaultValue
                     "block" -> "Enter Block ID" to defaultValue
                     "entity" -> "Enter Entity ID" to defaultValue
@@ -82,16 +82,16 @@ object CreateDisplay {
                     defaultText = default,
                     onSubmit = { value ->
                         val success = when (type) {
-                            "text" -> DisplayManager.createTextDisplay(name, value, player.commandSource)
-                            "item" -> DisplayManager.createItemDisplay(name, value, player.commandSource)
-                            "block" -> DisplayManager.createBlockDisplay(name, value, player.commandSource)
-                            "entity" -> DisplayManager.createEntityDisplay(name, value, player.commandSource)
+                            "text" -> DisplayManager.createTextDisplay(name, value, player.createCommandSourceStack())
+                            "item" -> DisplayManager.createItemDisplay(name, value, player.createCommandSourceStack())
+                            "block" -> DisplayManager.createBlockDisplay(name, value, player.createCommandSourceStack())
+                            "entity" -> DisplayManager.createEntityDisplay(name, value, player.createCommandSourceStack())
                             else -> false
                         }
 
                         if (success) {
                             if (hologramName != null) {
-                                HologramManager.addDisplayToHologram(hologramName, name, player.commandSource)
+                                HologramManager.addDisplayToHologram(hologramName, name, player.createCommandSourceStack())
                                 DisplayEdit.open(player, name) {
                                     HologramDisplays.open(player, hologramName)
                                 }

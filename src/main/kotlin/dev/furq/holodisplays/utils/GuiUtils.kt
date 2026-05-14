@@ -4,17 +4,18 @@ import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.data.display.EntityDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
+import eu.pb4.sgui.api.ClickType
 import eu.pb4.sgui.api.gui.SimpleGui
-import net.minecraft.component.DataComponentTypes
-import net.minecraft.component.type.LoreComponent
-import net.minecraft.item.Item
-import net.minecraft.item.ItemStack
-import net.minecraft.item.Items
-import net.minecraft.screen.ScreenHandlerType
-import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.text.Style
-import net.minecraft.text.Text
-import net.minecraft.util.Formatting
+import net.minecraft.ChatFormatting
+import net.minecraft.core.component.DataComponents
+import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.Style
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.item.Item
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.Items
+import net.minecraft.world.item.component.ItemLore
 
 object GuiUtils {
 
@@ -22,9 +23,9 @@ object GuiUtils {
         item = Items.BARRIER,
         name = "Back",
         lore = listOf(
-            Text.empty()
-                .append(Text.literal("→").formatted(Formatting.YELLOW))
-                .append(Text.literal(" Click to go back").formatted(Formatting.GRAY))
+            Component.empty()
+                .append(Component.literal("→").withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(" Click to go back").withStyle(ChatFormatting.GRAY))
         )
     )
 
@@ -36,27 +37,27 @@ object GuiUtils {
     fun createGuiItem(
         item: Item,
         name: String,
-        lore: List<Text> = emptyList()
+        lore: List<Component> = emptyList()
     ): ItemStack {
         return ItemStack(item).apply {
             set(
-                DataComponentTypes.CUSTOM_NAME,
-                Text.literal(name).setStyle(Style.EMPTY.withItalic(false)).formatted(Formatting.GREEN)
+                DataComponents.CUSTOM_NAME,
+                Component.literal(name).setStyle(Style.EMPTY.withItalic(false)).withStyle(ChatFormatting.GREEN)
             )
-            set(DataComponentTypes.LORE, LoreComponent(lore.map {
+            set(DataComponents.LORE, ItemLore(lore.map {
                 it.copy().setStyle(Style.EMPTY.withItalic(false))
             }))
         }
     }
 
     fun createGui(
-        type: ScreenHandlerType<*>,
-        player: ServerPlayerEntity,
+        type: MenuType<*>,
+        player: ServerPlayer,
         title: String,
         size: Int,
         borderSlots: List<Int>
     ): SimpleGui = SimpleGui(type, player, false).apply {
-        this.title = Text.literal(title)
+        this.title = Component.literal(title)
         setupBorders(size, borderSlots)
     }
 
@@ -68,23 +69,23 @@ object GuiUtils {
         }
     }
 
-    fun createLore(vararg lines: String): List<Text> = lines.map { line ->
-        Text.empty().append(Text.literal(line).formatted(Formatting.GRAY))
+    fun createLore(vararg lines: String): List<Component> = lines.map { line ->
+        Component.empty().append(Component.literal(line).withStyle(ChatFormatting.GRAY))
     }
 
-    fun createCurrentValueLore(label: String, value: String): List<Text> = listOf(
-        Text.empty()
-            .append(Text.literal("$label: ").formatted(Formatting.GRAY))
-            .append(Text.literal(value).formatted(Formatting.WHITE))
+    fun createCurrentValueLore(label: String, value: String): List<Component> = listOf(
+        Component.empty()
+            .append(Component.literal("$label: ").withStyle(ChatFormatting.GRAY))
+            .append(Component.literal(value).withStyle(ChatFormatting.WHITE))
     )
 
-    fun createActionLore(vararg actions: String): List<Text> = actions.map { action ->
-        Text.empty()
-            .append(Text.literal("→").formatted(Formatting.YELLOW))
-            .append(Text.literal(" $action").formatted(Formatting.GRAY))
+    fun createActionLore(vararg actions: String): List<Component> = actions.map { action ->
+        Component.empty()
+            .append(Component.literal("→").withStyle(ChatFormatting.YELLOW))
+            .append(Component.literal(" $action").withStyle(ChatFormatting.GRAY))
     }
 
-    fun createCombinedLore(currentValue: Pair<String, String>, vararg actions: String): List<Text> =
+    fun createCombinedLore(currentValue: Pair<String, String>, vararg actions: String): List<Component> =
         createCurrentValueLore(currentValue.first, currentValue.second) + createActionLore(*actions)
 
     fun getDisplayIcon(display: Any?): Item = when (display) {
@@ -141,4 +142,9 @@ object GuiUtils {
 
     fun createPagedTitle(baseTitle: String, pageInfo: PageInfo): String =
         "$baseTitle (${pageInfo.currentPage + 1}/${pageInfo.maxPages + 1})"
+
+    fun ClickType.isRightClick(): Boolean {
+        //~ if >=26.1 'isRight' -> 'this == ClickType.MOUSE_RIGHT'
+        return this == ClickType.MOUSE_RIGHT
+    }
 }

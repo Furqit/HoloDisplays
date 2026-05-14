@@ -7,9 +7,9 @@ import dev.furq.holodisplays.data.DisplayData;
 import dev.furq.holodisplays.data.HologramData;
 import dev.furq.holodisplays.data.display.*;
 import dev.furq.holodisplays.handlers.ViewerHandler;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.decoration.DisplayEntity.BillboardMode;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.Display.BillboardConstraints;
+import net.minecraft.world.entity.Pose;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
@@ -59,16 +59,16 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
         return apiHolograms.get(id);
     }
 
-    private static BillboardMode parseBillboardMode(String mode) {
+    private static BillboardConstraints parseBillboardMode(String mode) {
         if (mode == null) {
-            return BillboardMode.CENTER;
+            return BillboardConstraints.CENTER;
         }
 
         return switch (mode.toLowerCase()) {
-            case "fixed" -> BillboardMode.FIXED;
-            case "horizontal" -> BillboardMode.HORIZONTAL;
-            case "vertical" -> BillboardMode.VERTICAL;
-            default -> BillboardMode.CENTER;
+            case "fixed" -> BillboardConstraints.FIXED;
+            case "horizontal" -> BillboardConstraints.HORIZONTAL;
+            case "vertical" -> BillboardConstraints.VERTICAL;
+            default -> BillboardConstraints.CENTER;
         };
     }
 
@@ -92,8 +92,8 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
             ViewerHandler.INSTANCE.updateHologramIndex(fullId, hologram.getPosition());
 
             MinecraftServer server = HoloDisplays.Companion.getSERVER();
-            if (server != null && server.getPlayerManager() != null) {
-                server.getPlayerManager().getPlayerList().forEach(ViewerHandler.INSTANCE::updatePlayerVisibility);
+            if (server != null && server.getPlayerList() != null) {
+                server.getPlayerList().getPlayers().forEach(ViewerHandler.INSTANCE::updatePlayerVisibility);
             }
 
             return true;
@@ -144,8 +144,8 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
             ViewerHandler.INSTANCE.respawnForAllObservers(fullId);
 
             MinecraftServer server = HoloDisplays.Companion.getSERVER();
-            if (server != null && server.getPlayerManager() != null) {
-                server.getPlayerManager().getPlayerList().forEach(ViewerHandler.INSTANCE::updatePlayerVisibility);
+            if (server != null && server.getPlayerList() != null) {
+                server.getPlayerList().getPlayers().forEach(ViewerHandler.INSTANCE::updatePlayerVisibility);
             }
 
             return true;
@@ -549,7 +549,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
                 throw new IllegalArgumentException("Entity pose cannot be null or empty");
             }
             try {
-                builder.setPose(EntityPose.valueOf(pose.toUpperCase()));
+                builder.setPose(Pose.valueOf(pose.toUpperCase()));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Invalid entity pose: " + pose);
             }
@@ -565,7 +565,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
         private final List<HologramData.DisplayLine> displays = new ArrayList<>();
         private HologramData.Position position = new HologramData.Position("minecraft:overworld", 0.0f, 0.0f, 0.0f);
         private Vector3f scale = new Vector3f(1.0f, 1.0f, 1.0f);
-        private BillboardMode billboardMode = BillboardMode.CENTER;
+        private BillboardConstraints billboardMode = BillboardConstraints.CENTER;
         private int updateRate = 20;
         private double viewRange = 48.0;
         private Vector3f rotation = new Vector3f();

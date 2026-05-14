@@ -4,7 +4,7 @@
 
 HoloDisplays is a powerful, high-performance Minecraft mod that enables the creation of efficient virtual holograms using packet-based display entities. Unlike traditional hologram plugins that spawn real entities (which can cause server lag), HoloDisplays leverages Minecraft's built-in display entities sent via network packets. This approach minimizes server load while providing flexible, customizable visual effects for text, items, blocks, and entities.
 
-The mod is designed for Fabric Loader on Minecraft versions 1.20.5 to 1.21.x. It integrates seamlessly with mods like Placeholder API for dynamic content and supports advanced text formatting, including gradients and color codes.
+The mod is designed for Fabric Loader on Minecraft versions 1.20.5 to 26.x. It integrates seamlessly with mods like Placeholder API for dynamic content and supports advanced text formatting, including gradients and color codes.
 
 ## Key Benefits
 

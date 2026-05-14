@@ -2,13 +2,13 @@ package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.utils.GuiUtils
 import eu.pb4.sgui.api.gui.AnvilInputGui
-import net.minecraft.item.Items
-import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.text.Text
+import net.minecraft.network.chat.Component
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.item.Items
 
 object AnvilInput {
     fun open(
-        player: ServerPlayerEntity,
+        player: ServerPlayer,
         title: String,
         defaultText: String = "",
         onSubmit: (String) -> Unit,
@@ -28,7 +28,7 @@ object AnvilInput {
                 }
             }
         }.apply {
-            this.title = Text.literal(title)
+            this.title = Component.literal(title)
             setSlot(1, GuiUtils.createGuiItem(
                 name = "Cancel",
                 item = Items.BARRIER,

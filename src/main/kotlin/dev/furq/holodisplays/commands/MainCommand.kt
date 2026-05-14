@@ -6,8 +6,10 @@ import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.gui.MainMenu
 import dev.furq.holodisplays.utils.CommandUtils.requirePlayer
 import me.lucko.fabric.api.permissions.v0.Permissions
-import net.minecraft.server.command.CommandManager
-import net.minecraft.server.command.ServerCommandSource
+//? if >=1.21.11
+import net.minecraft.server.permissions.PermissionLevel
+import net.minecraft.commands.CommandSourceStack
+import net.minecraft.commands.Commands
 
 object MainCommand {
     private val commandAliases = listOf(
@@ -16,15 +18,16 @@ object MainCommand {
         "holo"
     )
 
-    fun register(dispatcher: CommandDispatcher<ServerCommandSource>) {
+    fun register(dispatcher: CommandDispatcher<CommandSourceStack>) {
         commandAliases.forEach { alias ->
             dispatcher.register(buildCommand(alias))
         }
     }
 
-    private fun buildCommand(alias: String): LiteralArgumentBuilder<ServerCommandSource> {
-        return CommandManager.literal(alias)
-            .requires(Permissions.require("holodisplays.admin", 2))
+    private fun buildCommand(alias: String): LiteralArgumentBuilder<CommandSourceStack> {
+        return Commands.literal(alias)
+            //~ if >=1.21.11 '2' -> 'PermissionLevel.GAMEMASTERS'
+            .requires(Permissions.require("holodisplays.admin", PermissionLevel.GAMEMASTERS))
             .executes { context ->
                 requirePlayer(context)?.let {
                     MainMenu.openMainMenu(it)
@@ -36,16 +39,16 @@ object MainCommand {
             .then(ReloadCommand.register())
     }
 
-    private fun buildDisplayCommands(): LiteralArgumentBuilder<ServerCommandSource> {
-        return CommandManager.literal("display")
+    private fun buildDisplayCommands(): LiteralArgumentBuilder<CommandSourceStack> {
+        return Commands.literal("display")
             .then(CreateCommand.registerDisplay())
             .then(ListCommand.registerDisplays())
             .then(DeleteCommand.registerDisplay())
             .then(DisplayEditCommand.register())
     }
 
-    private fun buildHologramCommands(): LiteralArgumentBuilder<ServerCommandSource> {
-        return CommandManager.literal("hologram")
+    private fun buildHologramCommands(): LiteralArgumentBuilder<CommandSourceStack> {
+        return Commands.literal("hologram")
             .then(CreateCommand.registerHologram())
             .then(ListCommand.registerHolograms())
             .then(DeleteCommand.registerHologram())

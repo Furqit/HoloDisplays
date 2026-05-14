@@ -4,22 +4,22 @@ import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.data.display.EntityDisplay
 import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.utils.GuiUtils
-import net.minecraft.entity.EntityPose
-import net.minecraft.item.Items
-import net.minecraft.screen.ScreenHandlerType
-import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.entity.Pose
+import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.item.Items
 
 object EntityDisplayEditor {
     private val poseModes = listOf("standing", "fall_flying", "sleeping", "swimming", "spin_attack", "crouching", "long_jumping", "dying", "croaking", "using_tongue", "sitting", "roaring", "sniffing", "emerging", "digging", "sliding", "shooting", "inhaling")
 
     fun open(
-        player: ServerPlayerEntity,
+        player: ServerPlayer,
         name: String,
         returnCallback: () -> Unit = { DisplayEdit.open(player, name) }
     ) {
         val display = DisplayConfig.getDisplay(name)?.type as? EntityDisplay ?: return
         val gui = GuiUtils.createGui(
-            type = ScreenHandlerType.GENERIC_9X3,
+            type = MenuType.GENERIC_9x3,
             player = player,
             title = "Edit Entity Display",
             size = 27,
@@ -37,7 +37,7 @@ object EntityDisplayEditor {
                     title = "Enter Entity ID",
                     defaultText = display.id,
                     onSubmit = { entityId ->
-                        DisplayManager.updateEntityId(name, entityId, player.commandSource)
+                        DisplayManager.updateEntityId(name, entityId, player.createCommandSourceStack())
                         open(player, name, returnCallback)
                     },
                     onCancel = { open(player, name, returnCallback) }
@@ -53,7 +53,7 @@ object EntityDisplayEditor {
                 )
             )) { _, _, _, _ ->
                 val newGlow = !(display.glow ?: false)
-                DisplayManager.updateEntityGlow(name, newGlow, player.commandSource)
+                DisplayManager.updateEntityGlow(name, newGlow, player.createCommandSourceStack())
                 open(player, name, returnCallback)
             }
 
@@ -75,8 +75,8 @@ object EntityDisplayEditor {
                 val currentMode = display.pose?.name?.lowercase() ?: "STANDING"
                 val currentIndex = poseModes.indexOf(currentMode)
                 val nextMode = poseModes[(currentIndex + 1) % poseModes.size]
-                val nextPose = EntityPose.valueOf(nextMode.uppercase())
-                DisplayManager.updateEntityPose(name, nextPose, player.commandSource)
+                val nextPose = Pose.valueOf(nextMode.uppercase())
+                DisplayManager.updateEntityPose(name, nextPose, player.createCommandSourceStack())
                 open(player, name, returnCallback)
             }
 

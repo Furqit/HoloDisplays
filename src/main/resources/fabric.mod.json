@@ -19,7 +19,6 @@
   "mixins": [
     "holodisplays.mixins.json"
   ],
-  "__AW__": "",
   "depends": {
     "fabricloader": ">=0.15",
     "minecraft": "${mcdep}",

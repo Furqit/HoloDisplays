@@ -4,21 +4,20 @@ import dev.furq.holodisplays.HoloDisplays
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.data.HologramData
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
-import net.minecraft.registry.RegistryKey
-import net.minecraft.registry.RegistryKeys
-import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.util.Identifier
-import net.minecraft.world.World
+import net.minecraft.core.registries.Registries
+import net.minecraft.resources.ResourceKey
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.entity.Display.BillboardConstraints
+import net.minecraft.world.level.Level
 import org.joml.Vector3f
 import java.util.concurrent.ConcurrentHashMap
-import net.minecraft.entity.decoration.DisplayEntity.BillboardMode as MinecraftBillboardMode
 
 object HologramHandler {
-    private val worldCache = ConcurrentHashMap<String, World>()
+    private val worldCache = ConcurrentHashMap<String, Level>()
 
     sealed class HologramProperty {
         data class Scale(val value: Vector3f?) : HologramProperty()
-        data class BillboardMode(val mode: MinecraftBillboardMode?) : HologramProperty()
+        data class BillboardMode(val mode: BillboardConstraints?) : HologramProperty()
         data class ViewRange(val value: Double?) : HologramProperty()
         data class UpdateRate(val value: Int?) : HologramProperty()
         data class Position(val position: HologramData.Position) : HologramProperty()
@@ -88,7 +87,7 @@ object HologramHandler {
 
     private fun updateHologramData(hologram: HologramData, property: HologramProperty): HologramData = when (property) {
         is HologramProperty.Scale -> hologram.copy(scale = property.value ?: Vector3f(1f))
-        is HologramProperty.BillboardMode -> hologram.copy(billboardMode = property.mode ?: MinecraftBillboardMode.CENTER)
+        is HologramProperty.BillboardMode -> hologram.copy(billboardMode = property.mode ?: BillboardConstraints.CENTER)
         is HologramProperty.ViewRange -> hologram.copy(viewRange = property.value ?: 48.0)
         is HologramProperty.UpdateRate -> hologram.copy(updateRate = property.value ?: 20)
         is HologramProperty.ConditionalPlaceholder -> hologram.copy(conditionalPlaceholder = property.value)
@@ -126,21 +125,20 @@ object HologramHandler {
         ViewerHandler.removeHologramIndex(name)
     }
 
-    private fun getPlayersInRange(data: HologramData): List<ServerPlayerEntity> {
-        return getWorld(data.world).players
-            ?.filterIsInstance<ServerPlayerEntity>()
-            ?.filter { isPlayerInRange(it, data.world, data.position.toVec3f(), data.viewRange) }
-            ?: emptyList()
+    private fun getPlayersInRange(data: HologramData): List<ServerPlayer> {
+        return getWorld(data.world).players()
+            .filterIsInstance<ServerPlayer>()
+            .filter { isPlayerInRange(it, data.world, data.position.toVec3f(), data.viewRange) }
     }
 
     fun isPlayerInRange(
-        player: ServerPlayerEntity,
+        player: ServerPlayer,
         world: String,
         position: Vector3f,
         viewRange: Double,
     ): Boolean {
-        if (player.world == getWorld(world)) {
-            return player.pos.squaredDistanceTo(
+        if (player.level() == getWorld(world)) {
+            return player.position().distanceToSqr(
                 position.x.toDouble(),
                 position.y.toDouble(),
                 position.z.toDouble()
@@ -149,11 +147,11 @@ object HologramHandler {
         return false
     }
 
-    private fun getWorld(world: String): World {
+    private fun getWorld(world: String): Level {
         return worldCache.computeIfAbsent(world) { w ->
-            val worldId = Identifier.tryParse(w)
+            val worldId = McRegistries.parseId(w)
                 ?: throw HologramException("Invalid world identifier: $w")
-            HoloDisplays.SERVER?.getWorld(RegistryKey.of(RegistryKeys.WORLD, worldId))
+            HoloDisplays.SERVER?.getLevel(ResourceKey.create(Registries.DIMENSION, worldId))
                 ?: throw HologramException("World not found: $w")
         }
     }

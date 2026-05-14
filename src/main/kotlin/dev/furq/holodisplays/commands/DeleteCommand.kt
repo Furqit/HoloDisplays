@@ -7,23 +7,23 @@ import dev.furq.holodisplays.gui.DeleteConfirmation
 import dev.furq.holodisplays.gui.MainMenu
 import dev.furq.holodisplays.utils.CommandUtils
 import dev.furq.holodisplays.utils.CommandUtils.requirePlayer
-import net.minecraft.server.command.CommandManager
-import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.commands.CommandSourceStack
+import net.minecraft.commands.Commands
 
 object DeleteCommand {
-    fun registerDisplay(): ArgumentBuilder<ServerCommandSource, *> = CommandManager
+    fun registerDisplay(): ArgumentBuilder<CommandSourceStack, *> = Commands
         .literal("delete")
-        .then(CommandManager.argument("name", StringArgumentType.word())
+        .then(Commands.argument("name", StringArgumentType.word())
             .suggests { _, builder -> CommandUtils.suggestDisplays(builder) }
             .executes { context -> executeDisplay(context) })
 
-    fun registerHologram(): ArgumentBuilder<ServerCommandSource, *> = CommandManager
+    fun registerHologram(): ArgumentBuilder<CommandSourceStack, *> = Commands
         .literal("delete")
-        .then(CommandManager.argument("name", StringArgumentType.word())
+        .then(Commands.argument("name", StringArgumentType.word())
             .suggests { _, builder -> CommandUtils.suggestHolograms(builder) }
             .executes { context -> executeHologram(context) })
 
-    private fun executeHologram(context: CommandContext<ServerCommandSource>): Int {
+    private fun executeHologram(context: CommandContext<CommandSourceStack>): Int {
         val name = StringArgumentType.getString(context, "name")
         return requirePlayer(context)?.let { player ->
             DeleteConfirmation.open(player, name, "hologram") {
@@ -33,7 +33,7 @@ object DeleteCommand {
         } ?: 0
     }
 
-    private fun executeDisplay(context: CommandContext<ServerCommandSource>): Int {
+    private fun executeDisplay(context: CommandContext<CommandSourceStack>): Int {
         val name = StringArgumentType.getString(context, "name")
         return requirePlayer(context)?.let { player ->
             DeleteConfirmation.open(player, name, "display") {

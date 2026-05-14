@@ -1,11 +1,9 @@
 pluginManagement {
     repositories {
-        mavenLocal()
         mavenCentral()
         gradlePluginPortal()
         maven("https://maven.fabricmc.net/")
-        maven("https://maven.kikugie.dev/releases") { name = "KikuGie Releases" }
-        maven("https://maven.kikugie.dev/snapshots") { name = "KikuGie Snapshots" }
+        maven("https://maven.kikugie.dev/releases")
     }
 }
 
@@ -17,8 +15,8 @@ plugins {
 
 stonecutter {
     create(rootProject) {
-        versions("1.20.6", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.10", "1.21.11", "26.1")
-        vcsVersion = "1.21.11"
+        versions("1.20.5", "1.21", "1.21.2", "1.21.6", "1.21.9", "1.21.11", "26.1")
+        vcsVersion = "26.1"
     }
 }
 

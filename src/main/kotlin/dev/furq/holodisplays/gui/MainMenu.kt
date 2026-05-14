@@ -2,15 +2,15 @@ package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiUtils
-import net.minecraft.item.Items
-import net.minecraft.screen.ScreenHandlerType
-import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.item.Items
 
 object MainMenu {
 
-    fun openMainMenu(player: ServerPlayerEntity) {
+    fun openMainMenu(player: ServerPlayer) {
         val gui = GuiUtils.createGui(
-            type = ScreenHandlerType.GENERIC_3X3,
+            type = MenuType.GENERIC_3x3,
             player = player,
             title = "HoloDisplays",
             size = 9,

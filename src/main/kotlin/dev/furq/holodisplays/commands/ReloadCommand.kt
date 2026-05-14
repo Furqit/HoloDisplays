@@ -8,19 +8,22 @@ import dev.furq.holodisplays.handlers.TickHandler
 import dev.furq.holodisplays.handlers.ViewerHandler
 import dev.furq.holodisplays.managers.FeedbackManager
 import dev.furq.holodisplays.utils.FeedbackType
+//? if >=1.21.11
+import net.minecraft.server.permissions.PermissionLevel
 import me.lucko.fabric.api.permissions.v0.Permissions
-import net.minecraft.server.command.CommandManager
-import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.commands.CommandSourceStack
+import net.minecraft.commands.Commands
 
 object ReloadCommand {
-    fun register(): ArgumentBuilder<ServerCommandSource, *> = CommandManager.literal("reload")
-        .requires(Permissions.require("holodisplays.admin", 2))
+    fun register(): ArgumentBuilder<CommandSourceStack, *> = Commands.literal("reload")
+        //~ if >=1.21.11 '2' -> 'PermissionLevel.GAMEMASTERS'
+        .requires(Permissions.require("holodisplays.admin", PermissionLevel.GAMEMASTERS))
         .executes { context ->
             performReload(context.source)
             1
         }
 
-    private fun performReload(source: ServerCommandSource) {
+    private fun performReload(source: CommandSourceStack) {
         ViewerHandler.resetAllObservers()
         PacketHandler.resetEntityTracking()
         ViewerHandler.clearTrackers()

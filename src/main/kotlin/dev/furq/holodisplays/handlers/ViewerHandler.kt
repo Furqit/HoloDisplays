@@ -8,20 +8,20 @@ import dev.furq.holodisplays.data.HologramData
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import dev.furq.holodisplays.utils.ConditionEvaluator
-import net.minecraft.network.listener.ClientPlayPacketListener
-import net.minecraft.network.packet.Packet
-import net.minecraft.network.packet.s2c.play.BundleS2CPacket
-import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.util.math.ChunkPos
+import net.minecraft.network.protocol.Packet
+import net.minecraft.network.protocol.game.ClientGamePacketListener
+import net.minecraft.network.protocol.game.ClientboundBundlePacket
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.level.ChunkPos
 import java.util.*
 
 object ViewerHandler {
     private val observers = mutableMapOf<String, MutableSet<UUID>>()
     private val hologramChunkMap = mutableMapOf<Long, MutableSet<String>>()
-    private val playerManager get() = HoloDisplays.SERVER?.playerManager
+    private val playerManager get() = HoloDisplays.SERVER?.playerList
 
-    private fun getPlayer(uuid: UUID): ServerPlayerEntity? = playerManager?.getPlayer(uuid)
-    fun isViewing(player: ServerPlayerEntity, name: String): Boolean = observers[name]?.contains(player.uuid) == true
+    private fun getPlayer(uuid: UUID): ServerPlayer? = playerManager?.getPlayer(uuid)
+    fun isViewing(player: ServerPlayer, name: String): Boolean = observers[name]?.contains(player.uuid) == true
     fun createTracker(name: String) = observers.getOrPut(name) { mutableSetOf() }
     fun removeTracker(name: String) = observers.remove(name)
     fun clearTrackers() = observers.clear()
@@ -36,7 +36,8 @@ object ViewerHandler {
 
     fun updateHologramIndex(name: String, position: HologramData.Position) {
         removeHologramIndex(name)
-        val chunkLong = net.minecraft.util.math.ChunkPos.toLong(
+        //~ if >=26.1 'asLong' -> 'pack'
+        val chunkLong = ChunkPos.pack(
             position.x.toInt() shr 4,
             position.z.toInt() shr 4
         )
@@ -52,7 +53,7 @@ object ViewerHandler {
         }
     }
 
-    fun addViewer(player: ServerPlayerEntity, name: String) = safeCall {
+    fun addViewer(player: ServerPlayer, name: String) = safeCall {
         val hologramData = HologramConfig.getHologramOrAPI(name) ?: return@safeCall
         val observerSet = observers.getOrPut(name) { mutableSetOf() }
         if (observerSet.add(player.uuid)) {
@@ -60,7 +61,7 @@ object ViewerHandler {
         }
     }
 
-    private fun removeViewer(player: ServerPlayerEntity, name: String) {
+    private fun removeViewer(player: ServerPlayer, name: String) {
         observers[name]?.let { observerSet ->
             if (observerSet.remove(player.uuid)) {
                 PacketHandler.destroyDisplayEntity(player, name)
@@ -68,7 +69,7 @@ object ViewerHandler {
         }
     }
 
-    fun clearViewers(player: ServerPlayerEntity) {
+    fun clearViewers(player: ServerPlayer) {
         observers.keys.forEach { name -> removeViewer(player, name) }
     }
 
@@ -97,13 +98,13 @@ object ViewerHandler {
         }
     }
 
-    private fun showHologramToPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) = safeCall {
+    private fun showHologramToPlayer(player: ServerPlayer, name: String, hologram: HologramData) = safeCall {
         if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) return@safeCall
 
-        val packets = mutableListOf<Packet<in ClientPlayPacketListener>>()
+        val packets = mutableListOf<Packet<in ClientGamePacketListener>>()
         val packetConsumer: (Packet<*>) -> Unit = {
             @Suppress("UNCHECKED_CAST")
-            packets.add(it as Packet<in ClientPlayPacketListener>)
+            packets.add(it as Packet<in ClientGamePacketListener>)
         }
 
         hologram.displays.forEachIndexed { index, entity ->
@@ -114,7 +115,7 @@ object ViewerHandler {
         }
 
         if (packets.isNotEmpty()) {
-             player.networkHandler.sendPacket(BundleS2CPacket(packets))
+             player.connection.send(ClientboundBundlePacket(packets))
         }
     }
 
@@ -123,7 +124,7 @@ object ViewerHandler {
         else -> display
     }
 
-    private fun updateHologramForPlayer(player: ServerPlayerEntity, name: String, hologram: HologramData) {
+    private fun updateHologramForPlayer(player: ServerPlayer, name: String, hologram: HologramData) {
         if (!ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player)) return
 
         hologram.displays.forEachIndexed { index, entity ->
@@ -137,17 +138,19 @@ object ViewerHandler {
         }
     }
 
-    fun updatePlayerVisibility(player: ServerPlayerEntity) {
-        val playerWorld = player.world.registryKey.value.toString()
-        val playerChunkX = player.chunkPos.x
-        val playerChunkZ = player.chunkPos.z
+    fun updatePlayerVisibility(player: ServerPlayer) {
+        //~ if >=1.21.11 'location' -> 'identifier'
+        val playerWorld = player.level().dimension().identifier().toString()
+        val playerChunkX = player.chunkPosition().x
+        val playerChunkZ = player.chunkPosition().z
         
         val viewDistance = playerManager?.viewDistance ?: 10
         
         val nearbyHolograms = mutableSetOf<String>()
         for (x in -viewDistance..viewDistance) {
             for (z in -viewDistance..viewDistance) {
-                val chunkLong = ChunkPos.toLong(playerChunkX + x, playerChunkZ + z)
+                //~ if >=26.1 'asLong' -> 'pack'
+                val chunkLong = ChunkPos.pack(playerChunkX + x, playerChunkZ + z)
                 hologramChunkMap[chunkLong]?.let { nearbyHolograms.addAll(it) }
             }
         }

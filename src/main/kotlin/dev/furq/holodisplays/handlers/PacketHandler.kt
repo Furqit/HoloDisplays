@@ -8,26 +8,22 @@ import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import dev.furq.holodisplays.mixin.*
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import net.minecraft.block.BlockState
-import net.minecraft.component.DataComponentTypes
-import net.minecraft.component.type.CustomModelDataComponent
-import net.minecraft.entity.EntityType
-import net.minecraft.entity.attribute.EntityAttributeInstance
-import net.minecraft.entity.attribute.EntityAttributes
-import net.minecraft.entity.data.DataTracker
-import net.minecraft.entity.data.TrackedData
-import net.minecraft.item.ItemStack
-import net.minecraft.network.packet.Packet
-import net.minecraft.network.packet.s2c.play.EntitiesDestroyS2CPacket
-import net.minecraft.network.packet.s2c.play.EntityAttributesS2CPacket
-import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket
-import net.minecraft.network.packet.s2c.play.EntityTrackerUpdateS2CPacket
-import net.minecraft.registry.Registries
-import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.state.property.Property
-import net.minecraft.text.Text
-import net.minecraft.util.Identifier
-import net.minecraft.util.math.Vec3d
+import net.minecraft.core.component.DataComponents
+import net.minecraft.network.chat.Component
+import net.minecraft.network.protocol.Packet
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
+import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
+import net.minecraft.network.protocol.game.ClientboundUpdateAttributesPacket
+import net.minecraft.network.syncher.EntityDataAccessor
+import net.minecraft.network.syncher.SynchedEntityData
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.ai.attributes.AttributeInstance
+import net.minecraft.world.entity.ai.attributes.Attributes
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.component.CustomModelData
+import net.minecraft.world.phys.Vec3
 import org.joml.Math.toRadians
 import org.joml.Quaternionf
 import org.joml.Vector3f
@@ -55,8 +51,8 @@ object PacketHandler {
 
     private fun getNextEntityId(): Int = recycledIds.firstOrNull()?.also(recycledIds::remove) ?: --nextEntityId
 
-    private fun <T> createEntry(trackedData: TrackedData<T>, value: T):
-            DataTracker.SerializedEntry<T> = DataTracker.SerializedEntry(trackedData.id, trackedData.dataType, value)
+    private fun <T : Any> createEntry(trackedData: EntityDataAccessor<T>, value: T): SynchedEntityData.DataValue<*> =
+        SynchedEntityData.DataValue.create(trackedData, value)
 
     private fun calculateTranslation(display: BaseDisplay, offset: Vector3f, scale: Vector3f, isFromApi: Boolean): Vector3f = Vector3f(offset).apply {
         if (display is BlockDisplay && !isFromApi) add(-0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z)
@@ -71,14 +67,14 @@ object PacketHandler {
     }
 
     fun spawnDisplayEntity(
-        player: ServerPlayerEntity,
+        player: ServerPlayer,
         hologramName: String,
         line: HologramData.DisplayLine,
         displayData: DisplayData,
         position: Vector3f,
         lineIndex: Int,
         hologram: HologramData,
-        packetConsumer: (Packet<*>) -> Unit = { player.networkHandler.sendPacket(it) }
+        packetConsumer: (Packet<*>) -> Unit = { player.connection.send(it) }
     ) = safeCall {
         val entityId = getNextEntityId()
         val displayRef = "${line.name}:$lineIndex"
@@ -100,7 +96,7 @@ object PacketHandler {
         sendDisplayMetadata(player, entityId, displayData, hologram, line, packetConsumer)
     }
 
-    fun destroyDisplayEntity(player: ServerPlayerEntity, hologramName: String) {
+    fun destroyDisplayEntity(player: ServerPlayer, hologramName: String) {
         val playerEntities = entityIds[player.uuid] ?: return
         val prefix = "$hologramName/"
         val iterator = playerEntities.object2IntEntrySet().iterator()
@@ -115,7 +111,7 @@ object PacketHandler {
         }
 
         if (!idsToDestroy.isEmpty) {
-            player.networkHandler.sendPacket(EntitiesDestroyS2CPacket(idsToDestroy))
+            player.connection.send(ClientboundRemoveEntitiesPacket(idsToDestroy))
             recycledIds.addAll(idsToDestroy)
         }
 
@@ -131,24 +127,24 @@ object PacketHandler {
         pitch: Float = 0f,
         yaw: Float = 0f,
         headYaw: Double = 0.0
-    ): EntitySpawnS2CPacket = safeCall {
+    ): ClientboundAddEntityPacket = safeCall {
         val entityType = when (display) {
             is TextDisplay -> EntityType.TEXT_DISPLAY
             is ItemDisplay -> EntityType.ITEM_DISPLAY
             is BlockDisplay -> EntityType.BLOCK_DISPLAY
-            is EntityDisplay -> Registries.ENTITY_TYPE.get(Identifier.tryParse(display.id))
+            is EntityDisplay -> McRegistries.getEntityTypeOrThrow(display.id)
             else -> throw DisplayException("Unknown display type")
         }
 
-        val pos = Vec3d(position)
-        EntitySpawnS2CPacket(
+        val pos = Vec3(position)
+        ClientboundAddEntityPacket(
             entityId, UUID.randomUUID(), pos.x, pos.y, pos.z,
-            pitch, yaw, entityType, 0, Vec3d.ZERO, headYaw
+            pitch, yaw, entityType, 0, Vec3.ZERO, headYaw
         )
     } ?: throw DisplayException("Failed to create spawn packet")
 
     private fun sendDisplayMetadata(
-        player: ServerPlayerEntity,
+        player: ServerPlayer,
         entityId: Int,
         displayData: DisplayData,
         hologram: HologramData,
@@ -156,18 +152,18 @@ object PacketHandler {
         packetConsumer: (Packet<*>) -> Unit
     ) = safeCall {
         val entries = buildDisplayMetadata(displayData, hologram, line, player)
-        packetConsumer(EntityTrackerUpdateS2CPacket(entityId, entries))
+        packetConsumer(ClientboundSetEntityDataPacket(entityId, entries))
 
         if (displayData.type is EntityDisplay) {
-            val scaleAttr = EntityAttributeInstance(/*? if 1.20.6 {*/ /*EntityAttributes.GENERIC_SCALE *//*?}*//*? if >=1.21.3 {*/ EntityAttributes.SCALE /*?}*/) { }
+            val scaleAttr = AttributeInstance(Attributes.SCALE) { }
             scaleAttr.baseValue = displayData.type.scale?.x()?.toDouble() ?: 1.0
-            val scalePacket = EntityAttributesS2CPacket(entityId, listOf(scaleAttr))
+            val scalePacket = ClientboundUpdateAttributesPacket(entityId, listOf(scaleAttr))
             packetConsumer(scalePacket)
         }
     }
 
     fun updateDisplayMetadata(
-        player: ServerPlayerEntity,
+        player: ServerPlayer,
         hologramName: String,
         displayId: String,
         lineIndex: Int,
@@ -181,11 +177,11 @@ object PacketHandler {
     }
 
     fun updateTextMetadata(
-        player: ServerPlayerEntity,
+        player: ServerPlayer,
         hologramName: String,
         displayId: String,
         lineIndex: Int,
-        text: Text,
+        text: Component,
     ) {
         val entries = buildList {
             add(createEntry(TextDisplayEntityAccessor.getText(), text))
@@ -195,24 +191,24 @@ object PacketHandler {
     }
 
     private fun updateEntityMetadata(
-        player: ServerPlayerEntity,
+        player: ServerPlayer,
         hologramName: String,
         displayRef: String,
-        metadata: List<DataTracker.SerializedEntry<*>>,
+        metadata: List<SynchedEntityData.DataValue<*>>,
     ) = safeCall {
         val compositeKey = getCompositeKey(hologramName, displayRef)
         val entityId = entityIds[player.uuid]?.getInt(compositeKey) ?: return@safeCall
         if (!entityIds[player.uuid]!!.containsKey(compositeKey)) return@safeCall
 
-        player.networkHandler.sendPacket(EntityTrackerUpdateS2CPacket(entityId, metadata))
+        player.connection.send(ClientboundSetEntityDataPacket(entityId, metadata))
     }
 
     private fun buildDisplayMetadata(
         displayData: DisplayData,
         hologram: HologramData,
         line: HologramData.DisplayLine,
-        player: ServerPlayerEntity,
-    ): List<DataTracker.SerializedEntry<*>> = safeCall(default = emptyList()) {
+        player: ServerPlayer,
+    ): List<SynchedEntityData.DataValue<*>> = safeCall(default = emptyList()) {
         buildList {
             val display = displayData.type
             val commonProps = commonDisplayProperties(displayData, hologram, line)
@@ -231,14 +227,14 @@ object PacketHandler {
         displayData: DisplayData,
         hologram: HologramData,
         line: HologramData.DisplayLine,
-    ): List<DataTracker.SerializedEntry<*>> = buildList {
+    ): List<SynchedEntityData.DataValue<*>> = buildList {
         val display = displayData.type
 
         val scale = display.scale ?: hologram.scale
-        add(createEntry(DisplayEntityAccessor.getScale(), Vector3f(scale.x, scale.y, scale.z)))
+        add(createEntry(DisplayAccessor.getScale(), Vector3f(scale.x, scale.y, scale.z)))
 
         val billboardOrdinal = (display.billboardMode ?: hologram.billboardMode).ordinal.toByte()
-        add(createEntry(DisplayEntityAccessor.getBillboard(), billboardOrdinal))
+        add(createEntry(DisplayAccessor.getBillboard(), billboardOrdinal))
 
         val rawLeftRotation = display.leftRotation ?: hologram.leftRotation
         val leftRotation = if (rawLeftRotation != null) {
@@ -250,23 +246,23 @@ object PacketHandler {
                 .rotateX(toRadians(rotation.x))
                 .rotateZ(toRadians(rotation.z))
         }
-        add(createEntry(DisplayEntityAccessor.getLeftRotation(), leftRotation))
+        add(createEntry(DisplayAccessor.getLeftRotation(), leftRotation))
 
         val rightRotation = display.rightRotation ?: hologram.rightRotation
         if (rightRotation != null) {
-            add(createEntry(DisplayEntityAccessor.getRightRotation(), rightRotation))
+            add(createEntry(DisplayAccessor.getRightRotation(), rightRotation))
         }
 
         val isFromApi = HoloDisplaysAPIInternal.getDisplay(line.name) != null
         val translation = calculateTranslation(display, line.offset, scale, isFromApi)
-        add(createEntry(DisplayEntityAccessor.getTranslation(), translation))
+        add(createEntry(DisplayAccessor.getTranslation(), translation))
 
     }
 
     private fun textDisplayProperties(
         display: TextDisplay,
-        player: ServerPlayerEntity,
-    ): List<DataTracker.SerializedEntry<*>> = safeCall(default = emptyList()) {
+        player: ServerPlayer,
+    ): List<SynchedEntityData.DataValue<*>> = safeCall(default = emptyList()) {
         buildList {
             val processedText = TickHandler.processText(display.getText(), player)
             add(createEntry(TextDisplayEntityAccessor.getText(), processedText))
@@ -298,15 +294,16 @@ object PacketHandler {
         }
     } ?: emptyList()
 
-    private fun itemDisplayProperties(display: ItemDisplay): List<DataTracker.SerializedEntry<*>> = safeCall(default = emptyList()) {
+    private fun itemDisplayProperties(display: ItemDisplay): List<SynchedEntityData.DataValue<*>> = safeCall(default = emptyList()) {
         buildList {
-            val item = Identifier.tryParse(display.id)?.let(Registries.ITEM::get)
-                ?: throw DisplayException("Invalid item identifier: ${display.id}")
+            val item = McRegistries.getItemOrThrow(display.id)
 
-            val itemStack = ItemStack(item)
+            val itemStack = ItemStack(item, 1)
             display.customModelData?.also { cmd ->
                 itemStack.set(
-                    DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelDataComponent(/*? if <=1.21.3 {*//*cmd*//*?}*//*? if >1.21.3 {*/listOf(cmd.toFloat()), listOf(), listOf(), listOf()/*?}*/)
+                    DataComponents.CUSTOM_MODEL_DATA,
+                    //~ if >1.21.3 'cmd' -> 'listOf(cmd.toFloat()), listOf(), listOf(), listOf()'
+                    CustomModelData(listOf(cmd.toFloat()), listOf(), listOf(), listOf())
                 )
             }
 
@@ -317,18 +314,17 @@ object PacketHandler {
         }
     } ?: emptyList()
 
-    private fun blockDisplayProperties(display: BlockDisplay): List<DataTracker.SerializedEntry<*>> = safeCall(default = emptyList()) {
+    private fun blockDisplayProperties(display: BlockDisplay): List<SynchedEntityData.DataValue<*>> = safeCall(default = emptyList()) {
         buildList {
-            val block = Identifier.tryParse(display.id)?.let(Registries.BLOCK::get)
-                ?: throw DisplayException("Invalid block identifier: ${display.id}")
+            val block = McRegistries.getBlockOrThrow(display.id)
 
-            var blockState = block.defaultState
+            var blockState = McRegistries.defaultBlockState(block)
             if (display.properties.isNotEmpty()) {
-                val stateManager = block.stateManager
+                val stateDefinition = McRegistries.stateDefinition(block)
                 display.properties.forEach { (key, value) ->
-                    val property = stateManager.getProperty(key)
+                    val property = stateDefinition.getProperty(key)
                     if (property != null) {
-                        blockState = withProperty(blockState, property, value)
+                        blockState = BlockStateUtil.withParsedProperty(blockState, property, value)
                     }
                 }
             }
@@ -336,11 +332,7 @@ object PacketHandler {
         }
     } ?: emptyList()
 
-    private fun <T : Comparable<T>> withProperty(state: BlockState, property: Property<T>, valueString: String): BlockState {
-        return property.parse(valueString).map { value -> state.with(property, value) }.orElse(state)
-    }
-
-    private fun entityDisplayProperties(display: EntityDisplay): List<DataTracker.SerializedEntry<*>> = buildList {
+    private fun entityDisplayProperties(display: EntityDisplay): List<SynchedEntityData.DataValue<*>> = buildList {
         display.glow?.also { glow ->
             add(createEntry(EntityAccessor.getFlags(), if (glow) (1 shl 6).toByte() else 0))
         }

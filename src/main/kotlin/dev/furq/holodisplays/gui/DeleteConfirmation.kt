@@ -3,15 +3,15 @@ package dev.furq.holodisplays.gui
 import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiUtils
-import net.minecraft.item.Items
-import net.minecraft.screen.ScreenHandlerType
-import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.item.Items
 
 object DeleteConfirmation {
 
-    fun open(player: ServerPlayerEntity, name: String, type: String, returnGui: () -> Unit) {
+    fun open(player: ServerPlayer, name: String, type: String, returnGui: () -> Unit) {
         val gui = GuiUtils.createGui(
-            type = ScreenHandlerType.GENERIC_9X3,
+            type = MenuType.GENERIC_9x3,
             player = player,
             title = "Confirm Deletion",
             size = 27,
@@ -29,8 +29,8 @@ object DeleteConfirmation {
                 }
             )) { _, _, _, _ ->
                 when (type) {
-                    "hologram" -> HologramManager.deleteHologram(name, player.commandSource)
-                    "display" -> DisplayManager.deleteDisplay(name, player.commandSource)
+                    "hologram" -> HologramManager.deleteHologram(name, player.createCommandSourceStack())
+                    "display" -> DisplayManager.deleteDisplay(name, player.createCommandSourceStack())
                 }
                 returnGui()
             }

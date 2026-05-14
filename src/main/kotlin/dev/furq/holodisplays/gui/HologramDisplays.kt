@@ -5,20 +5,21 @@ import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiUtils
-import net.minecraft.item.Items
-import net.minecraft.screen.ScreenHandlerType
-import net.minecraft.server.network.ServerPlayerEntity
+import dev.furq.holodisplays.utils.GuiUtils.isRightClick
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.inventory.MenuType
+import net.minecraft.world.item.Items
 import org.joml.Vector3f
 
 object HologramDisplays {
     private const val ITEMS_PER_PAGE = 21
 
-    fun open(player: ServerPlayerEntity, hologramName: String, page: Int = 0) {
+    fun open(player: ServerPlayer, hologramName: String, page: Int = 0) {
         val hologram = HologramConfig.getHologram(hologramName) ?: return
         val pageInfo = GuiUtils.calculatePageInfo(hologram.displays.size, page, ITEMS_PER_PAGE)
 
         val gui = GuiUtils.createGui(
-            type = ScreenHandlerType.GENERIC_9X5,
+            type = MenuType.GENERIC_9x5,
             player = player,
             title = GuiUtils.createPagedTitle("Manage Lines", pageInfo),
             size = 45,
@@ -66,8 +67,8 @@ object HologramDisplays {
                             open(player, hologramName, pageInfo.currentPage)
                         }
 
-                        type.isRight -> {
-                            if (HologramManager.removeDisplayFromHologram(hologramName, display.name, player.commandSource)) {
+                        type.isRightClick() -> {
+                            if (HologramManager.removeDisplayFromHologram(hologramName, display.name, player.createCommandSourceStack())) {
                                 open(player, hologramName, pageInfo.currentPage)
                             }
                         }
@@ -87,12 +88,12 @@ object HologramDisplays {
                 )
             )) { _, type, _, _ ->
                 when {
-                    type.isRight -> DisplayList.open(
+                    type.isRightClick() -> DisplayList.open(
                         player = player,
                         selectionMode = true,
                         hologramName = hologramName,
                         onSelect = { displayName ->
-                            if (HologramManager.addDisplayToHologram(hologramName, displayName, player.commandSource)) {
+                            if (HologramManager.addDisplayToHologram(hologramName, displayName, player.createCommandSourceStack())) {
                                 open(player, hologramName, pageInfo.currentPage)
                             }
                         }
@@ -106,7 +107,7 @@ object HologramDisplays {
         }
     }
 
-    private fun editOffset(player: ServerPlayerEntity, hologramName: String, lineIndex: Int, currentOffset: Vector3f, currentPage: Int) {
+    private fun editOffset(player: ServerPlayer, hologramName: String, lineIndex: Int, currentOffset: Vector3f, currentPage: Int) {
         AnvilInput.open(player, "Enter X Offset", currentOffset.x.toString(),
             onSubmit = { x ->
                 AnvilInput.open(player, "Enter Y Offset", currentOffset.y.toString(),

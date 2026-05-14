@@ -9,56 +9,56 @@ import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.CommandUtils
 import dev.furq.holodisplays.utils.CommandUtils.requirePlayer
-import net.minecraft.server.command.CommandManager
-import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.commands.CommandSourceStack
+import net.minecraft.commands.Commands
 
 object CreateCommand {
 
-    fun registerHologram(): ArgumentBuilder<ServerCommandSource, *> = CommandManager
+    fun registerHologram(): ArgumentBuilder<CommandSourceStack, *> = Commands
         .literal("create")
         .then(buildHologramCommand())
 
-    fun registerDisplay(): ArgumentBuilder<ServerCommandSource, *> = CommandManager
+    fun registerDisplay(): ArgumentBuilder<CommandSourceStack, *> = Commands
         .literal("create")
         .then(buildDisplayCommand())
 
-    private fun buildHologramCommand(): ArgumentBuilder<ServerCommandSource, *> {
-        return CommandManager.argument("name", StringArgumentType.word())
+    private fun buildHologramCommand(): ArgumentBuilder<CommandSourceStack, *> {
+        return Commands.argument("name", StringArgumentType.word())
             .executes { context -> executeHologram(context) }
     }
 
-    private fun buildDisplayCommand(): ArgumentBuilder<ServerCommandSource, *> {
-        return CommandManager.argument("name", StringArgumentType.word())
-            .then(CommandManager.literal("text")
-                .then(CommandManager.argument("content", StringArgumentType.string())
+    private fun buildDisplayCommand(): ArgumentBuilder<CommandSourceStack, *> {
+        return Commands.argument("name", StringArgumentType.word())
+            .then(Commands.literal("text")
+                .then(Commands.argument("content", StringArgumentType.string())
                     .executes { context -> executeText(context, null) }
-                    .then(CommandManager.argument("hologramName", StringArgumentType.word())
+                    .then(Commands.argument("hologramName", StringArgumentType.word())
                         .suggests { _, builder -> CommandUtils.suggestHolograms(builder) }
                         .executes { context -> executeText(context, StringArgumentType.getString(context, "hologramName")) })))
-            .then(CommandManager.literal("item")
-                .then(CommandManager.argument("itemId", StringArgumentType.string())
+            .then(Commands.literal("item")
+                .then(Commands.argument("itemId", StringArgumentType.string())
                     .suggests { _, builder -> CommandUtils.suggestItemIds(builder) }
                     .executes { context -> executeItem(context, null) }
-                    .then(CommandManager.argument("hologramName", StringArgumentType.word())
+                    .then(Commands.argument("hologramName", StringArgumentType.word())
                         .suggests { _, builder -> CommandUtils.suggestHolograms(builder) }
                         .executes { context -> executeItem(context, StringArgumentType.getString(context, "hologramName")) })))
-            .then(CommandManager.literal("block")
-                .then(CommandManager.argument("blockId", StringArgumentType.string())
+            .then(Commands.literal("block")
+                .then(Commands.argument("blockId", StringArgumentType.string())
                     .suggests { _, builder -> CommandUtils.suggestBlockIds(builder) }
                     .executes { context -> executeBlock(context, null) }
-                    .then(CommandManager.argument("hologramName", StringArgumentType.word())
+                    .then(Commands.argument("hologramName", StringArgumentType.word())
                         .suggests { _, builder -> CommandUtils.suggestHolograms(builder) }
                         .executes { context -> executeBlock(context, StringArgumentType.getString(context, "hologramName")) })))
-            .then(CommandManager.literal("entity")
-                .then(CommandManager.argument("entityId", StringArgumentType.string())
+            .then(Commands.literal("entity")
+                .then(Commands.argument("entityId", StringArgumentType.string())
                     .suggests { _, builder -> CommandUtils.suggestEntityIds(builder) }
                     .executes { context -> executeEntity(context, null) }
-                    .then(CommandManager.argument("hologramName", StringArgumentType.word())
+                    .then(Commands.argument("hologramName", StringArgumentType.word())
                         .suggests { _, builder -> CommandUtils.suggestHolograms(builder) }
                         .executes { context -> executeEntity(context, StringArgumentType.getString(context, "hologramName")) })))
     }
 
-    private fun executeHologram(context: CommandContext<ServerCommandSource>): Int {
+    private fun executeHologram(context: CommandContext<CommandSourceStack>): Int {
         val name = StringArgumentType.getString(context, "name")
         return requirePlayer(context)?.let { player ->
             HologramManager.createHologram(name, player)
@@ -67,7 +67,7 @@ object CreateCommand {
         } ?: 0
     }
 
-    private fun executeText(context: CommandContext<ServerCommandSource>, hologramName: String?): Int {
+    private fun executeText(context: CommandContext<CommandSourceStack>, hologramName: String?): Int {
         val name = StringArgumentType.getString(context, "name")
         val content = StringArgumentType.getString(context, "content")
         return createDisplay(context, hologramName, name) {
@@ -75,7 +75,7 @@ object CreateCommand {
         }
     }
 
-    private fun executeItem(context: CommandContext<ServerCommandSource>, hologramName: String?): Int {
+    private fun executeItem(context: CommandContext<CommandSourceStack>, hologramName: String?): Int {
         val name = StringArgumentType.getString(context, "name")
         val itemId = StringArgumentType.getString(context, "itemId")
         return createDisplay(context, hologramName, name) {
@@ -83,7 +83,7 @@ object CreateCommand {
         }
     }
 
-    private fun executeBlock(context: CommandContext<ServerCommandSource>, hologramName: String?): Int {
+    private fun executeBlock(context: CommandContext<CommandSourceStack>, hologramName: String?): Int {
         val name = StringArgumentType.getString(context, "name")
         val blockId = StringArgumentType.getString(context, "blockId")
         return createDisplay(context, hologramName, name) {
@@ -91,7 +91,7 @@ object CreateCommand {
         }
     }
 
-    private fun executeEntity(context: CommandContext<ServerCommandSource>, hologramName: String?): Int {
+    private fun executeEntity(context: CommandContext<CommandSourceStack>, hologramName: String?): Int {
         val name = StringArgumentType.getString(context, "name")
         val entityId = StringArgumentType.getString(context, "entityId")
         return createDisplay(context, hologramName, name) {
@@ -100,7 +100,7 @@ object CreateCommand {
     }
 
     private fun createDisplay(
-        context: CommandContext<ServerCommandSource>,
+        context: CommandContext<CommandSourceStack>,
         hologramName: String?,
         displayName: String,
         createAction: () -> Unit

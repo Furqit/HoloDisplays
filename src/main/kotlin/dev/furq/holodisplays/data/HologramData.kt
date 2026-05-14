@@ -6,7 +6,7 @@ import dev.furq.holodisplays.utils.QuaternionfSerializer
 import dev.furq.holodisplays.utils.Vector3fSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import net.minecraft.entity.decoration.DisplayEntity.BillboardMode
+import net.minecraft.world.entity.Display.BillboardConstraints
 import org.joml.Quaternionf
 import org.joml.Vector3f
 
@@ -18,7 +18,7 @@ data class HologramData(
     val leftRotation: Quaternionf? = null,
     val rightRotation: Quaternionf? = null,
     val scale: Vector3f = Vector3f(1.0f),
-    val billboardMode: BillboardMode = BillboardMode.CENTER,
+    val billboardMode: BillboardConstraints = BillboardConstraints.CENTER,
     val updateRate: Int = 20,
     val viewRange: Double = 48.0,
     val conditionalPlaceholder: String? = null,
@@ -48,7 +48,7 @@ data class HologramData(
         var leftRotation: Quaternionf? = null
         var rightRotation: Quaternionf? = null
         var scale: Vector3f = Vector3f(1.0f)
-        var billboardMode: BillboardMode = BillboardMode.CENTER
+        var billboardMode: BillboardConstraints = BillboardConstraints.CENTER
         var updateRate: Int = 20
         var viewRange: Double = 48.0
         var conditionalPlaceholder: String? = null

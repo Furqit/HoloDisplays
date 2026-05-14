@@ -2,7 +2,10 @@ package dev.furq.holodisplays.config
 
 import dev.furq.holodisplays.api.HoloDisplaysAPIInternal
 import dev.furq.holodisplays.data.DisplayData
-import dev.furq.holodisplays.data.display.*
+import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.data.display.EntityDisplay
+import dev.furq.holodisplays.data.display.ItemDisplay
+import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.ConfigException
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import kotlinx.serialization.ExperimentalSerializationApi

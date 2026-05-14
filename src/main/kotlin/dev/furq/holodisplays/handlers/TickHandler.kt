@@ -10,14 +10,17 @@ import eu.pb4.placeholders.api.PlaceholderContext
 import eu.pb4.placeholders.api.Placeholders
 import eu.pb4.placeholders.api.parsers.NodeParser
 import eu.pb4.placeholders.api.parsers.TagParser
-import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.text.Text
+import net.minecraft.network.chat.Component
+//? if >=26.1
+import eu.pb4.placeholders.api.ServerPlaceholderContext
+import net.minecraft.server.level.ServerPlayer
 
 object TickHandler {
     private var ticks = 0
     private val animationCache = mutableMapOf<Pair<String, Int>, String>()
     private val placeholderParser by lazy {
-        NodeParser.merge(TagParser.DEFAULT, Placeholders.DEFAULT_PLACEHOLDER_PARSER)
+        //~ if >=26.1 'DEFAULT_PLACEHOLDER_PARSER' -> 'SERVER_PLACEHOLDER_PARSER'
+        NodeParser.merge(TagParser.DEFAULT, Placeholders.SERVER_PLACEHOLDER_PARSER)
     }
     private val animationRegex = "<animation:([^>]+)>".toRegex()
     private val placeholderRegex = "%([^%:]+):([^%]+)%".toRegex()
@@ -35,12 +38,12 @@ object TickHandler {
         ticks = 0
     }
 
-    fun tick(players: List<ServerPlayerEntity>) {
+    fun tick(players: List<ServerPlayer>) {
         processHolograms(players)
         ticks++
     }
 
-    private fun processHolograms(players: List<ServerPlayerEntity>) {
+    private fun processHolograms(players: List<ServerPlayer>) {
         HologramConfig.getHolograms().forEach { (name, hologram) ->
             if (ViewerHandler.getObserverCount(name) == 0) return@forEach
             processHologramDisplays(name, hologram, players)
@@ -52,7 +55,7 @@ object TickHandler {
         }
     }
 
-    private fun processHologramDisplays(name: String, hologram: HologramData, players: List<ServerPlayerEntity>) {
+    private fun processHologramDisplays(name: String, hologram: HologramData, players: List<ServerPlayer>) {
         hologram.displays.forEachIndexed { index, displayLine ->
             val display = DisplayConfig.getDisplayOrAPI(displayLine.name)?.type as? TextDisplay
                 ?: return@forEachIndexed
@@ -108,12 +111,13 @@ object TickHandler {
             }
             .toList()
 
-    private fun processPlaceholders(text: String, player: ServerPlayerEntity): Text {
+    private fun processPlaceholders(text: String, player: ServerPlayer): Component {
         val node = placeholderParser.parseNode(text)
-        return node.toText(PlaceholderContext.of(player))
+        //~ if >=26.1 'toText(PlaceholderContext.of(player))' -> 'toComponent(ServerPlaceholderContext.of(player))'
+        return node.toComponent(ServerPlaceholderContext.of(player))
     }
 
-    private fun updateDisplayForViewers(name: String, displayRef: String, index: Int, text: String, players: List<ServerPlayerEntity>) {
+    private fun updateDisplayForViewers(name: String, displayRef: String, index: Int, text: String, players: List<ServerPlayer>) {
         val viewers = players.filter { ViewerHandler.isViewing(it, name) }
         viewers.forEach { player ->
             val processedText = processText(text, player)
@@ -121,7 +125,7 @@ object TickHandler {
         }
     }
 
-    fun processText(text: String, player: ServerPlayerEntity): Text {
+    fun processText(text: String, player: ServerPlayer): Component {
         val processedAnimations = processAnimations(text)
         return processPlaceholders(processedAnimations, player)
     }

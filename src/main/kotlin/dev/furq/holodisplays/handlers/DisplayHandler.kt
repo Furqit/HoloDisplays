@@ -8,14 +8,14 @@ import dev.furq.holodisplays.data.display.EntityDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
+import net.minecraft.world.entity.Display.BillboardConstraints
 import org.joml.Vector3f
-import net.minecraft.entity.EntityPose as MinecraftEntityPose
-import net.minecraft.entity.decoration.DisplayEntity.BillboardMode as MinecraftBillboardMode
+import net.minecraft.world.entity.Pose as EntityPose
 
 object DisplayHandler {
     sealed class DisplayProperty {
         data class Scale(val value: Vector3f?) : DisplayProperty()
-        data class BillboardMode(val mode: MinecraftBillboardMode?) : DisplayProperty()
+        data class BillboardMode(val mode: BillboardConstraints?) : DisplayProperty()
         data class Rotation(val value: Vector3f?) : DisplayProperty()
         data class TextLines(val value: List<String>) : DisplayProperty()
         data class TextLineWidth(val value: Int?) : DisplayProperty()
@@ -31,7 +31,7 @@ object DisplayHandler {
         data class BlockProperties(val value: Map<String, String>) : DisplayProperty()
         data class EntityId(val value: String) : DisplayProperty()
         data class EntityGlow(val value: Boolean?) : DisplayProperty()
-        data class EntityPose(val value: MinecraftEntityPose?) : DisplayProperty()
+        data class Pose(val value: EntityPose?) : DisplayProperty()
         data class ConditionalPlaceholder(val value: String?) : DisplayProperty()
     }
 
@@ -120,7 +120,7 @@ object DisplayHandler {
         is DisplayProperty.Rotation -> display.copy(rotation = property.value)
         is DisplayProperty.EntityId -> display.copy(id = property.value)
         is DisplayProperty.EntityGlow -> display.copy(glow = property.value)
-        is DisplayProperty.EntityPose -> display.copy(pose = property.value)
+        is DisplayProperty.Pose -> display.copy(pose = property.value)
         is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
         else -> null
     }
