@@ -115,15 +115,12 @@ publishMods {
     type = STABLE
     modLoaders.add("fabric")
 
-    val lower = """>=\s*([0-9.]+)""".toRegex().find(mcDep)?.groupValues?.get(1)
-    val upper = """<=\s*([0-9.]+)""".toRegex().find(mcDep)?.groupValues?.get(1)
-
     modrinth {
         projectId = "WdbPWi13"
         accessToken = localProperties.getProperty("MODRINTH_TOKEN")
         minecraftVersionRange {
-            start = lower ?: "latest"
-            end = upper ?: "latest"
+            start = compatibleVersions.first()
+            end = compatibleVersions.last()
         }
         requires("fabric-api")
         requires("placeholder-api")
@@ -136,8 +133,8 @@ publishMods {
         accessToken = localProperties.getProperty("CURSEFORGE_TOKEN")
         serverRequired = true
         minecraftVersionRange {
-            start = lower ?: "latest"
-            end = upper ?: "latest"
+            start = compatibleVersions.first()
+            end = compatibleVersions.last()
         }
         requires("fabric-api")
         requires("text-placeholder-api")
