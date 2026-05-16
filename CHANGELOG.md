@@ -1,3 +1,3 @@
 ### Updates & Improvements
-- Implemented `/holodisplays hologram near [radius]` command to seek nearby holograms.
-- Added support for Minecraft 1.21.11.
+- Updated to support 26.1.x
+- Implement the missing lineWidth setter in HoloDisplaysAPI - *shmeeb*
