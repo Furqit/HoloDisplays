@@ -21,7 +21,8 @@ object DeleteConfirmation {
         gui.apply {
             setSlot(11, GuiUtils.createGuiItem(
                 name = "Confirm",
-                item = Items.LIME_CONCRETE,
+                //~ if >=26.2 'LIME_CONCRETE' -> 'CONCRETE.lime'
+                item = Items.CONCRETE.lime,
                 lore = buildList {
                     addAll(GuiUtils.createActionLore("Click to delete"))
                     addAll(GuiUtils.createCurrentValueLore("Type", type))
@@ -37,7 +38,8 @@ object DeleteConfirmation {
 
             setSlot(15, GuiUtils.createGuiItem(
                 name = "Cancel",
-                item = Items.RED_CONCRETE,
+                //~ if >=26.2 'RED_CONCRETE' -> 'CONCRETE.red'
+                item = Items.CONCRETE.red,
                 lore = GuiUtils.createActionLore("Click to cancel")
             )) { _, _, _, _ -> returnGui() }
 

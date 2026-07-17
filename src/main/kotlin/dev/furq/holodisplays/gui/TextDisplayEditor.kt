@@ -94,7 +94,8 @@ object TextDisplayEditor {
 
             setSlot(29, GuiUtils.createGuiItem(
                 name = "Shadow",
-                item = Items.GRAY_DYE,
+                //~ if >=26.2 'GRAY_DYE' -> 'DYE.gray'
+                item = Items.DYE.gray,
                 lore = GuiUtils.createCombinedLore("Current" to (display.shadow ?: false).toString(), "Click to toggle")
             )) { _, _, _, _ ->
                 val currentValue = display.shadow ?: false

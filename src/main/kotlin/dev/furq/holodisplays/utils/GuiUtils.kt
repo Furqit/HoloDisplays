@@ -30,7 +30,8 @@ object GuiUtils {
     )
 
     fun createBorderItem() = createGuiItem(
-        item = Items.GRAY_STAINED_GLASS_PANE,
+        //~ if >=26.2 'GRAY_STAINED_GLASS_PANE' -> 'STAINED_GLASS_PANE.gray'
+        item = Items.STAINED_GLASS_PANE.gray,
         name = ""
     )
 

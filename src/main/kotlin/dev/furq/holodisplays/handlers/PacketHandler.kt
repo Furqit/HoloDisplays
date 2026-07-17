@@ -18,7 +18,8 @@ import net.minecraft.network.protocol.game.ClientboundUpdateAttributesPacket
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.world.entity.EntityType
+//~ if >=26.2 'EntityType' -> 'EntityTypes'
+import net.minecraft.world.entity.EntityTypes
 import net.minecraft.world.entity.ai.attributes.AttributeInstance
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.item.ItemStack
@@ -129,9 +130,11 @@ object PacketHandler {
         headYaw: Double = 0.0
     ): ClientboundAddEntityPacket = safeCall {
         val entityType = when (display) {
-            is TextDisplay -> EntityType.TEXT_DISPLAY
-            is ItemDisplay -> EntityType.ITEM_DISPLAY
-            is BlockDisplay -> EntityType.BLOCK_DISPLAY
+            //~ if >=26.2 'EntityType' -> 'EntityTypes' {
+            is TextDisplay -> EntityTypes.TEXT_DISPLAY
+            is ItemDisplay -> EntityTypes.ITEM_DISPLAY
+            is BlockDisplay -> EntityTypes.BLOCK_DISPLAY
+            //~}
             is EntityDisplay -> McRegistries.getEntityTypeOrThrow(display.id)
             else -> throw DisplayException("Unknown display type")
         }
