@@ -93,7 +93,7 @@ object TickHandler {
             if (viewers == null) {
                 viewers = players.filter { ViewerHandler.isViewing(it, name) }
             }
-            val hologramViewers = viewers!!
+            val hologramViewers = viewers
             if (hologramViewers.isEmpty()) return
 
             val animated = processAnimations(text)
