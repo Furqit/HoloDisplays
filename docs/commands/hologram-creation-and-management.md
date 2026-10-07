@@ -47,7 +47,7 @@ These commands handle holograms: creating, listing, deleting, editing, moving, a
     ```
     /holodisplays hologram delete myholo
     ```
-* **Output**: Confirmation GUI; on confirm, deletes and returns to main menu. Feedback: "Hologram deleted".
+* **Output**: Confirmation GUI; on confirm, deletes and returns to main menu. Feedback: "Hologram 'myholo' has been removed".
 
 ## Edit Hologram
 
@@ -116,4 +116,4 @@ These commands handle holograms: creating, listing, deleting, editing, moving, a
     ```
 * **Output**: Updates, opens editor. Feedback: "Display added/removed".
 
-See [Display Management](broken-reference) for display commands, Hologram Configurations for formats.
+See [Display Management](display-management.md) for display commands, Hologram Configurations for formats.

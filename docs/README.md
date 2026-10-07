@@ -17,9 +17,9 @@ The mod is designed for Fabric Loader on Minecraft versions 1.20.5 to 26.x. It i
 
 * **Multiple Display Types**: Text with multi-line support and gradients; items with render types; blocks and entities with scaling and poses.
 * **Hologram Management**: Group displays with offsets, configure scale, rotation, view range, and conditions.
-* **Animations**: Frame-based text cycling (planned: item/block animations).
+* **Animations**: Frame-based text cycling via `<animation:name>` tags.
 * **Integration**: Compatible with Placeholder API for dynamic placeholders.
 * **User Interface**: GUI editors for all aspects; command alternatives.
 * **API**: Register holograms/displays programmatically.
 
-Source code and downloads: [GitHub](https://github.com/Furq07/HoloDisplays) | [Modrinth](https://modrinth.com/mod/holodisplays)
+Source code and downloads: [GitHub](https://github.com/Furqit/HoloDisplays) | [Modrinth](https://modrinth.com/mod/holodisplays)

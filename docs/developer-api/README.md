@@ -1,6 +1,6 @@
 # Developer API
 
-HoloDisplays provides a public Java API for other mods to create and manage holograms and displays programmatically. The API is accessible via [`HoloDisplaysAPI`](https://github.com/Furq07/HoloDisplays/blob/main/src/main/java/dev/furq/holodisplays/api/HoloDisplaysAPI.java). All API-registered content is managed in-memory (not saved to config files) and cleared on reload/shutdown.
+HoloDisplays provides a public Java API for other mods to create and manage holograms and displays programmatically. The API is accessible via [`HoloDisplaysAPI`](https://github.com/Furqit/HoloDisplays/blob/main/src/main/java/dev/furq/holodisplays/api/HoloDisplaysAPI.java). All API-registered content is managed in-memory (not saved to config files) and cleared on reload/shutdown.
 
 ## Getting Started
 
@@ -90,4 +90,4 @@ See subsections for specific topics:
 * Performance: Limit displays per hologram; use viewRange wisely.
 * Compatibility: Requires Fabric 1.20.5+, Placeholder API optional for conditions.
 
-Source: [GitHub](https://github.com/Furq07/HoloDisplays).
+Source: [GitHub](https://github.com/Furqit/HoloDisplays).

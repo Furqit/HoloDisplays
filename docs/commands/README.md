@@ -15,13 +15,13 @@ Commands are structured under `display` and `hologram` subcommands. Tab-completi
 
 See subsections for details:
 
-* [Hologram Creation and Management](broken-reference)
-* [Display Management](broken-reference)
+* [Hologram Creation and Management](hologram-creation-and-management.md)
+* [Display Management](display-management.md)
 
 Cross-references:
 
-* For hologram formats, see [Hologram Configurations](broken-reference).
-* For API alternatives, see [Developer API](broken-reference).
+* For hologram formats, see [Hologram Configurations](../configuration/hologram-configurations.md).
+* For API alternatives, see [Developer API](../developer-api/README.md).
 
 ## Quick Examples
 
@@ -51,7 +51,7 @@ These commands are for server administration: reloading configs and general mana
     ```
 * **Output**: Reloads and updates visibility. Feedback: "Configuration reloaded successfully".
 * **Note**: Use after manual config edits. May cause brief flicker in holograms; safe for production but test first.
-* **Cross-reference**: See [Configuration](broken-reference) for reload effects.
+* **Cross-reference**: See [Configuration](../configuration/README.md) for reload effects.
 
 ### Main Command (Admin Access)
 

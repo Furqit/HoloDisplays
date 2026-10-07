@@ -1,6 +1,6 @@
 # Animations
 
-Animations cycle text frames in text displays. Saved in `animations/<name>.json`. Apply via GUI (planned) or manual reference in text lines.
+Animations cycle text frames inside text displays. Saved in `animations/<name>.json`. Reference them in text lines with `<animation:name>`.
 
 ## Format
 
@@ -32,4 +32,4 @@ Animations cycle text frames in text displays. Saved in `animations/<name>.json`
 }
 ```
 
-To use: In text display lines, reference animation (future feature; currently manual cycling via updateRate).
+To use: reference it in a text display line, e.g. `"Loading <animation:loading>"`. Interval must be at least 1 (values below 1 are treated as 1).

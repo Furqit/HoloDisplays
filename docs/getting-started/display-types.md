@@ -5,6 +5,8 @@ HoloDisplays supports four types of displays: Text, Item, Block, and Entity. Eac
 All display types share common properties:
 
 * **rotation**: Array \[x, y, z] (Euler angles in degrees).
+* **leftRotation**: Array \[x, y, z, w] (quaternion).
+* **rightRotation**: Array \[x, y, z, w] (quaternion).
 * **scale**: Array \[x, y, z] (multipliers; default \[1, 1, 1]).
 * **billboardMode**: String (fixed, horizontal, vertical, center; except entity).
 * **conditionalPlaceholder**: String (visibility condition, e.g., "%player:group% == admin").
@@ -53,7 +55,7 @@ Displays 3D items with customizable render modes (e.g., as held, on ground).
 ### Properties
 
 * **id**: String (item registry ID, e.g., "minecraft:diamond_sword").
-* **displayType**: String (none, thirdperson_lefthand, thirdperson_righthand, firstperson_lefthand, firstperson_righthand, head, gui, ground, fixed).
+* **itemDisplayType**: String (none, thirdperson_lefthand, thirdperson_righthand, firstperson_lefthand, firstperson_righthand, head, gui, ground, fixed).
 * **customModelData**: Integer (>=1; optional for custom models).
 
 ### JSON Format
@@ -62,7 +64,7 @@ Displays 3D items with customizable render modes (e.g., as held, on ground).
 {
   "type": "item",
   "id": "minecraft:diamond",
-  "displayType": "gui",
+  "itemDisplayType": "gui",
   "customModelData": 1,
   "rotation": [0, 90, 0],
   "scale": [2, 2, 2],
@@ -73,7 +75,7 @@ Displays 3D items with customizable render modes (e.g., as held, on ground).
 
 ### Example Usage
 
-Command: `/hd display create mysword item minecraft:diamond_sword` GUI: Set displayType to "head" for helmet-like view.
+Command: `/hd display create mysword item minecraft:diamond_sword` GUI: Set item display type to "head" for helmet-like view.
 
 ## Block Display
 

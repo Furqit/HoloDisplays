@@ -75,4 +75,4 @@ Use placeholders in display lines or conditions (e.g., `%player:health%`). Holog
 }
 ```
 
-See Overview for global setup, [Display Configurations](broken-reference) for referenced displays.
+See Overview for global setup, [Display Configurations](../configuration/display-configurations.md) for referenced displays.

@@ -113,4 +113,4 @@ Mobs/entities.
 }
 ```
 
-See Overview for global setup, [Hologram Configurations](broken-reference) for grouping.
+See Overview for global setup, [Hologram Configurations](../configuration/hologram-configurations.md) for grouping.

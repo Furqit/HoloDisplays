@@ -71,7 +71,7 @@ These commands manage standalone displays: creating, listing, deleting, and edit
     * `condition <placeholder>` / `condition remove`.
   * Text:
     * `text line add <content>`.
-    * `text line <index> <content>`.
+    * `text line set <index> <content>`.
     * `text line delete <index>`.
     * `text width <value>`.
     * `background <color> <opacity>` / `background reset`.
