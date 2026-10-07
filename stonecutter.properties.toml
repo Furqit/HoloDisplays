@@ -2,7 +2,7 @@
 mod.id = "holodisplays"
 mod.name = "HoloDisplays"
 mod.group = "dev.furq"
-mod.version = "0.5.1"
+mod.version = "0.5.2"
 
 deps.fabric_loader = "0.17.2"
 deps.kotlin_version = "1.13.8+kotlin.2.3.0"
@@ -79,3 +79,13 @@ deps.fabric_api = "0.155.0+26.2"
 deps.placeholder-api = "3.1.0-beta.1+26.2"
 deps.sgui = "2.1.0+26.2"
 deps.permissions-api = "0.7.0"
+
+["26.3"]
+mod.mc_dep = ">=26.3 <=26.3"
+mod.mc_releases = ["26.3"]
+
+deps.fabric_api = "0.161.0+26.3"
+deps.placeholder-api = "3.2.0+26.3"
+deps.sgui = "2.2.1+26.3"
+deps.permissions-api = "0.7.0"
+

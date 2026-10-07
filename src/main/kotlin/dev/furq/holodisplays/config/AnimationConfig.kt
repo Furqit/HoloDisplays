@@ -3,22 +3,13 @@ package dev.furq.holodisplays.config
 import dev.furq.holodisplays.data.AnimationData
 import dev.furq.holodisplays.handlers.ConfigException
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 object AnimationConfig : Config {
     override lateinit var configDir: Path
-    private val animations = mutableMapOf<String, AnimationData>()
-
-    @OptIn(ExperimentalSerializationApi::class)
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        prettyPrint = true
-        allowTrailingComma = true
-        allowComments = true
-    }
+    private val animations = ConcurrentHashMap<String, AnimationData>()
+    private val json = sharedJson
 
     override fun init(baseDir: Path) {
         configDir = baseDir.resolve("animations")
@@ -26,19 +17,22 @@ object AnimationConfig : Config {
     }
 
     override fun reload() {
-        animations.clear()
-        configDir.toFile().listFiles { it.extension == "json" }
-            ?.forEach { file ->
+        val files = configDir.toFile().listFiles { it.extension == "json" }
+            ?: throw ConfigException("Failed to list animation config files")
+        val loaded = mutableMapOf<String, AnimationData>()
+        files.forEach { file ->
+            safeCall {
                 val jsonContent = file.readText()
                 val animationData = json.decodeFromString<AnimationData>(jsonContent)
-                animations[file.nameWithoutExtension] = animationData
+                loaded[file.nameWithoutExtension] = animationData
             }
-            ?: throw ConfigException("Failed to list animation config files")
+        }
+        animations.clear()
+        animations.putAll(loaded)
     }
 
 
     fun getAnimation(name: String) = animations[name]
-    fun getAnimations() = animations.toMap()
 
     fun saveAnimation(name: String, animation: AnimationData) = safeCall {
         animations[name] = animation

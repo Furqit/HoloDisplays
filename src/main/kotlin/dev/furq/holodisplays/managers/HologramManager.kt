@@ -48,8 +48,12 @@ object HologramManager {
         feedbackType: FeedbackType,
         vararg details: Pair<String, Any>
     ) = requireHologramExists(name, source) {
-        HologramHandler.updateHologramProperty(name, property)
-        FeedbackManager.send(source, feedbackType, *details)
+        val result = HologramHandler.updateHologramProperty(name, property)
+        if (result == null) {
+            FeedbackManager.send(source, FeedbackType.UPDATE_FAILED)
+        } else {
+            FeedbackManager.send(source, feedbackType, *details)
+        }
     }
 
     fun createHologram(name: String, player: ServerPlayer) = requireHologramNew(name, player.createCommandSourceStack()) {
@@ -158,7 +162,11 @@ object HologramManager {
 
     fun addDisplayToHologram(hologramName: String, displayName: String, source: CommandSourceStack): Boolean {
         val hologram = HologramConfig.getHologram(hologramName)
-        if (hologram!!.displays.any { it.name == displayName }) {
+        if (hologram == null) {
+            FeedbackManager.send(source, FeedbackType.HOLOGRAM_NOT_FOUND, "name" to hologramName)
+            return false
+        }
+        if (hologram.displays.any { it.name == displayName }) {
             FeedbackManager.send(source, FeedbackType.DISPLAY_ALREADY_ADDED, "name" to displayName)
             return false
         }
@@ -168,7 +176,11 @@ object HologramManager {
 
     fun removeDisplayFromHologram(hologramName: String, displayName: String, source: CommandSourceStack): Boolean {
         val hologram = HologramConfig.getHologram(hologramName)
-        val index = hologram!!.displays.indexOfFirst { it.name == displayName }
+        if (hologram == null) {
+            FeedbackManager.send(source, FeedbackType.HOLOGRAM_NOT_FOUND, "name" to hologramName)
+            return false
+        }
+        val index = hologram.displays.indexOfFirst { it.name == displayName }
         if (index == -1) {
             FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to displayName)
             return false
@@ -181,7 +193,11 @@ object HologramManager {
 
     fun updateDisplayOffset(hologramName: String, displayName: String, offset: Vector3f, source: CommandSourceStack) {
         val hologram = HologramConfig.getHologram(hologramName)
-        val index = hologram!!.displays.indexOfFirst { it.name == displayName }
+        if (hologram == null) {
+            FeedbackManager.send(source, FeedbackType.HOLOGRAM_NOT_FOUND, "name" to hologramName)
+            return
+        }
+        val index = hologram.displays.indexOfFirst { it.name == displayName }
 
         if (index == -1) {
             FeedbackManager.send(source, FeedbackType.DISPLAY_NOT_FOUND, "name" to displayName)

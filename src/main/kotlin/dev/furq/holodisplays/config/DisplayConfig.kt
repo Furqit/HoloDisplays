@@ -8,22 +8,14 @@ import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.ConfigException
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.*
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 object DisplayConfig : Config {
     override lateinit var configDir: Path
-    private val displays = mutableMapOf<String, DisplayData>()
-
-    @OptIn(ExperimentalSerializationApi::class)
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        prettyPrint = true
-        allowTrailingComma = true
-        allowComments = true
-    }
+    private val displays = ConcurrentHashMap<String, DisplayData>()
+    private val json = sharedJson
 
     override fun init(baseDir: Path) {
         configDir = baseDir.resolve("displays")
@@ -31,20 +23,22 @@ object DisplayConfig : Config {
     }
 
     override fun reload() {
-        displays.clear()
-        configDir.toFile().listFiles { it.extension == "json" }
-            ?.forEach { file ->
-                safeCall {
-                    val jsonContent = file.readText()
-                    val displayData = deserializeDisplayData(jsonContent)
-                    displays[file.nameWithoutExtension] = displayData
-                }
-            }
+        val files = configDir.toFile().listFiles { it.extension == "json" }
             ?: throw ConfigException("Failed to list display config files")
+        val loaded = mutableMapOf<String, DisplayData>()
+        files.forEach { file ->
+            safeCall {
+                val jsonContent = file.readText()
+                val displayData = deserializeDisplayData(jsonContent)
+                loaded[file.nameWithoutExtension] = displayData
+            }
+        }
+        displays.clear()
+        displays.putAll(loaded)
     }
 
     fun getDisplay(name: String): DisplayData? = displays[name]
-    fun getDisplayOrAPI(name: String): DisplayData? = displays[name] ?: HoloDisplaysAPIInternal.getDisplay(name)
+    fun getDisplayOrAPI(name: String): DisplayData? = displays[name] ?: HoloDisplaysAPIInternal.getDisplayUnchecked(name)
     fun getDisplays(): Map<String, DisplayData> = displays
     fun exists(name: String): Boolean = displays.containsKey(name)
 
@@ -62,10 +56,10 @@ object DisplayConfig : Config {
         val type = jsonElement.jsonObject["type"]?.jsonPrimitive?.content ?: throw ConfigException("Display config missing 'type' field")
 
         val display = when (type.lowercase()) {
-            "text" -> json.decodeFromString<TextDisplay>(jsonContent)
-            "item" -> json.decodeFromString<ItemDisplay>(jsonContent)
-            "block" -> json.decodeFromString<BlockDisplay>(jsonContent)
-            "entity" -> json.decodeFromString<EntityDisplay>(jsonContent)
+            "text" -> json.decodeFromJsonElement<TextDisplay>(jsonElement)
+            "item" -> json.decodeFromJsonElement<ItemDisplay>(jsonElement)
+            "block" -> json.decodeFromJsonElement<BlockDisplay>(jsonElement)
+            "entity" -> json.decodeFromJsonElement<EntityDisplay>(jsonElement)
             else -> throw ConfigException("Unknown display type: $type")
         }
 
@@ -73,16 +67,16 @@ object DisplayConfig : Config {
     }
 
     private fun serializeDisplayData(displayData: DisplayData): String {
-        val (displayJson, typeName) = when (val display = displayData.type) {
-            is TextDisplay -> json.encodeToString(TextDisplay.serializer(), display) to "text"
-            is ItemDisplay -> json.encodeToString(ItemDisplay.serializer(), display) to "item"
-            is BlockDisplay -> json.encodeToString(BlockDisplay.serializer(), display) to "block"
-            is EntityDisplay -> json.encodeToString(EntityDisplay.serializer(), display) to "entity"
+        val (displayElement, typeName) = when (val display = displayData.type) {
+            is TextDisplay -> json.encodeToJsonElement(TextDisplay.serializer(), display) to "text"
+            is ItemDisplay -> json.encodeToJsonElement(ItemDisplay.serializer(), display) to "item"
+            is BlockDisplay -> json.encodeToJsonElement(BlockDisplay.serializer(), display) to "block"
+            is EntityDisplay -> json.encodeToJsonElement(EntityDisplay.serializer(), display) to "entity"
             else -> throw ConfigException("Unknown display type: ${display::class.simpleName}")
         }
 
         return json.encodeToString(
-            JsonObject(json.parseToJsonElement(displayJson).jsonObject + ("type" to JsonPrimitive(typeName)))
+            JsonObject(displayElement.jsonObject + ("type" to JsonPrimitive(typeName)))
         )
     }
 

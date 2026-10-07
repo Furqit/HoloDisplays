@@ -46,6 +46,7 @@ enum class FeedbackType(private val template: String, val isError: Boolean = fal
     INVALID_ROTATION("Invalid rotation values. Must be valid angles", true),
     INVALID_CONDITION("Invalid condition format. Use: %placeholder% operator value", true),
     DISPLAY_ALREADY_ADDED("Display '{name}' is already added to this hologram", true),
+    UPDATE_FAILED("Update failed. Check console for details", true),
     PLAYER_ONLY("This command can only be used by players", true);
 
     fun format(vararg params: Pair<String, Any>): String =

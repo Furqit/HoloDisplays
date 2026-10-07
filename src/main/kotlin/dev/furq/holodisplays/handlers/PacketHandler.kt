@@ -22,6 +22,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.EntityTypes
 import net.minecraft.world.entity.ai.attributes.AttributeInstance
 import net.minecraft.world.entity.ai.attributes.Attributes
+import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.CustomModelData
 import net.minecraft.world.phys.Vec3
@@ -29,13 +30,14 @@ import org.joml.Math.toRadians
 import org.joml.Quaternionf
 import org.joml.Vector3f
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.experimental.or
 
 object PacketHandler {
     private const val INITIAL_ENTITY_ID = -1
     private var nextEntityId = INITIAL_ENTITY_ID
     private val recycledIds = mutableSetOf<Int>()
-    private val entityIds = mutableMapOf<UUID, Object2IntOpenHashMap<String>>()
+    private val entityIds = mutableMapOf<UUID, MutableMap<String, Object2IntOpenHashMap<String>>>()
     private val hexColorPattern = "^[0-9A-Fa-f]{2}[0-9A-Fa-f]{6}$".toRegex()
 
     private val itemDisplayTypeMap = mapOf(
@@ -49,6 +51,24 @@ object PacketHandler {
         "ground" to 7.toByte(),
         "fixed" to 8.toByte()
     )
+    private val parsedBackgroundColorCache = ConcurrentHashMap<String, Int>()
+    private val itemDisplayTypeCache = ConcurrentHashMap<String, Byte>()
+
+    private fun parseBackgroundColor(bgColor: String): Int? {
+        if (!bgColor.matches(hexColorPattern)) return null
+        return parsedBackgroundColorCache.getOrPut(bgColor) {
+            bgColor.take(2).toInt(16).shl(24) or bgColor.substring(2).toInt(16)
+        }
+    }
+
+    private fun resolveItemDisplayType(raw: String): Byte {
+        itemDisplayTypeCache[raw]?.let { return it }
+        val resolved = itemDisplayTypeMap[raw.lowercase()] ?: 7.toByte()
+        itemDisplayTypeCache[raw] = resolved
+        return resolved
+    }
+
+    private val itemStackPrototypes = ConcurrentHashMap<Item, ItemStack>()
 
     private fun getNextEntityId(): Int = recycledIds.firstOrNull()?.also(recycledIds::remove) ?: --nextEntityId
 
@@ -59,12 +79,18 @@ object PacketHandler {
         if (display is BlockDisplay && !isFromApi) add(-0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z)
     }
 
-    private fun getCompositeKey(hologramName: String, displayRef: String): String = "$hologramName/$displayRef"
+    private fun hologramEntities(playerUuid: UUID, hologramName: String): Object2IntOpenHashMap<String>? {
+        return entityIds[playerUuid]?.get(hologramName)
+    }
 
     fun resetEntityTracking() {
         entityIds.clear()
         nextEntityId = INITIAL_ENTITY_ID
         recycledIds.clear()
+    }
+
+    fun hasTrackedEntity(player: ServerPlayer, hologramName: String, displayRef: String): Boolean {
+        return hologramEntities(player.uuid, hologramName)?.containsKey(displayRef) == true
     }
 
     fun spawnDisplayEntity(
@@ -79,10 +105,10 @@ object PacketHandler {
     ) = safeCall {
         val entityId = getNextEntityId()
         val displayRef = "${line.name}:$lineIndex"
-        val compositeKey = getCompositeKey(hologramName, displayRef)
 
-        entityIds.getOrPut(player.uuid) { Object2IntOpenHashMap() }
-            .put(compositeKey, entityId)
+        entityIds.getOrPut(player.uuid) { mutableMapOf() }
+            .getOrPut(hologramName) { Object2IntOpenHashMap() }
+            .put(displayRef, entityId)
 
         val display = displayData.type
         if (display is EntityDisplay) {
@@ -99,26 +125,20 @@ object PacketHandler {
 
     fun destroyDisplayEntity(player: ServerPlayer, hologramName: String) {
         val playerEntities = entityIds[player.uuid] ?: return
-        val prefix = "$hologramName/"
-        val iterator = playerEntities.object2IntEntrySet().iterator()
-        val idsToDestroy = IntArrayList()
-
-        while (iterator.hasNext()) {
-            val entry = iterator.next()
-            if (entry.key.startsWith(prefix)) {
-                idsToDestroy.add(entry.intValue)
-                iterator.remove()
-            }
-        }
-
-        if (!idsToDestroy.isEmpty) {
-            player.connection.send(ClientboundRemoveEntitiesPacket(idsToDestroy))
-            recycledIds.addAll(idsToDestroy)
-        }
-
+        val hologramMap = playerEntities.remove(hologramName) ?: return
         if (playerEntities.isEmpty()) {
             entityIds.remove(player.uuid)
         }
+        if (hologramMap.isEmpty()) return
+
+        val idsToDestroy = IntArrayList(hologramMap.size)
+        val iterator = hologramMap.object2IntEntrySet().iterator()
+        while (iterator.hasNext()) {
+            idsToDestroy.add(iterator.next().intValue)
+        }
+
+        player.connection.send(ClientboundRemoveEntitiesPacket(idsToDestroy))
+        recycledIds.addAll(idsToDestroy)
     }
 
     private fun createSpawnPacket(
@@ -186,11 +206,24 @@ object PacketHandler {
         lineIndex: Int,
         text: Component,
     ) {
-        val entries = buildList {
-            add(createEntry(TextDisplayEntityAccessor.getText(), text))
+        buildTextUpdatePacket(player, hologramName, displayId, lineIndex, text)?.let {
+            player.connection.send(it)
         }
+    }
+
+    fun buildTextUpdatePacket(
+        player: ServerPlayer,
+        hologramName: String,
+        displayId: String,
+        lineIndex: Int,
+        text: Component,
+    ): ClientboundSetEntityDataPacket? {
         val displayRef = "$displayId:$lineIndex"
-        updateEntityMetadata(player, hologramName, displayRef, entries)
+        val hologramMap = hologramEntities(player.uuid, hologramName) ?: return null
+        if (!hologramMap.containsKey(displayRef)) return null
+        val entityId = hologramMap.getInt(displayRef)
+        val entries = listOf(createEntry(TextDisplayEntityAccessor.getText(), text))
+        return ClientboundSetEntityDataPacket(entityId, entries)
     }
 
     private fun updateEntityMetadata(
@@ -199,9 +232,9 @@ object PacketHandler {
         displayRef: String,
         metadata: List<SynchedEntityData.DataValue<*>>,
     ) = safeCall {
-        val compositeKey = getCompositeKey(hologramName, displayRef)
-        val entityId = entityIds[player.uuid]?.getInt(compositeKey) ?: return@safeCall
-        if (!entityIds[player.uuid]!!.containsKey(compositeKey)) return@safeCall
+        val hologramMap = hologramEntities(player.uuid, hologramName) ?: return@safeCall
+        if (!hologramMap.containsKey(displayRef)) return@safeCall
+        val entityId = hologramMap.getInt(displayRef)
 
         player.connection.send(ClientboundSetEntityDataPacket(entityId, metadata))
     }
@@ -244,10 +277,14 @@ object PacketHandler {
             rawLeftRotation
         } else {
             val rotation = display.rotation ?: hologram.rotation
-            Quaternionf()
-                .rotateY(toRadians(rotation.y))
-                .rotateX(toRadians(rotation.x))
-                .rotateZ(toRadians(rotation.z))
+            if (rotation.x == 0f && rotation.y == 0f && rotation.z == 0f) {
+                Quaternionf()
+            } else {
+                Quaternionf()
+                    .rotateY(toRadians(rotation.y))
+                    .rotateX(toRadians(rotation.x))
+                    .rotateZ(toRadians(rotation.z))
+            }
         }
         add(createEntry(DisplayAccessor.getLeftRotation(), leftRotation))
 
@@ -256,7 +293,7 @@ object PacketHandler {
             add(createEntry(DisplayAccessor.getRightRotation(), rightRotation))
         }
 
-        val isFromApi = HoloDisplaysAPIInternal.getDisplay(line.name) != null
+        val isFromApi = HoloDisplaysAPIInternal.getDisplayUnchecked(line.name) != null
         val translation = calculateTranslation(display, line.offset, scale, isFromApi)
         add(createEntry(DisplayAccessor.getTranslation(), translation))
 
@@ -273,9 +310,8 @@ object PacketHandler {
             display.lineWidth?.also { add(createEntry(TextDisplayEntityAccessor.getLineWidth(), it)) }
 
             display.backgroundColor
-                ?.takeIf { it.matches(hexColorPattern) }
-                ?.also { bgColor ->
-                    val finalColor = bgColor.take(2).toInt(16).shl(24) or bgColor.substring(2).toInt(16)
+                ?.let(::parseBackgroundColor)
+                ?.also { finalColor ->
                     add(createEntry(TextDisplayEntityAccessor.getBackground(), finalColor))
                 }
 
@@ -301,7 +337,7 @@ object PacketHandler {
         buildList {
             val item = McRegistries.getItemOrThrow(display.id)
 
-            val itemStack = ItemStack(item, 1)
+            val itemStack = itemStackPrototypes.getOrPut(item) { ItemStack(item, 1) }.copy()
             display.customModelData?.also { cmd ->
                 itemStack.set(
                     DataComponents.CUSTOM_MODEL_DATA,
@@ -312,8 +348,7 @@ object PacketHandler {
 
             add(createEntry(ItemDisplayEntityAccessor.getItem(), itemStack))
 
-            val displayType = itemDisplayTypeMap[display.itemDisplayType.lowercase()] ?: 7.toByte()
-            add(createEntry(ItemDisplayEntityAccessor.getItemDisplay(), displayType))
+            add(createEntry(ItemDisplayEntityAccessor.getItemDisplay(), resolveItemDisplayType(display.itemDisplayType)))
         }
     } ?: emptyList()
 

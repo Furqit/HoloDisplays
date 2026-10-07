@@ -18,13 +18,23 @@ import java.util.*
 object ViewerHandler {
     private val observers = mutableMapOf<String, MutableSet<UUID>>()
     private val hologramChunkMap = mutableMapOf<Long, MutableSet<String>>()
+    private val visibilityCache = mutableMapOf<UUID, VisibilityCacheEntry>()
     private val playerManager get() = HoloDisplays.SERVER?.playerList
+
+    private data class VisibilityCacheEntry(
+        val chunkLong: Long,
+        val world: String,
+        val nearby: Set<String>
+    )
 
     private fun getPlayer(uuid: UUID): ServerPlayer? = playerManager?.getPlayer(uuid)
     fun isViewing(player: ServerPlayer, name: String): Boolean = observers[name]?.contains(player.uuid) == true
     fun createTracker(name: String) = observers.getOrPut(name) { mutableSetOf() }
     fun removeTracker(name: String) = observers.remove(name)
-    fun clearTrackers() = observers.clear()
+    fun clearTrackers() {
+        observers.clear()
+        visibilityCache.clear()
+    }
     fun getObserverCount(name: String): Int = observers[name]?.size ?: 0
 
     fun resetAllObservers() {
@@ -32,6 +42,11 @@ object ViewerHandler {
             removeHologramFromAllViewers(name)
         }
         hologramChunkMap.clear()
+        visibilityCache.clear()
+    }
+
+    fun invalidateVisibilityCache() {
+        visibilityCache.clear()
     }
 
     fun updateHologramIndex(name: String, position: HologramData.Position) {
@@ -42,15 +57,18 @@ object ViewerHandler {
             position.z.toInt() shr 4
         )
         hologramChunkMap.getOrPut(chunkLong) { mutableSetOf() }.add(name)
+        visibilityCache.clear()
     }
 
     fun removeHologramIndex(name: String) {
         val iterator = hologramChunkMap.values.iterator()
+        var removed = false
         while (iterator.hasNext()) {
             val set = iterator.next()
-            set.remove(name)
+            if (set.remove(name)) removed = true
             if (set.isEmpty()) iterator.remove()
         }
+        if (removed) visibilityCache.clear()
     }
 
     fun addViewer(player: ServerPlayer, name: String) = safeCall {
@@ -71,6 +89,7 @@ object ViewerHandler {
 
     fun clearViewers(player: ServerPlayer) {
         observers.keys.forEach { name -> removeViewer(player, name) }
+        visibilityCache.remove(player.uuid)
     }
 
     fun removeHologramFromAllViewers(name: String) {
@@ -88,6 +107,28 @@ object ViewerHandler {
                 PacketHandler.destroyDisplayEntity(player, name)
                 showHologramToPlayer(player, name, hologramData)
             }
+        }
+    }
+
+    fun respawnForPlayer(player: ServerPlayer, name: String) {
+        val hologramData = HologramConfig.getHologramOrAPI(name) ?: return
+        PacketHandler.destroyDisplayEntity(player, name)
+        showHologramToPlayer(player, name, hologramData)
+    }
+
+    private fun needsDisplayRefresh(player: ServerPlayer, name: String, hologram: HologramData): Boolean {
+        hologram.displays.forEachIndexed { index, line ->
+            val display = DisplayConfig.getDisplayOrAPI(line.name)
+            val expected = display != null && ConditionEvaluator.evaluate(display.type.conditionalPlaceholder, player)
+            val tracked = PacketHandler.hasTrackedEntity(player, name, "${line.name}:$index")
+            if (expected != tracked) return true
+        }
+        return false
+    }
+
+    private fun hasConditionalDisplays(hologram: HologramData): Boolean {
+        return hologram.displays.any { line ->
+            DisplayConfig.getDisplayOrAPI(line.name)?.type?.conditionalPlaceholder != null
         }
     }
 
@@ -143,16 +184,25 @@ object ViewerHandler {
         val playerWorld = player.level().dimension().identifier().toString()
         val playerChunkX = player.chunkPosition().x
         val playerChunkZ = player.chunkPosition().z
-        
+        //~ if >=26.1 'asLong' -> 'pack'
+        val playerChunkLong = ChunkPos.pack(playerChunkX, playerChunkZ)
+
         val viewDistance = playerManager?.viewDistance ?: 10
-        
-        val nearbyHolograms = mutableSetOf<String>()
-        for (x in -viewDistance..viewDistance) {
-            for (z in -viewDistance..viewDistance) {
-                //~ if >=26.1 'asLong' -> 'pack'
-                val chunkLong = ChunkPos.pack(playerChunkX + x, playerChunkZ + z)
-                hologramChunkMap[chunkLong]?.let { nearbyHolograms.addAll(it) }
+
+        val cached = visibilityCache[player.uuid]
+        val nearbyHolograms: Set<String> = if (cached != null && cached.chunkLong == playerChunkLong && cached.world == playerWorld) {
+            cached.nearby
+        } else {
+            val nearby = mutableSetOf<String>()
+            for (x in -viewDistance..viewDistance) {
+                for (z in -viewDistance..viewDistance) {
+                    //~ if >=26.1 'asLong' -> 'pack'
+                    val chunkLong = ChunkPos.pack(playerChunkX + x, playerChunkZ + z)
+                    hologramChunkMap[chunkLong]?.let { nearby.addAll(it) }
+                }
             }
+            visibilityCache[player.uuid] = VisibilityCacheEntry(playerChunkLong, playerWorld, nearby)
+            nearby
         }
 
         val potentialHolograms = nearbyHolograms + (observers.entries.filter { it.value.contains(player.uuid) }.map { it.key })
@@ -169,11 +219,19 @@ object ViewerHandler {
             }
 
             val shouldView = ConditionEvaluator.evaluate(hologram.conditionalPlaceholder, player) &&
-                    HologramHandler.isPlayerInRange(player, hologram.world, hologram.position.toVec3f(), hologram.viewRange)
+                    HologramHandler.isPlayerInRange(player, hologram.world, hologram.position.x, hologram.position.y, hologram.position.z, hologram.viewRange)
 
             when {
                 shouldView && !isCurrentlyViewing -> addViewer(player, name)
                 !shouldView && isCurrentlyViewing -> removeViewer(player, name)
+                shouldView && isCurrentlyViewing -> {
+                    if (hasConditionalDisplays(hologram)) {
+                        val rate = if (hologram.updateRate <= 0) 20 else hologram.updateRate
+                        if (player.tickCount % rate == 0 && needsDisplayRefresh(player, name, hologram)) {
+                            respawnForPlayer(player, name)
+                        }
+                    }
+                }
             }
         }
     }

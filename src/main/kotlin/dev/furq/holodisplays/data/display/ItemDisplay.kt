@@ -33,6 +33,6 @@ data class ItemDisplay(
         override var billboardMode: BillboardConstraints? = null
         override var conditionalPlaceholder: String? = null
 
-        override fun build() = ItemDisplay(id, itemDisplayType, customModelData, rotation, leftRotation, rightRotation, scale, billboardMode, conditionalPlaceholder)
+        override fun build() = ItemDisplay(id, itemDisplayType, customModelData, rotation?.let { Vector3f(it) }, leftRotation?.let { Quaternionf(it) }, rightRotation?.let { Quaternionf(it) }, scale?.let { Vector3f(it) }, billboardMode, conditionalPlaceholder)
     }
 }

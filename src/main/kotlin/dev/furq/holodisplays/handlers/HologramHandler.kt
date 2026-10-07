@@ -15,6 +15,10 @@ import java.util.concurrent.ConcurrentHashMap
 object HologramHandler {
     private val worldCache = ConcurrentHashMap<String, Level>()
 
+    fun clearWorldCache() {
+        worldCache.clear()
+    }
+
     sealed class HologramProperty {
         data class Scale(val value: Vector3f?) : HologramProperty()
         data class BillboardMode(val mode: BillboardConstraints?) : HologramProperty()
@@ -25,6 +29,7 @@ object HologramHandler {
         data class LineOffset(val index: Int, val offset: Vector3f) : HologramProperty()
         data class AddLine(val displayId: String, val offset: Vector3f = Vector3f()) : HologramProperty()
         data class RemoveLine(val index: Int) : HologramProperty()
+        data class RemoveLines(val indices: List<Int>) : HologramProperty()
         data class ConditionalPlaceholder(val value: String?) : HologramProperty()
     }
 
@@ -73,7 +78,8 @@ object HologramHandler {
             is HologramProperty.ConditionalPlaceholder,
             is HologramProperty.LineOffset,
             is HologramProperty.AddLine,
-            is HologramProperty.RemoveLine -> true
+            is HologramProperty.RemoveLine,
+            is HologramProperty.RemoveLines -> true
 
             else -> false
         }
@@ -97,17 +103,30 @@ object HologramHandler {
         is HologramProperty.AddLine -> hologram.copy(
             displays = hologram.displays + HologramData.DisplayLine(property.displayId, property.offset)
         )
-        is HologramProperty.RemoveLine -> hologram.copy(
-            displays = hologram.displays.filterIndexed { index, _ -> index != property.index }
-        ).also {
+        is HologramProperty.RemoveLine -> {
             if (property.index !in hologram.displays.indices) {
                 throw HologramException("Invalid line index: ${property.index}")
             }
+            hologram.copy(
+                displays = hologram.displays.filterIndexed { index, _ -> index != property.index }
+            )
+        }
+        is HologramProperty.RemoveLines -> {
+            val sorted = property.indices.sorted()
+            if (sorted.any { it !in hologram.displays.indices }) {
+                throw HologramException("Invalid line indices: ${property.indices}")
+            }
+            val toRemove = sorted.toSet()
+            hologram.copy(
+                displays = hologram.displays.filterIndexed { index, _ -> index !in toRemove }
+            )
         }
     }
 
     private fun updateLineOffset(hologram: HologramData, property: HologramProperty.LineOffset): HologramData {
-        require(property.index in hologram.displays.indices) { "Invalid line index: ${property.index}" }
+        if (property.index !in hologram.displays.indices) {
+            throw HologramException("Invalid line index: ${property.index}")
+        }
         return hologram.copy(
             displays = hologram.displays.mapIndexed { index, displayLine ->
                 if (index == property.index) displayLine.copy(offset = property.offset) else displayLine
@@ -128,7 +147,7 @@ object HologramHandler {
     private fun getPlayersInRange(data: HologramData): List<ServerPlayer> {
         return getWorld(data.world).players()
             .filterIsInstance<ServerPlayer>()
-            .filter { isPlayerInRange(it, data.world, data.position.toVec3f(), data.viewRange) }
+            .filter { isPlayerInRange(it, data.world, data.position.x, data.position.y, data.position.z, data.viewRange) }
     }
 
     fun isPlayerInRange(
@@ -137,11 +156,22 @@ object HologramHandler {
         position: Vector3f,
         viewRange: Double,
     ): Boolean {
+        return isPlayerInRange(player, world, position.x, position.y, position.z, viewRange)
+    }
+
+    fun isPlayerInRange(
+        player: ServerPlayer,
+        world: String,
+        x: Float,
+        y: Float,
+        z: Float,
+        viewRange: Double,
+    ): Boolean {
         if (player.level() == getWorld(world)) {
             return player.position().distanceToSqr(
-                position.x.toDouble(),
-                position.y.toDouble(),
-                position.z.toDouble()
+                x.toDouble(),
+                y.toDouble(),
+                z.toDouble()
             ) <= viewRange * viewRange
         }
         return false

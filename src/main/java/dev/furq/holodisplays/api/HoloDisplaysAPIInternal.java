@@ -32,8 +32,16 @@ public final class HoloDisplaysAPIInternal {
         return HoloDisplaysAPIImpl.hasApiHolograms();
     }
 
+    public static boolean hasApiHologramsUnchecked() {
+        return HoloDisplaysAPIImpl.hasApiHolograms();
+    }
+
     public static void forEachApiHologram(BiConsumer<String, HologramData> consumer) {
         validateCaller();
+        HoloDisplaysAPIImpl.forEachApiHologram(consumer);
+    }
+
+    public static void forEachApiHologramUnchecked(BiConsumer<String, HologramData> consumer) {
         HoloDisplaysAPIImpl.forEachApiHologram(consumer);
     }
 
@@ -47,8 +55,16 @@ public final class HoloDisplaysAPIInternal {
         return HoloDisplaysAPIImpl.getDisplayStatic(id);
     }
 
+    public static DisplayData getDisplayUnchecked(String id) {
+        return HoloDisplaysAPIImpl.getDisplayStatic(id);
+    }
+
     public static HologramData getHologram(String id) {
         validateCaller();
+        return HoloDisplaysAPIImpl.getHologramStatic(id);
+    }
+
+    public static HologramData getHologramUnchecked(String id) {
         return HoloDisplaysAPIImpl.getHologramStatic(id);
     }
 }

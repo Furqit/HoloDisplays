@@ -17,6 +17,8 @@ import net.minecraft.world.entity.Pose as EntityPose
 
 object DisplayManager {
 
+    private val COLOR_HEX_REGEX = Regex("^[0-9A-Fa-f]{6}$")
+
     private inline fun requireDisplayExists(
         name: String,
         source: CommandSourceStack,
@@ -42,8 +44,12 @@ object DisplayManager {
         feedbackType: FeedbackType,
         vararg details: Pair<String, Any>
     ) = requireDisplayExists(name, source) {
-        DisplayHandler.updateDisplayProperty(name, property)
-        FeedbackManager.send(source, feedbackType, *details)
+        val result = DisplayHandler.updateDisplayProperty(name, property)
+        if (result == null) {
+            FeedbackManager.send(source, FeedbackType.UPDATE_FAILED)
+        } else {
+            FeedbackManager.send(source, feedbackType, *details)
+        }
     }
 
     private fun createDisplay(name: String, display: BaseDisplay, type: String, source: CommandSourceStack): Boolean {
@@ -99,8 +105,8 @@ object DisplayManager {
             .filterValues { hologram -> hologram.displays.any { it.name == name } }
             .forEach { (hologramName, hologram) ->
                 val indicesToRemove = hologram.displays.mapIndexedNotNull { index, displayLine -> index.takeIf { displayLine.name == name } }
-                indicesToRemove.reversed().forEach { index ->
-                    HologramHandler.updateHologramProperty(hologramName, HologramHandler.HologramProperty.RemoveLine(index))
+                if (indicesToRemove.isNotEmpty()) {
+                    HologramHandler.updateHologramProperty(hologramName, HologramHandler.HologramProperty.RemoveLines(indicesToRemove))
                 }
             }
 
@@ -159,18 +165,24 @@ object DisplayManager {
     fun updateBackground(name: String, color: String?, opacity: Int?, source: CommandSourceStack) {
         requireDisplayExists(name, source) {
             if (color != null) {
-                if (!color.matches(Regex("^[0-9A-Fa-f]{6}$"))) {
+                if (!color.matches(COLOR_HEX_REGEX)) {
                     FeedbackManager.send(source, FeedbackType.INVALID_COLOR)
                     return
                 }
 
-                val opacityHex = ((opacity?.coerceIn(0, 100) ?: (100 / 100.0 * 255))).toInt()
+                val resolvedOpacity = opacity ?: 100
+                if (resolvedOpacity !in 0..100) {
+                    FeedbackManager.send(source, FeedbackType.INVALID_TEXT_OPACITY)
+                    return
+                }
+
+                val opacityHex = ((resolvedOpacity.coerceIn(0, 100) / 100.0) * 255).toInt()
                     .toString(16)
                     .padStart(2, '0')
                     .uppercase()
 
                 updateProperty(name, source, TextBackgroundColor("$opacityHex$color"),
-                    FeedbackType.BACKGROUND_UPDATED, "color" to color, "opacity" to opacity!!)
+                    FeedbackType.BACKGROUND_UPDATED, "color" to color, "opacity" to resolvedOpacity)
             } else {
                 updateProperty(name, source, TextBackgroundColor(null), FeedbackType.BACKGROUND_UPDATED)
             }

@@ -23,7 +23,7 @@ object TextLineEditor {
             player = player,
             title = GuiUtils.createPagedTitle("Edit Component Lines", pageInfo),
             size = 45,
-            borderSlots = (10..16) + (19..25) + (28..34)
+            borderSlots = GuiUtils.PAGED_BORDER_SLOTS
         )
 
         gui.apply {
@@ -41,7 +41,7 @@ object TextLineEditor {
             val endIndex = minOf(startIndex + ITEMS_PER_PAGE, display.lines.size)
 
             for (i in startIndex until endIndex) {
-                if (slot in listOf(17, 26, 35)) slot += 2
+                slot = GuiUtils.advanceContentSlot(slot)
 
                 val line = display.lines[i]
                 val lore = buildList {

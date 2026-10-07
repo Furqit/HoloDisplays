@@ -13,26 +13,57 @@ import java.util.concurrent.CompletableFuture
 
 object CommandUtils {
 
-    fun suggestHolograms(builder: SuggestionsBuilder): CompletableFuture<Suggestions> =
-        builder.apply { HologramConfig.getHolograms().keys.forEach(::suggest) }.buildFuture()
+    private fun matchesPrefix(candidate: String, remaining: String): Boolean {
+        if (remaining.isEmpty()) return true
+        return candidate.startsWith(remaining, ignoreCase = true) ||
+            candidate.substringAfter(':').startsWith(remaining.substringAfter(':'), ignoreCase = true)
+    }
 
-    fun suggestDisplays(builder: SuggestionsBuilder): CompletableFuture<Suggestions> =
-        builder.apply { DisplayConfig.getDisplays().keys.forEach(::suggest) }.buildFuture()
+    fun suggestHolograms(builder: SuggestionsBuilder): CompletableFuture<Suggestions> {
+        val remaining = builder.remaining.lowercase()
+        HologramConfig.getHolograms().keys.toList()
+            .filter { matchesPrefix(it, remaining) }
+            .forEach(builder::suggest)
+        return builder.buildFuture()
+    }
 
-    fun suggestItemIds(builder: SuggestionsBuilder): CompletableFuture<Suggestions> =
-        builder.apply {
-            BuiltInRegistries.ITEM.keySet().forEach { suggest(it.toString()) }
-        }.buildFuture()
+    fun suggestDisplays(builder: SuggestionsBuilder): CompletableFuture<Suggestions> {
+        val remaining = builder.remaining.lowercase()
+        DisplayConfig.getDisplays().keys.toList()
+            .filter { matchesPrefix(it, remaining) }
+            .forEach(builder::suggest)
+        return builder.buildFuture()
+    }
 
-    fun suggestBlockIds(builder: SuggestionsBuilder): CompletableFuture<Suggestions> =
-        builder.apply {
-            BuiltInRegistries.BLOCK.keySet().forEach { suggest(it.toString()) }
-        }.buildFuture()
+    fun suggestItemIds(builder: SuggestionsBuilder): CompletableFuture<Suggestions> {
+        val remaining = builder.remaining.lowercase()
+        BuiltInRegistries.ITEM.keySet()
+            .asSequence()
+            .map { it.toString() }
+            .filter { matchesPrefix(it, remaining) }
+            .forEach(builder::suggest)
+        return builder.buildFuture()
+    }
 
-    fun suggestEntityIds(builder: SuggestionsBuilder): CompletableFuture<Suggestions> =
-        builder.apply {
-            BuiltInRegistries.ENTITY_TYPE.keySet().forEach { suggest(it.toString()) }
-        }.buildFuture()
+    fun suggestBlockIds(builder: SuggestionsBuilder): CompletableFuture<Suggestions> {
+        val remaining = builder.remaining.lowercase()
+        BuiltInRegistries.BLOCK.keySet()
+            .asSequence()
+            .map { it.toString() }
+            .filter { matchesPrefix(it, remaining) }
+            .forEach(builder::suggest)
+        return builder.buildFuture()
+    }
+
+    fun suggestEntityIds(builder: SuggestionsBuilder): CompletableFuture<Suggestions> {
+        val remaining = builder.remaining.lowercase()
+        BuiltInRegistries.ENTITY_TYPE.keySet()
+            .asSequence()
+            .map { it.toString() }
+            .filter { matchesPrefix(it, remaining) }
+            .forEach(builder::suggest)
+        return builder.buildFuture()
+    }
 
     fun requirePlayer(context: CommandContext<CommandSourceStack>): ServerPlayer? {
         return context.source.player ?: run {

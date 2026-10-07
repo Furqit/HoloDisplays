@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.Items
+import java.util.Locale
 
 object NearList {
     private const val ITEMS_PER_PAGE = 21
@@ -19,7 +20,7 @@ object NearList {
             player = player,
             title = GuiUtils.createPagedTitle("Nearby Holograms", pageInfo),
             size = 45,
-            borderSlots = (10..16) + (19..25) + (28..34)
+            borderSlots = GuiUtils.PAGED_BORDER_SLOTS
         )
 
         gui.apply {
@@ -36,12 +37,12 @@ object NearList {
             val endIndex = minOf(startIndex + ITEMS_PER_PAGE, holograms.size)
 
             for (i in startIndex until endIndex) {
-                if (slot in listOf(17, 26, 35)) slot += 2
+                slot = GuiUtils.advanceContentSlot(slot)
 
                 val (name, distance) = holograms[i]
                 val lore = listOf(
                     Component.literal("Distance: ").withStyle(ChatFormatting.GRAY)
-                        .append(Component.literal("${"%.1f".format(distance)}m").withStyle(ChatFormatting.YELLOW)),
+                        .append(Component.literal("${String.format(Locale.US, "%.1f", distance)}m").withStyle(ChatFormatting.YELLOW)),
                     Component.empty()
                 ) + GuiUtils.createActionLore("Left-Click to edit", "Right-Click to delete")
 

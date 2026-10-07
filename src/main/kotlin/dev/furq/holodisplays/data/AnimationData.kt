@@ -11,6 +11,6 @@ data class AnimationData(
         private var frames = mutableListOf<String>()
         var interval: Int = 20
 
-        fun build() = AnimationData(frames, interval)
+        fun build() = AnimationData(frames.toList(), interval)
     }
 }

@@ -3,10 +3,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
 
 plugins {
-    kotlin("jvm") version "2.3.+"
-    kotlin("plugin.serialization") version "2.3.+"
+    kotlin("jvm") version "2.4.+"
+    kotlin("plugin.serialization") version "2.4.+"
     id("dev.kikugie.loom-back-compat")
-    id("me.modmuss50.mod-publish-plugin") version "2.0.0-beta.1"
+    id("me.modmuss50.mod-publish-plugin") version "2.2.+"
 }
 
 val localProperties = Properties().apply {
@@ -46,9 +46,11 @@ dependencies {
     modImplementation("net.fabricmc:fabric-language-kotlin:${property("deps.kotlin_version")}")
     modImplementation("net.fabricmc.fabric-api:fabric-api:${property("deps.fabric_api")}")
 
-    modImplementation("eu.pb4", "placeholder-api", property("deps.placeholder-api") as String)
-    modImplementation(include("eu.pb4", "sgui", property("deps.sgui") as String))
-    modImplementation(include("me.lucko", "fabric-permissions-api", property("deps.permissions-api") as String))
+    modImplementation("eu.pb4:placeholder-api:${property("deps.placeholder-api")}")
+    modImplementation("eu.pb4:sgui:${property("deps.sgui")}")
+    include("eu.pb4:sgui:${property("deps.sgui")}")
+    modImplementation("me.lucko:fabric-permissions-api:${property("deps.permissions-api")}")
+    include("me.lucko:fabric-permissions-api:${property("deps.permissions-api")}")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
@@ -131,7 +133,7 @@ publishMods {
         projectId = "1150354"
         projectSlug = "holodisplays"
         accessToken = localProperties.getProperty("CURSEFORGE_TOKEN")
-        serverRequired = true
+        server = true
         minecraftVersionRange {
             start = compatibleVersions.first()
             end = compatibleVersions.last()

@@ -23,7 +23,7 @@ object DisplayEditCommand : EditCommand() {
     override fun updateScale(name: String, scale: Vector3f, source: CommandSourceStack) = DisplayManager.updateScale(name, scale, source)
     override fun resetScale(name: String, source: CommandSourceStack) = DisplayManager.updateScale(name, null, source)
     override fun updateBillboard(name: String, mode: String, source: CommandSourceStack) = DisplayManager.updateBillboard(name, mode, source)
-    override fun resetBillboard(name: String, source: CommandSourceStack) = DisplayManager.updateRotation(name, null, null, null, source)
+    override fun resetBillboard(name: String, source: CommandSourceStack) = DisplayManager.updateBillboard(name, null, source)
     override fun updateRotation(name: String, pitch: Float, yaw: Float, roll: Float, source: CommandSourceStack) = DisplayManager.updateRotation(name, pitch, yaw, roll, source)
     override fun resetRotation(name: String, source: CommandSourceStack) = DisplayManager.updateRotation(name, null, null, null, source)
     override fun updateCondition(name: String, condition: String?, source: CommandSourceStack) = DisplayManager.updateCondition(name, condition, source)

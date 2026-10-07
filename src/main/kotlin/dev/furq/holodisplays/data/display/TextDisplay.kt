@@ -52,7 +52,7 @@ data class TextDisplay(
 
         override fun build() = TextDisplay(
             lines.toList(), lineWidth, backgroundColor, textOpacity,
-            shadow, seeThrough, alignment, rotation, leftRotation, rightRotation, scale, billboardMode, conditionalPlaceholder
+            shadow, seeThrough, alignment, rotation?.let { Vector3f(it) }, leftRotation?.let { Quaternionf(it) }, rightRotation?.let { Quaternionf(it) }, scale?.let { Vector3f(it) }, billboardMode, conditionalPlaceholder
         )
     }
 }

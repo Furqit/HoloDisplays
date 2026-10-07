@@ -2,8 +2,11 @@ package dev.furq.holodisplays.handlers
 
 import net.minecraft.core.Registry
 import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.world.entity.EntityType
+import net.minecraft.world.item.Item
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.state.BlockState
+import java.util.concurrent.ConcurrentHashMap
 //? if >=1.21.11 {
 import net.minecraft.resources.Identifier
 import net.minecraft.resources.ResourceKey
@@ -15,6 +18,10 @@ import net.minecraft.resources.ResourceKey
 typealias McId = Identifier
 
 internal object McRegistries {
+
+    private val itemCache = ConcurrentHashMap<String, Item>()
+    private val blockCache = ConcurrentHashMap<String, Block>()
+    private val entityTypeCache = ConcurrentHashMap<String, EntityType<*>>()
 
     fun parseId(raw: String?): McId? =
         //~ if >=1.21.11 'ResourceLocation' -> 'Identifier'
@@ -33,9 +40,9 @@ internal object McRegistries {
         *///?}
     }
 
-    fun getItemOrThrow(id: String) = getOrThrow(BuiltInRegistries.ITEM, id, "item")
-    fun getBlockOrThrow(id: String) = getOrThrow(BuiltInRegistries.BLOCK, id, "block")
-    fun getEntityTypeOrThrow(id: String) = getOrThrow(BuiltInRegistries.ENTITY_TYPE, id, "entity")
+    fun getItemOrThrow(id: String): Item = itemCache.getOrPut(id) { getOrThrow(BuiltInRegistries.ITEM, id, "item") }
+    fun getBlockOrThrow(id: String): Block = blockCache.getOrPut(id) { getOrThrow(BuiltInRegistries.BLOCK, id, "block") }
+    fun getEntityTypeOrThrow(id: String): EntityType<*> = entityTypeCache.getOrPut(id) { getOrThrow(BuiltInRegistries.ENTITY_TYPE, id, "entity") }
 
     private fun <T : Any> getOrThrow(registry: Registry<T>, displayId: String, typeName: String): T {
         val id = parseId(displayId) ?: throw DisplayException("Invalid $typeName identifier: $displayId")

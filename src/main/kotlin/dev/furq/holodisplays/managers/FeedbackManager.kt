@@ -11,6 +11,7 @@ import net.minecraft.sounds.SoundEvent
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import org.joml.Vector3f
+import java.util.Locale
 
 object FeedbackManager {
     private const val PREFIX = "§8[§bHoloDisplays§8]§r "
@@ -38,15 +39,15 @@ object FeedbackManager {
     }
 
     fun formatVector3f(vector: Vector3f): Array<Pair<String, Any>> = arrayOf(
-        "x" to "%.2f".format(vector.x),
-        "y" to "%.2f".format(vector.y),
-        "z" to "%.2f".format(vector.z)
+        "x" to String.format(Locale.US, "%.2f", vector.x),
+        "y" to String.format(Locale.US, "%.2f", vector.y),
+        "z" to String.format(Locale.US, "%.2f", vector.z)
     )
 
     fun formatRotation(pitch: Float, yaw: Float, roll: Float): Array<Pair<String, Any>> = arrayOf(
-        "pitch" to "%.2f".format(pitch),
-        "yaw" to "%.2f".format(yaw),
-        "roll" to "%.2f".format(roll)
+        "pitch" to String.format(Locale.US, "%.2f", pitch),
+        "yaw" to String.format(Locale.US, "%.2f", yaw),
+        "roll" to String.format(Locale.US, "%.2f", roll)
     )
 
     private fun playSuccessSound(source: CommandSourceStack) {

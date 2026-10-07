@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
@@ -37,7 +38,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
         return !apiHolograms.isEmpty();
     }
 
-    static void forEachApiHologram(java.util.function.BiConsumer<String, HologramData> consumer) {
+    static void forEachApiHologram(BiConsumer<String, HologramData> consumer) {
         apiHolograms.forEach(consumer);
     }
 

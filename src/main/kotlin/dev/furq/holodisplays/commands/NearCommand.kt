@@ -35,9 +35,10 @@ object NearCommand {
                         hologramPos.y.toDouble(),
                         hologramPos.z.toDouble()
                     )
-                    if (distSq <= radiusSq) name to sqrt(distSq) else null
+                    if (distSq <= radiusSq) name to distSq else null
                 }
                 .sortedBy { it.second }
+                .map { (name, distSq) -> name to sqrt(distSq) }
                 .toList()
 
             if (nearbyHolograms.isEmpty()) {

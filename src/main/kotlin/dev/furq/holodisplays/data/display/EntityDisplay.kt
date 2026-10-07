@@ -35,6 +35,6 @@ data class EntityDisplay(
         var pose: Pose? = null
         override var conditionalPlaceholder: String? = null
 
-        override fun build() = EntityDisplay(id, rotation, leftRotation, rightRotation, scale, glow, pose, conditionalPlaceholder)
+        override fun build() = EntityDisplay(id, rotation?.let { Vector3f(it) }, leftRotation?.let { Quaternionf(it) }, rightRotation?.let { Quaternionf(it) }, scale?.let { Vector3f(it) }, glow, pose, conditionalPlaceholder)
     }
 }

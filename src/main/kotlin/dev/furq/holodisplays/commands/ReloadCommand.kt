@@ -28,6 +28,7 @@ object ReloadCommand {
         PacketHandler.resetEntityTracking()
         ViewerHandler.clearTrackers()
         TickHandler.init()
+        HologramHandler.clearWorldCache()
         ConfigManager.reload()
         HologramHandler.reinitialize()
         FeedbackManager.send(source, FeedbackType.RELOAD_SUCCESS)

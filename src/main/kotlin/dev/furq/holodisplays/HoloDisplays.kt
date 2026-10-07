@@ -1,12 +1,12 @@
 package dev.furq.holodisplays
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import dev.furq.holodisplays.api.HoloDisplaysAPIInternal
 import dev.furq.holodisplays.commands.MainCommand
 import dev.furq.holodisplays.config.ConfigManager
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.handlers.ErrorHandler.safeCall
 import dev.furq.holodisplays.handlers.HologramHandler
+import dev.furq.holodisplays.handlers.PacketHandler
 import dev.furq.holodisplays.handlers.TickHandler
 import dev.furq.holodisplays.handlers.ViewerHandler
 import net.fabricmc.api.ModInitializer
@@ -18,9 +18,6 @@ import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.server.MinecraftServer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 
 class HoloDisplays : ModInitializer {
     companion object {
@@ -30,12 +27,6 @@ class HoloDisplays : ModInitializer {
 
         var SERVER: MinecraftServer? = null
             private set
-        var EXECUTOR_HOLODISPLAYS: Executor = Executors.newFixedThreadPool(1,
-            ThreadFactoryBuilder()
-                .setNameFormat("HoloDisplays-Executor-%d")
-                .setDaemon(true)
-                .build()
-        )
     }
 
     override fun onInitialize() {
@@ -47,7 +38,7 @@ class HoloDisplays : ModInitializer {
 
     private fun handleServerTick(server: MinecraftServer) {
         val players = server.playerList.players
-        if (players.isNotEmpty() && (HologramConfig.getHolograms().isNotEmpty() || HoloDisplaysAPIInternal.hasApiHolograms())) {
+        if (players.isNotEmpty() && (HologramConfig.getHolograms().isNotEmpty() || HoloDisplaysAPIInternal.hasApiHologramsUnchecked())) {
             TickHandler.tick(players)
             players.forEach { player ->
                 ViewerHandler.updatePlayerVisibility(player)
@@ -58,7 +49,7 @@ class HoloDisplays : ModInitializer {
     private fun registerServerEvents() = safeCall {
         ServerLifecycleEvents.SERVER_STARTING.register { SERVER = it }
         ServerTickEvents.END_SERVER_TICK.register { server ->
-            CompletableFuture.runAsync({ handleServerTick(server) }, EXECUTOR_HOLODISPLAYS)
+            handleServerTick(server)
         }
 
         ServerPlayConnectionEvents.JOIN.register { handler, _, _ ->
@@ -70,6 +61,9 @@ class HoloDisplays : ModInitializer {
 
         ServerLifecycleEvents.SERVER_STOPPING.register {
             HoloDisplaysAPIInternal.clearAll()
+            HologramHandler.clearWorldCache()
+            TickHandler.init()
+            PacketHandler.resetEntityTracking()
         }
     }
 

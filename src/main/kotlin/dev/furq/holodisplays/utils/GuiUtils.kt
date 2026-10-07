@@ -19,6 +19,13 @@ import net.minecraft.world.item.component.ItemLore
 
 object GuiUtils {
 
+    const val PAGED_ITEMS_PER_PAGE = 21
+    val PAGED_BORDER_SLOTS: List<Int> = (10..16) + (19..25) + (28..34)
+    const val PAGED_CONTENT_START_SLOT = 10
+
+    fun advanceContentSlot(slot: Int): Int =
+        if (slot == 17 || slot == 26 || slot == 35) slot + 2 else slot
+
     fun createBackItem() = createGuiItem(
         item = Items.BARRIER,
         name = "Back",
@@ -63,8 +70,9 @@ object GuiUtils {
     }
 
     private fun SimpleGui.setupBorders(totalSlots: Int, excludeSlots: List<Int>) {
+        val excluded = excludeSlots.toSet()
         for (i in 0 until totalSlots) {
-            if (i !in excludeSlots) {
+            if (i !in excluded) {
                 setSlot(i, createBorderItem())
             }
         }

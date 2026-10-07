@@ -1,6 +1,7 @@
 package dev.furq.holodisplays.utils
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encoding.Decoder
@@ -14,6 +15,11 @@ object Vector3fSerializer : KSerializer<Vector3f> {
     override fun serialize(encoder: Encoder, value: Vector3f) =
         encoder.encodeSerializableValue(delegate, listOf(value.x, value.y, value.z))
 
-    override fun deserialize(decoder: Decoder) =
-        decoder.decodeSerializableValue(delegate).let { (x, y, z) -> Vector3f(x, y, z) }
+    override fun deserialize(decoder: Decoder): Vector3f {
+        val components = decoder.decodeSerializableValue(delegate)
+        if (components.size != 3) {
+            throw SerializationException("Expected 3 floats for Vector3f, got ${components.size}")
+        }
+        return Vector3f(components[0], components[1], components[2])
+    }
 }

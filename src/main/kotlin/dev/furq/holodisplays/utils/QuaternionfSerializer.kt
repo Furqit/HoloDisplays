@@ -1,6 +1,7 @@
 package dev.furq.holodisplays.utils
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encoding.Decoder
@@ -14,6 +15,11 @@ object QuaternionfSerializer : KSerializer<Quaternionf> {
     override fun serialize(encoder: Encoder, value: Quaternionf) =
         encoder.encodeSerializableValue(delegate, listOf(value.x, value.y, value.z, value.w))
 
-    override fun deserialize(decoder: Decoder) =
-        decoder.decodeSerializableValue(delegate).let { (x, y, z, w) -> Quaternionf(x, y, z, w) }
+    override fun deserialize(decoder: Decoder): Quaternionf {
+        val components = decoder.decodeSerializableValue(delegate)
+        if (components.size != 4) {
+            throw SerializationException("Expected 4 floats for Quaternionf, got ${components.size}")
+        }
+        return Quaternionf(components[0], components[1], components[2], components[3])
+    }
 }

@@ -19,7 +19,7 @@ object HologramList {
             player = player,
             title = GuiUtils.createPagedTitle("Holograms", pageInfo),
             size = 45,
-            borderSlots = (10..16) + (19..25) + (28..34)
+            borderSlots = GuiUtils.PAGED_BORDER_SLOTS
         )
 
         gui.apply {
@@ -37,7 +37,7 @@ object HologramList {
             val endIndex = minOf(startIndex + ITEMS_PER_PAGE, holograms.size)
 
             for (i in startIndex until endIndex) {
-                if (slot in listOf(17, 26, 35)) slot += 2
+                slot = GuiUtils.advanceContentSlot(slot)
 
                 val (name) = holograms[i]
                 val lore = GuiUtils.createActionLore("Left-Click to edit", "Right-Click to delete")
