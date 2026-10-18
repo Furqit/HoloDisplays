@@ -16,14 +16,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HoloDisplaysAPIImpl.class);
-    private static final Map<String, HologramData> apiHolograms = new HashMap<>();
-    private static final Map<String, DisplayData> apiDisplays = new HashMap<>();
+    private static final Map<String, HologramData> apiHolograms = new ConcurrentHashMap<>();
+    private static final Map<String, DisplayData> apiDisplays = new ConcurrentHashMap<>();
 
     public HoloDisplaysAPIImpl {
         if (modId == null || modId.isEmpty()) {
