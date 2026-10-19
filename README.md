@@ -24,13 +24,13 @@ A high-performance, packet-based hologram system utilizing Minecraft’s display
 | Feature                   | Description                                                                  |
 |---------------------------|------------------------------------------------------------------------------|
 | Packet-Based Architecture | Utilizes network packets instead of real entities to minimize server load.   |
-| Animation Support         | Enables smooth, dynamic text animations.                                     |
+| Animation Support         | Text animations and item/block transforms (scale, rotation, translation).    |
 | Multiple Display Types    | Supports text, item, block, and entity displays with full customization.     |
 | Placeholder Integration   | Fully compatible with the Text Placeholder API.                              |
 | Advanced Text Formatting  | Includes gradient support, color codes, and QuickText formatting.            |
 | GUI Display Manager       | Intuitive GUI for creating, editing, and managing displays.                  |
 | Command System            | Command-based customization as an alternative to the GUI.                    |
-| Public Developer API      | Allows developers to create holograms and displays controlled by their mods. |
+| Public Developer API      | Allows developers to create and manage holograms, displays and animations.  |
 
 ---
 
@@ -38,7 +38,6 @@ A high-performance, packet-based hologram system utilizing Minecraft’s display
 
 | Feature                 | Description                                                   | Status   |
 |-------------------------|---------------------------------------------------------------|----------|
-| Block & Item Animations | Enable animations such as rotation, scaling, and translation. | Planned  |
 | Particle Effects        | Integrate with Snowstorm for advanced particle visuals.       | Possible |
 
 ---
