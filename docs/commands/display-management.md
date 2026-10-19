@@ -69,6 +69,7 @@ These commands manage standalone displays: creating, listing, deleting, and edit
     * `billboard <mode>` / `billboard reset`.
     * `rotation <pitch> <yaw> <roll>` / `rotation reset`.
     * `condition <placeholder>` / `condition remove`.
+    * `animation <name>` / `animation reset` (item and block displays; names a transform animation, see Configuration > Animations).
   * Text:
     * `text line add <content>`.
     * `text line set <index> <content>`.
@@ -94,5 +95,6 @@ These commands manage standalone displays: creating, listing, deleting, and edit
     ```
     /holo display edit mysign text line add "Line 2"
     /hd display edit mysword item displayType head
+    /hd display edit dropzone animation drop_item
     ```
 * **Output**: Updates, feedback. No args: GUI.

@@ -99,6 +99,19 @@ boolean success = api.updateDisplay("my_text", updatedDisplayData);
 * **Returns**: `true` if update was successful, `false` if display not found or update failed.
 * **Notes**: Changes to text content or colors use metadata updates. Changes to item/block IDs, rotation, or scale require respawning.
 
+### Update Display Animation
+
+```java
+boolean success = api.updateDisplayAnimation("my_sword", "drop_item");
+```
+
+* **Description**: Assigns a transform animation to an existing API-registered item or block display. Metadata update; entities are not respawned.
+* **Parameters**:
+  * `id`: The display identifier.
+  * `animationName`: The animation name, or `null` to revert the display to its static transform.
+* **Returns**: `true` if updated, `false` if the display is not API-registered or not an item or block display.
+* **Notes**: The animation does not need to exist yet; the display stays static until it is registered.
+
 ### Check Display Registration
 
 ```java
@@ -133,3 +146,84 @@ int removed = api.unregisterAllDisplays();
 * **Parameters**: None.
 * **Returns**: The number of displays removed.
 * **Notes**: All holograms using these displays will be respawned; does not affect config displays.
+
+## Text Animations
+
+Text animations cycle the frames of an `<animation:name>` placeholder placed anywhere in a display's text. Assigning one is content-driven: put the placeholder in the lines.
+
+### Save Text Animation
+
+```java
+boolean success = api.saveTextAnimation("blink", List.of("=|=", "==="), 10);
+```
+
+Then use it in a line (through the builder or `updateDisplayText`):
+
+```java
+api.updateDisplayText("my_text", List.of("<animation:blink>"));
+```
+
+* **Description**: Registers a text animation for runtime use. Runtime animations last until restart; persistent ones live in `config/holodisplays/animations/`.
+* **Parameters**:
+  * `name`: The animation name.
+  * `frames`: The non-empty list of frame texts.
+  * `interval`: Ticks each frame is shown (minimum 1).
+* **Returns**: `true` if registered (registering the same name again replaces it).
+
+### List Text Animations
+
+```java
+Set<String> names = api.getTextAnimationNames();
+```
+
+* **Description**: Names of all registered text animations, including file-based ones.
+
+### Delete Text Animation
+
+```java
+boolean success = api.deleteTextAnimation("blink");
+```
+
+* **Description**: Removes a text animation. File-based ones reappear on the next reload; lines referencing a missing animation show the invalid-animation placeholder.
+
+## Transform Animations
+
+Transform animations drive the scale, rotation and translation of item and block displays. Names accept letters, digits, dots, dashes and underscores.
+
+### Save Transform Animation
+
+```java
+boolean success = api.saveTransformAnimation("spin", builder -> {
+    builder.interval(126).interpolation("linear").loop(true);
+    builder.rotation(0f, 0f, 0f, 0f, 0f, 360f);
+});
+```
+
+Apply a runtime animation to a display:
+
+```java
+api.updateDisplayAnimation("my_sword", "spin");
+```
+
+* **Description**: Registers a transform animation for runtime use. Runtime animations last until restart; persistent animations live in `config/holodisplays/animations/`, and the bundled `drop_item` is always available.
+* **Parameters**:
+  * `name`: The animation name.
+  * `builder`: The TransformAnimationBuilder consumer.
+* **Returns**: `true` if registered (registering the same name again replaces it).
+* **Notes**: Timing: `interval` is the ticks for one from-to sweep. With `loop(true)` a full cycle takes `interval` ticks (from-to restart, for spins); ping-pong takes `2 x interval`. `interpolation` is `"sine"` (default) or `"linear"`.
+
+### List Transform Animations
+
+```java
+Set<String> names = api.getTransformAnimationNames();
+```
+
+* **Description**: Names of all registered transform animations, including file-based ones and the bundled `drop_item`.
+
+### Delete Transform Animation
+
+```java
+boolean success = api.deleteTransformAnimation("spin");
+```
+
+* **Description**: Removes a transform animation. File-based ones reappear on the next reload.

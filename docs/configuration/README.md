@@ -6,7 +6,7 @@ HoloDisplays uses JSON5 files in `config/holodisplays/` for data persistence. Ed
 
 * **holograms/**: Hologram files.
 * **displays/**: Display templates.
-* **animations/**: Animation sequences.
+* **animations/**: Animation files (text frame sequences and item/block transform animations; the mod ships a `drop_item.json` example).
 
 No global config; properties are per-object. See subsections for details.
 
@@ -16,7 +16,7 @@ HoloDisplays stores data in JSON5 files under `config/holodisplays/` (auto-creat
 
 * **holograms/**: `.json` files for each hologram (position, displays, properties).
 * **displays/**: `.json` files for display templates (text, item, block, entity).
-* **animations/**: `.json` files for text animation sequences.
+* **animations/**: `.json` files for animation sequences (text frame swaps and item/block transform animations; the mod ships a `drop_item.json` example).
 
 ## Global Settings
 

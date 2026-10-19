@@ -51,6 +51,7 @@ For messages with formatting.
 * **id**: String (e.g., "minecraft:diamond").
 * **itemDisplayType**: String (none, thirdperson_lefthand, etc., default: ground).
 * **customModelData**: Int (>=1).
+* **animation**: String, name of a transform animation from `animations/<name>.json` (optional).
 
 ### Example
 
@@ -74,6 +75,7 @@ For messages with formatting.
 
 * **id**: String (e.g., "minecraft:stone").
 * **properties**: Map of strings (e.g., `{"facing": "north"}`).
+* **animation**: String, name of a transform animation from `animations/<name>.json` (optional).
 
 ### Example
 

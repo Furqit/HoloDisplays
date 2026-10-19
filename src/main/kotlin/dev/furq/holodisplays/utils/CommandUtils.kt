@@ -1,5 +1,6 @@
 package dev.furq.holodisplays.utils
 
+import dev.furq.holodisplays.config.AnimationConfig
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
@@ -60,6 +61,14 @@ object CommandUtils {
         BuiltInRegistries.ENTITY_TYPE.keySet()
             .asSequence()
             .map { it.toString() }
+            .filter { matchesPrefix(it, remaining) }
+            .forEach(builder::suggest)
+        return builder.buildFuture()
+    }
+
+    fun suggestTransformAnimations(builder: SuggestionsBuilder): CompletableFuture<Suggestions> {
+        val remaining = builder.remaining.lowercase()
+        AnimationConfig.getTransformAnimationNames().toList()
             .filter { matchesPrefix(it, remaining) }
             .forEach(builder::suggest)
         return builder.buildFuture()

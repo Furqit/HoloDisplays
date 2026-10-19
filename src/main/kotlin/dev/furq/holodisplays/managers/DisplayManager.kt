@@ -1,5 +1,6 @@
 package dev.furq.holodisplays.managers
 
+import dev.furq.holodisplays.config.AnimationConfig
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.data.DisplayData
@@ -326,6 +327,23 @@ object DisplayManager {
             }
 
             updateProperty(displayName, source, Pose(pose), FeedbackType.DISPLAY_UPDATED)
+        }
+    }
+
+    fun updateAnimation(displayName: String, animation: String?, source: CommandSourceStack) {
+        requireDisplayExists(displayName, source) {
+            val display = DisplayConfig.getDisplay(displayName)?.type
+            if (display !is ItemDisplay && display !is BlockDisplay) {
+                FeedbackManager.send(source, FeedbackType.INVALID_DISPLAY_TYPE, "type" to "item or block")
+                return
+            }
+            if (animation != null && AnimationConfig.getTransformAnimation(animation) == null) {
+                FeedbackManager.send(source, FeedbackType.UPDATE_FAILED, "detail" to "animation '$animation' not found")
+                return
+            }
+
+            updateProperty(displayName, source, Animation(animation), FeedbackType.DISPLAY_UPDATED,
+                "detail" to (animation?.let { "animation '$it'" } ?: "animation removed"))
         }
     }
 }

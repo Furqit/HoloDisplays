@@ -38,7 +38,7 @@ object DisplayConfig : Config {
     }
 
     fun getDisplay(name: String): DisplayData? = displays[name]
-    fun getDisplayOrAPI(name: String): DisplayData? = displays[name] ?: HoloDisplaysAPIInternal.getDisplayUnchecked(name)
+    fun getDisplayOrAPI(name: String): DisplayData? = displays[name] ?: HoloDisplaysAPIInternal.getDisplay(name)
     fun getDisplays(): Map<String, DisplayData> = displays
     fun exists(name: String): Boolean = displays.containsKey(name)
 

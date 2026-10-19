@@ -34,7 +34,7 @@ object HologramConfig : Config {
 
 
     fun getHologram(name: String): HologramData? = holograms[name]
-    fun getHologramOrAPI(name: String): HologramData? = holograms[name] ?: HoloDisplaysAPIInternal.getHologramUnchecked(name)
+    fun getHologramOrAPI(name: String): HologramData? = holograms[name] ?: HoloDisplaysAPIInternal.getHologram(name)
     fun getHolograms(): Map<String, HologramData> = holograms
     fun exists(name: String): Boolean = holograms.containsKey(name)
 

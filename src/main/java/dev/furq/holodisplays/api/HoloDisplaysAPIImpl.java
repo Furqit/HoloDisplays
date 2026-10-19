@@ -1,10 +1,15 @@
 package dev.furq.holodisplays.api;
 
 import dev.furq.holodisplays.HoloDisplays;
+import dev.furq.holodisplays.config.AnimationConfig;
 import dev.furq.holodisplays.config.DisplayConfig;
 import dev.furq.holodisplays.config.HologramConfig;
+import dev.furq.holodisplays.data.AnimationData;
 import dev.furq.holodisplays.data.DisplayData;
+import dev.furq.holodisplays.data.FloatFromTo;
 import dev.furq.holodisplays.data.HologramData;
+import dev.furq.holodisplays.data.TransformAnimationData;
+import dev.furq.holodisplays.data.VecFromTo;
 import dev.furq.holodisplays.data.display.*;
 import dev.furq.holodisplays.handlers.ViewerHandler;
 import net.minecraft.server.MinecraftServer;
@@ -44,13 +49,15 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
     }
 
     static void clearAllStatic() {
-        apiHolograms.keySet().forEach(id -> {
-            ViewerHandler.INSTANCE.removeHologramFromAllViewers(id);
-            ViewerHandler.INSTANCE.removeTracker(id);
-            ViewerHandler.INSTANCE.removeHologramIndex(id);
-        });
+        apiHolograms.keySet().forEach(HoloDisplaysAPIImpl::detachHologram);
         apiHolograms.clear();
         apiDisplays.clear();
+    }
+
+    private static void detachHologram(String fullId) {
+        ViewerHandler.INSTANCE.removeHologramFromAllViewers(fullId);
+        ViewerHandler.INSTANCE.removeTracker(fullId);
+        ViewerHandler.INSTANCE.removeHologramIndex(fullId);
     }
 
     static DisplayData getDisplayStatic(String id) {
@@ -74,33 +81,34 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
         };
     }
 
+    private static void validateAnimationName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Animation name cannot be null or empty");
+        }
+        if (!name.matches("[A-Za-z0-9._-]+")) {
+            throw new IllegalArgumentException("Invalid animation name: " + name);
+        }
+    }
+
     @Override
     public boolean registerHologram(String id, HologramData hologram) {
         try {
-            String fullId = toFullId(id);
+            String fullId = toFullId(modId, id);
 
             if (apiHolograms.containsKey(fullId)) {
                 throw new IllegalArgumentException("Hologram with ID " + id + " is already registered");
             }
 
-            for (HologramData.DisplayLine display : hologram.getDisplays()) {
-                if (!DisplayConfig.INSTANCE.exists(display.getName()) && !apiDisplays.containsKey(display.getName())) {
-                    throw new IllegalArgumentException("Display with ID " + display.getName() + " does not exist");
-                }
-            }
+            validateDisplayReferences(id, hologram);
 
             apiHolograms.put(fullId, hologram);
             ViewerHandler.INSTANCE.createTracker(fullId);
             ViewerHandler.INSTANCE.updateHologramIndex(fullId, hologram.getPosition());
-
-            MinecraftServer server = HoloDisplays.Companion.getSERVER();
-            if (server != null && server.getPlayerList() != null) {
-                server.getPlayerList().getPlayers().forEach(ViewerHandler.INSTANCE::updatePlayerVisibility);
-            }
+            refreshPlayerVisibility();
 
             return true;
         } catch (Exception e) {
-            LOGGER.error("Failed to register hologram {}: {}", id, e.getMessage());
+            LOGGER.error("Failed to register hologram {}: {} {}", id, e.getClass().getSimpleName(), e.getMessage());
             return false;
         }
     }
@@ -108,20 +116,18 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
     @Override
     public boolean unregisterHologram(String id) {
         try {
-            String fullId = toFullId(id);
+            String fullId = toFullId(modId, id);
 
             if (!apiHolograms.containsKey(fullId)) {
                 return false;
             }
 
-            ViewerHandler.INSTANCE.removeHologramFromAllViewers(fullId);
-            ViewerHandler.INSTANCE.removeTracker(fullId);
-            ViewerHandler.INSTANCE.removeHologramIndex(fullId);
+            detachHologram(fullId);
             apiHolograms.remove(fullId);
 
             return true;
         } catch (Exception e) {
-            LOGGER.error("Failed to unregister hologram {}: {}", id, e.getMessage());
+            LOGGER.error("Failed to unregister hologram {}: {} {}", id, e.getClass().getSimpleName(), e.getMessage());
             return false;
         }
     }
@@ -129,37 +135,29 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
     @Override
     public boolean updateHologram(String id, HologramData hologram) {
         try {
-            String fullId = toFullId(id);
+            String fullId = toFullId(modId, id);
 
             if (!apiHolograms.containsKey(fullId)) {
                 return false;
             }
 
-            for (HologramData.DisplayLine display : hologram.getDisplays()) {
-                if (!DisplayConfig.INSTANCE.exists(display.getName()) && !apiDisplays.containsKey(display.getName())) {
-                    throw new IllegalArgumentException("Display with ID " + display.getName() + " does not exist");
-                }
-            }
+            validateDisplayReferences(id, hologram);
 
             apiHolograms.put(fullId, hologram);
             ViewerHandler.INSTANCE.updateHologramIndex(fullId, hologram.getPosition());
             ViewerHandler.INSTANCE.respawnForAllObservers(fullId);
-
-            MinecraftServer server = HoloDisplays.Companion.getSERVER();
-            if (server != null && server.getPlayerList() != null) {
-                server.getPlayerList().getPlayers().forEach(ViewerHandler.INSTANCE::updatePlayerVisibility);
-            }
+            refreshPlayerVisibility();
 
             return true;
         } catch (Exception e) {
-            LOGGER.error("Failed to update hologram {}: {}", id, e.getMessage());
+            LOGGER.error("Failed to update hologram {}: {} {}", id, e.getClass().getSimpleName(), e.getMessage());
             return false;
         }
     }
 
     @Override
     public boolean isHologramRegistered(String id) {
-        return apiHolograms.containsKey(toFullId(id));
+        return apiHolograms.containsKey(toFullId(modId, id));
     }
 
     @Override
@@ -207,9 +205,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
                 .toList();
 
         hologramsToRemove.forEach(id -> {
-            ViewerHandler.INSTANCE.removeHologramFromAllViewers(id);
-            ViewerHandler.INSTANCE.removeTracker(id);
-            ViewerHandler.INSTANCE.removeHologramIndex(id);
+            detachHologram(id);
             apiHolograms.remove(id);
         });
 
@@ -239,35 +235,34 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
 
     @Override
     public DisplayData getDisplay(String id) {
-        return apiDisplays.get(toFullId(id));
+        return apiDisplays.get(toFullId(modId, id));
     }
 
     @Override
     public HologramData getHologram(String id) {
-        return apiHolograms.get(toFullId(id));
+        return apiHolograms.get(toFullId(modId, id));
     }
 
     @Override
     public boolean isDisplayRegistered(String id) {
-        return apiDisplays.containsKey(toFullId(id));
+        return apiDisplays.containsKey(toFullId(modId, id));
     }
 
     @Override
     public boolean updateDisplay(String id, DisplayData display) {
         try {
-            String fullId = toFullId(id);
-
-            if (!apiDisplays.containsKey(fullId) || display == null) {
+            String fullId = toFullId(modId, id);
+            DisplayData oldDisplay = apiDisplays.get(fullId);
+            if (display == null || oldDisplay == null) {
                 return false;
             }
 
-            DisplayData oldDisplay = apiDisplays.get(fullId);
             apiDisplays.put(fullId, display);
             updateAffectedHolograms(fullId, oldDisplay, display);
 
             return true;
         } catch (Exception e) {
-            LOGGER.error("Failed to update display {}: {}", id, e.getMessage());
+            LOGGER.error("Failed to update display {}: {} {}", id, e.getClass().getSimpleName(), e.getMessage());
             return false;
         }
     }
@@ -275,7 +270,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
     @Override
     public boolean unregisterDisplay(String id) {
         try {
-            String fullId = toFullId(id);
+            String fullId = toFullId(modId, id);
 
             if (!apiDisplays.containsKey(fullId)) {
                 return false;
@@ -292,31 +287,194 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
 
             return true;
         } catch (Exception e) {
-            LOGGER.error("Failed to unregister display {}: {}", id, e.getMessage());
+            LOGGER.error("Failed to unregister display {}: {} {}", id, e.getClass().getSimpleName(), e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateDisplayText(String id, List<String> lines) {
+        try {
+            String fullId = toFullId(modId, id);
+            if (lines == null) {
+                LOGGER.warn("updateDisplayText({}): lines was null", fullId);
+                return false;
+            }
+            DisplayData old = apiDisplays.get(fullId);
+            if (old == null) {
+                LOGGER.warn("updateDisplayText({}): display is not registered through the API", fullId);
+                return false;
+            }
+            if (!(old.getType() instanceof TextDisplay)) {
+                LOGGER.warn("updateDisplayText({}): display is not a text display", fullId);
+                return false;
+            }
+            storeUpdatedDisplay(fullId, old, ((TextDisplay) old.getType()).withLines(lines));
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to update text lines of display {}: {} {}", id, e.getClass().getSimpleName(), e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateDisplayAnimation(String id, String animationName) {
+        try {
+            String fullId = toFullId(modId, id);
+            DisplayData old = apiDisplays.get(fullId);
+            if (old == null) {
+                LOGGER.warn("updateDisplayAnimation({}): display is not registered through the API", fullId);
+                return false;
+            }
+            if (animationName != null) {
+                validateAnimationName(animationName);
+                if (AnimationConfig.INSTANCE.getTransformAnimation(animationName) == null) {
+                    LOGGER.warn("updateDisplayAnimation({}): transform animation {} is not registered; the display will stay static until it is registered", fullId, animationName);
+                }
+            }
+            BaseDisplay updated;
+            if (old.getType() instanceof ItemDisplay item) {
+                updated = item.withAnimation(animationName);
+            } else if (old.getType() instanceof BlockDisplay block) {
+                updated = block.withAnimation(animationName);
+            } else {
+                LOGGER.warn("updateDisplayAnimation({}): display is not an item or block display", fullId);
+                return false;
+            }
+            storeUpdatedDisplay(fullId, old, updated);
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to update animation of display {}: {} {}", id, e.getClass().getSimpleName(), e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean saveTransformAnimation(String name, Consumer<TransformAnimationBuilder> builder) {
+        try {
+            if (builder == null) {
+                LOGGER.warn("saveTransformAnimation({}): builder was null", name);
+                return false;
+            }
+            validateAnimationName(name);
+            TransformAnimationBuilderImpl animationBuilder = new TransformAnimationBuilderImpl();
+            builder.accept(animationBuilder);
+            AnimationConfig.INSTANCE.setTransformAnimation(name, animationBuilder.build());
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save transform animation {}: {} {}", name, e.getClass().getSimpleName(), e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteTransformAnimation(String name) {
+        try {
+            validateAnimationName(name);
+            if (AnimationConfig.INSTANCE.removeTransformAnimation(name) == null) {
+                LOGGER.warn("deleteTransformAnimation({}): animation is not registered; file-based animations reappear on reload", name);
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to delete transform animation {}: {} {}", name, e.getClass().getSimpleName(), e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public Set<String> getTransformAnimationNames() {
+        return Set.copyOf(AnimationConfig.INSTANCE.getTransformAnimationNames());
+    }
+
+    @Override
+    public boolean saveTextAnimation(String name, List<String> frames, int interval) {
+        try {
+            validateAnimationName(name);
+            if (frames == null || frames.isEmpty() || frames.contains(null)) {
+                throw new IllegalArgumentException("Animation frames cannot be null or empty");
+            }
+            if (interval < 1) {
+                throw new IllegalArgumentException("Interval must be at least 1");
+            }
+            AnimationConfig.INSTANCE.setTextAnimation(name, new AnimationData(List.copyOf(frames), interval));
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save text animation {}: {} {}", name, e.getClass().getSimpleName(), e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteTextAnimation(String name) {
+        try {
+            validateAnimationName(name);
+            if (AnimationConfig.INSTANCE.removeTextAnimation(name) == null) {
+                LOGGER.warn("deleteTextAnimation({}): animation is not registered; file-based animations reappear on reload", name);
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to delete text animation {}: {} {}", name, e.getClass().getSimpleName(), e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public Set<String> getTextAnimationNames() {
+        return Set.copyOf(AnimationConfig.INSTANCE.getTextAnimationNames());
+    }
+
+    @Override
+    public boolean registerHologram(String id, HologramBuilder builder) {
+        try {
+            if (builder == null) {
+                LOGGER.warn("registerHologram({}): builder was null", id);
+                return false;
+            }
+            return registerHologram(id, builder.build());
+        } catch (Exception e) {
+            LOGGER.error("Failed to register hologram from builder {}: {} {}", id, e.getClass().getSimpleName(), e.getMessage());
             return false;
         }
     }
 
     @Override
     public void clearAll() {
-        apiHolograms.keySet().forEach(id -> {
-            ViewerHandler.INSTANCE.removeHologramFromAllViewers(id);
-            ViewerHandler.INSTANCE.removeTracker(id);
-            ViewerHandler.INSTANCE.removeHologramIndex(id);
-        });
-        apiHolograms.clear();
-        apiDisplays.clear();
+        unregisterAllHolograms();
+        unregisterAllDisplays();
     }
 
-    private String toFullId(String id) {
+    private static String toFullId(String modId, String id) {
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("ID cannot be null or empty");
         }
         return id.contains(":") ? id : modId + ":" + id;
     }
 
+    private void validateDisplayReferences(String id, HologramData hologram) {
+        for (HologramData.DisplayLine display : hologram.getDisplays()) {
+            if (!DisplayConfig.INSTANCE.exists(display.getName()) && !apiDisplays.containsKey(display.getName())) {
+                LOGGER.warn("Hologram {} references display {} that does not exist (yet); that line will not render until it is registered", id, display.getName());
+            }
+        }
+    }
+
+    private void refreshPlayerVisibility() {
+        MinecraftServer server = HoloDisplays.Companion.getSERVER();
+        if (server != null) {
+            server.getPlayerList().getPlayers().forEach(ViewerHandler.INSTANCE::updatePlayerVisibility);
+        }
+    }
+
+    private void storeUpdatedDisplay(String fullId, DisplayData old, BaseDisplay newType) {
+        DisplayData updated = new DisplayData(newType);
+        apiDisplays.put(fullId, updated);
+        updateAffectedHolograms(fullId, old, updated);
+    }
+
     private DisplayData registerDisplay(String id, BaseDisplay display) {
-        String fullId = toFullId(id);
+        String fullId = toFullId(modId, id);
 
         if (apiDisplays.containsKey(fullId)) {
             throw new IllegalArgumentException("Display with ID " + id + " is already registered");
@@ -486,6 +644,89 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
         }
     }
 
+    private static class TransformAnimationBuilderImpl implements TransformAnimationBuilder {
+        private int interval = 20;
+        private String interpolation = "sine";
+        private boolean loop = false;
+        private FloatFromTo scale;
+        private VecFromTo rotation;
+        private VecFromTo translation;
+
+        @Override
+        public TransformAnimationBuilder interval(int ticks) {
+            if (ticks < 1) {
+                throw new IllegalArgumentException("Interval must be at least 1");
+            }
+            this.interval = ticks;
+            return this;
+        }
+
+        @Override
+        public TransformAnimationBuilder interpolation(String mode) {
+            this.interpolation = parseInterpolation(mode);
+            return this;
+        }
+
+        @Override
+        public TransformAnimationBuilder loop(boolean loop) {
+            this.loop = loop;
+            return this;
+        }
+
+        @Override
+        public TransformAnimationBuilder scale(float from, float to) {
+            scale = new FloatFromTo(from, to, null, null, null);
+            return this;
+        }
+
+        @Override
+        public TransformAnimationBuilder scale(float from, float to, int interval, String interpolation, boolean loop) {
+            scale = new FloatFromTo(from, to, interval, parseInterpolation(interpolation), loop);
+            return this;
+        }
+
+        @Override
+        public TransformAnimationBuilder rotation(float fromX, float fromY, float fromZ, float toX, float toY, float toZ) {
+            rotation = new VecFromTo(List.of(fromX, fromY, fromZ), List.of(toX, toY, toZ), null, null, null);
+            return this;
+        }
+
+        @Override
+        public TransformAnimationBuilder rotation(float fromX, float fromY, float fromZ, float toX, float toY, float toZ, int interval, String interpolation, boolean loop) {
+            rotation = new VecFromTo(List.of(fromX, fromY, fromZ), List.of(toX, toY, toZ), interval, parseInterpolation(interpolation), loop);
+            return this;
+        }
+
+        @Override
+        public TransformAnimationBuilder translation(float fromX, float fromY, float fromZ, float toX, float toY, float toZ) {
+            translation = new VecFromTo(List.of(fromX, fromY, fromZ), List.of(toX, toY, toZ), null, null, null);
+            return this;
+        }
+
+        @Override
+        public TransformAnimationBuilder translation(float fromX, float fromY, float fromZ, float toX, float toY, float toZ, int interval, String interpolation, boolean loop) {
+            translation = new VecFromTo(List.of(fromX, fromY, fromZ), List.of(toX, toY, toZ), interval, parseInterpolation(interpolation), loop);
+            return this;
+        }
+
+        private static String parseInterpolation(String mode) {
+            if (mode == null || mode.isEmpty()) {
+                throw new IllegalArgumentException("Interpolation cannot be null or empty");
+            }
+            if ("linear".equalsIgnoreCase(mode)) {
+                return "linear";
+            }
+            if ("sine".equalsIgnoreCase(mode)) {
+                return "sine";
+            }
+            throw new IllegalArgumentException("Invalid interpolation mode: " + mode);
+        }
+
+        TransformAnimationData build() {
+            return new TransformAnimationData(interval, interpolation, loop, scale, rotation, translation);
+        }
+    }
+
     private static class ItemDisplayBuilderImpl extends BaseDisplayBuilderImpl<ItemDisplay.Builder> implements ItemDisplayBuilder {
         public ItemDisplayBuilderImpl() {
             super(new ItemDisplay.Builder());
@@ -497,6 +738,14 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
                 throw new IllegalArgumentException("Item ID cannot be null or empty");
             }
             builder.setId(itemId);
+        }
+
+        @Override
+        public void animation(String animationName) {
+            if (animationName != null) {
+                validateAnimationName(animationName);
+            }
+            builder.setAnimation(animationName);
         }
 
         public ItemDisplay build() {
@@ -520,6 +769,14 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
         @Override
         public void properties(Map<String, String> properties) {
             builder.setProperties(properties == null ? new HashMap<>() : properties);
+        }
+
+        @Override
+        public void animation(String animationName) {
+            if (animationName != null) {
+                validateAnimationName(animationName);
+            }
+            builder.setAnimation(animationName);
         }
 
         public BlockDisplay build() {
@@ -647,8 +904,7 @@ public record HoloDisplaysAPIImpl(String modId) implements HoloDisplaysAPI {
             if (displayId == null || displayId.isEmpty()) {
                 throw new IllegalArgumentException("Display ID cannot be null or empty");
             }
-            String fullId = displayId.contains(":") ? displayId : modId + ":" + displayId;
-            displays.add(new HologramData.DisplayLine(fullId, new Vector3f(offsetX, offsetY, offsetZ)));
+            displays.add(new HologramData.DisplayLine(toFullId(modId, displayId), new Vector3f(offsetX, offsetY, offsetZ)));
             return this;
         }
 

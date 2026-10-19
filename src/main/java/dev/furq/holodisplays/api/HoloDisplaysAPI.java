@@ -3,7 +3,9 @@ package dev.furq.holodisplays.api;
 import dev.furq.holodisplays.data.DisplayData;
 import dev.furq.holodisplays.data.HologramData;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -23,7 +25,7 @@ public interface HoloDisplaysAPI {
     }
 
     /**
-     * Clears all API-registered holograms and displays.
+     * Clears all API-registered holograms and displays of your mod.
      * This is called when the server shuts down or the mod is reloaded.
      * Most mods will not need to call this directly.
      */
@@ -39,6 +41,17 @@ public interface HoloDisplaysAPI {
      * @return True if registration was successful, false otherwise
      */
     boolean registerHologram(String id, HologramData hologram);
+
+    /**
+     * Builds the hologram with this builder and registers it under the given ID.
+     * Convenience shortcut for {@code registerHologram(id, builder.build())}.
+     * The mod's namespace will be automatically prepended to the ID.
+     *
+     * @param id      The unique identifier for this hologram
+     * @param builder A configured hologram builder
+     * @return True if registration was successful, false otherwise
+     */
+    boolean registerHologram(String id, HologramBuilder builder);
 
     /**
      * Unregisters a previously registered hologram.
@@ -173,16 +186,79 @@ public interface HoloDisplaysAPI {
     boolean unregisterDisplay(String id);
 
     /**
-     * Builder interface for text displays.
+     * Updates only the text lines of a text display that was registered through this API.
+     * Uses the same efficient update path as {@link #updateDisplay(String, DisplayData)}:
+     * metadata-only packets when possible, respawning entities only when required.
+     *
+     * @param id    The display ID, with or without your mod's namespace
+     * @param lines The new text lines
+     * @return True if the update was successful, false if the display was not API-registered or is not a text display
      */
-    interface TextDisplayBuilder {
-        /**
-         * Sets the text content of this display.
-         *
-         * @param lines The lines of text to display
-         */
-        void text(String... lines);
+    boolean updateDisplayText(String id, List<String> lines);
 
+    /**
+     * Updates the transform animation of an API-registered item or block display.
+     *
+     * @param id            The ID of the display
+     * @param animationName Name of a registered transform animation ("drop_item" is bundled), or null to revert it to its static transform
+     * @return True if updated
+     */
+    boolean updateDisplayAnimation(String id, String animationName);
+
+    /**
+     * Registers a transform animation for use by item and block display animations.
+     * Animations registered through the API are runtime-only and disappear on restart; file-based
+     * animations in <code>config/holodisplays/animations/</code> (including the bundled <code>drop_item</code>)
+     * are always available.
+     *
+     * @param name    The animation name (letters, digits, dots, dashes and underscores)
+     * @param builder The animation builder
+     * @return True if registered
+     */
+    boolean saveTransformAnimation(String name, Consumer<TransformAnimationBuilder> builder);
+
+    /**
+     * Removes a transform animation; file-based ones reappear on the next reload.
+     *
+     * @param name The animation name
+     * @return True if removed
+     */
+    boolean deleteTransformAnimation(String name);
+
+    /**
+     * @return Names of all registered transform animations, including file-based ones
+     */
+    Set<String> getTransformAnimationNames();
+
+    /**
+     * Registers a text animation for use by <code>&lt;animation:name&gt;</code> placeholders in text lines.
+     * Runtime-only and disappears on restart; file-based
+     * animations in <code>config/holodisplays/animations/</code> are always available.
+     *
+     * @param name     The animation name (letters, digits, dots, dashes and underscores)
+     * @param frames   The non-empty list of animation frames (one line of text each)
+     * @param interval Ticks each frame is shown (minimum 1)
+     * @return True if registered
+     */
+    boolean saveTextAnimation(String name, List<String> frames, int interval);
+
+    /**
+     * Removes a text animation; file-based ones reappear on the next reload. Lines still referencing it fall back to their invalid-animation placeholder.
+     *
+     * @param name The animation name
+     * @return True if removed
+     */
+    boolean deleteTextAnimation(String name);
+
+    /**
+     * @return Names of all registered text animations, including file-based ones
+     */
+    Set<String> getTextAnimationNames();
+
+    /**
+     * Common display builder methods.
+     */
+    interface DisplayBuilder {
         /**
          * Sets the scale of this display.
          *
@@ -200,13 +276,6 @@ public interface HoloDisplaysAPI {
          * @param z Z rotation in degrees
          */
         void rotation(float x, float y, float z);
-
-        /**
-         * Sets the billboard mode of this display.
-         *
-         * @param mode The billboard mode (fixed, horizontal, vertical, center)
-         */
-        void billboardMode(String mode);
 
         /**
          * Sets the left rotation of this display using raw quaternion values.
@@ -234,6 +303,30 @@ public interface HoloDisplaysAPI {
          * @param placeholder The condition or null
          */
         void condition(String placeholder);
+    }
+
+    /**
+     * Display builder methods for displays that support billboards.
+     */
+    interface BillboardDisplayBuilder extends DisplayBuilder {
+        /**
+         * Sets the billboard mode of this display.
+         *
+         * @param mode The billboard mode (fixed, horizontal, vertical, center)
+         */
+        void billboardMode(String mode);
+    }
+
+    /**
+     * Builder interface for text displays.
+     */
+    interface TextDisplayBuilder extends BillboardDisplayBuilder {
+        /**
+         * Sets the text content of this display.
+         *
+         * @param lines The lines of text to display
+         */
+        void text(String... lines);
 
         /**
          * Sets the background color of this text display.
@@ -275,7 +368,7 @@ public interface HoloDisplaysAPI {
     /**
      * Builder interface for item displays.
      */
-    interface ItemDisplayBuilder {
+    interface ItemDisplayBuilder extends BillboardDisplayBuilder {
         /**
          * Sets the item to display.
          *
@@ -284,62 +377,17 @@ public interface HoloDisplaysAPI {
         void item(String itemId);
 
         /**
-         * Sets the scale of this display.
+         * Assigns a transform animation to this display.
          *
-         * @param x X scale factor
-         * @param y Y scale factor
-         * @param z Z scale factor
+         * @param animationName Name of a registered transform animation ("drop_item" is bundled), or null to unassign
          */
-        void scale(float x, float y, float z);
-
-        /**
-         * Sets the rotation of this display.
-         *
-         * @param x X rotation in degrees
-         * @param y Y rotation in degrees
-         * @param z Z rotation in degrees
-         */
-        void rotation(float x, float y, float z);
-
-        /**
-         * Sets the billboard mode of this display.
-         *
-         * @param mode The billboard mode (fixed, horizontal, vertical, center)
-         */
-        void billboardMode(String mode);
-
-        /**
-         * Sets the left rotation of this display using raw quaternion values.
-         *
-         * @param x X component
-         * @param y Y component
-         * @param z Z component
-         * @param w W component
-         */
-        void leftRotation(float x, float y, float z, float w);
-
-        /**
-         * Sets the right rotation of this display using raw quaternion values.
-         *
-         * @param x X component
-         * @param y Y component
-         * @param z Z component
-         * @param w W component
-         */
-        void rightRotation(float x, float y, float z, float w);
-
-        /**
-         * Sets the conditional placeholder for this display.
-         *
-         * @param placeholder The condition or null
-         */
-        void condition(String placeholder);
+        void animation(String animationName);
     }
 
     /**
      * Builder interface for block displays.
      */
-    interface BlockDisplayBuilder {
+    interface BlockDisplayBuilder extends BillboardDisplayBuilder {
         /**
          * Sets the block to display.
          *
@@ -355,62 +403,17 @@ public interface HoloDisplaysAPI {
         void properties(Map<String, String> properties);
 
         /**
-         * Sets the scale of this display.
+         * Assigns a transform animation to this display.
          *
-         * @param x X scale factor
-         * @param y Y scale factor
-         * @param z Z scale factor
+         * @param animationName Name of a registered transform animation ("drop_item" is bundled), or null to unassign
          */
-        void scale(float x, float y, float z);
-
-        /**
-         * Sets the rotation of this display.
-         *
-         * @param x X rotation in degrees
-         * @param y Y rotation in degrees
-         * @param z Z rotation in degrees
-         */
-        void rotation(float x, float y, float z);
-
-        /**
-         * Sets the billboard mode of this display.
-         *
-         * @param mode The billboard mode (fixed, horizontal, vertical, center)
-         */
-        void billboardMode(String mode);
-
-        /**
-         * Sets the left rotation of this display using raw quaternion values.
-         *
-         * @param x X component
-         * @param y Y component
-         * @param z Z component
-         * @param w W component
-         */
-        void leftRotation(float x, float y, float z, float w);
-
-        /**
-         * Sets the right rotation of this display using raw quaternion values.
-         *
-         * @param x X component
-         * @param y Y component
-         * @param z Z component
-         * @param w W component
-         */
-        void rightRotation(float x, float y, float z, float w);
-
-        /**
-         * Sets the conditional placeholder for this display.
-         *
-         * @param placeholder The condition or null
-         */
-        void condition(String placeholder);
+        void animation(String animationName);
     }
 
     /**
      * Builder interface for entity displays.
      */
-    interface EntityDisplayBuilder {
+    interface EntityDisplayBuilder extends DisplayBuilder {
         /**
          * Sets the entity to display.
          *
@@ -431,51 +434,79 @@ public interface HoloDisplaysAPI {
          * @param pose The pose name (e.g., "standing", "crouching", "sneaking")
          */
         void pose(String pose);
+    }
+
+    /**
+     * Builder interface for transform animations.
+     */
+    interface TransformAnimationBuilder {
+        /**
+         * Sets the interval of this animation.
+         *
+         * @param ticks Ticks for one from to to sweep (default 20, minimum 1)
+         * @return This builder for chaining
+         */
+        TransformAnimationBuilder interval(int ticks);
 
         /**
-         * Sets the scale of this display.
+         * Sets the interpolation mode of this animation.
          *
-         * @param x X scale factor
-         * @param y Y scale factor
-         * @param z Z scale factor
+         * @param mode "linear" (constant speed) or "sine" (eases in and out; default)
+         * @return This builder for chaining
          */
-        void scale(float x, float y, float z);
+        TransformAnimationBuilder interpolation(String mode);
 
         /**
-         * Sets the rotation of this display.
+         * Sets whether this animation loops. With loop a full cycle takes interval ticks; ping-pong takes 2 x interval.
          *
-         * @param x X rotation in degrees
-         * @param y Y rotation in degrees
-         * @param z Z rotation in degrees
+         * @param loop True = from to to, then restart; false (default) = smooth ping-pong between from and to
+         * @return This builder for chaining
          */
-        void rotation(float x, float y, float z);
+        TransformAnimationBuilder loop(boolean loop);
 
         /**
-         * Sets the left rotation of this display using raw quaternion values.
+         * Animates the scale between two uniform values.
          *
-         * @param x X component
-         * @param y Y component
-         * @param z Z component
-         * @param w W component
+         * @param from Start scale
+         * @param to  End scale
+         * @return This builder for chaining
          */
-        void leftRotation(float x, float y, float z, float w);
+        TransformAnimationBuilder scale(float from, float to);
 
         /**
-         * Sets the right rotation of this display using raw quaternion values.
+         * Animates the scale with per-property timing overrides.
          *
-         * @param x X component
-         * @param y Y component
-         * @param z Z component
-         * @param w W component
+         * @return This builder for chaining
          */
-        void rightRotation(float x, float y, float z, float w);
+        TransformAnimationBuilder scale(float from, float to, int interval, String interpolation, boolean loop);
 
         /**
-         * Sets the conditional placeholder for this display.
+         * Animates a relative rotation sweep in degrees (XYZ), added on top of the display's static rotation.
          *
-         * @param placeholder The condition or null
+         * @return This builder for chaining
          */
-        void condition(String placeholder);
+        TransformAnimationBuilder rotation(float fromX, float fromY, float fromZ, float toX, float toY, float toZ);
+
+        /**
+         * Animates a relative rotation sweep with per-property timing overrides.
+         *
+         * @return This builder for chaining
+         */
+        TransformAnimationBuilder rotation(float fromX, float fromY, float fromZ, float toX, float toY, float toZ, int interval, String interpolation, boolean loop);
+
+        /**
+         * Animates a relative translation offset (XYZ), added on top of the display's computed translation.
+         *
+         * @return This builder for chaining
+         */
+        TransformAnimationBuilder translation(float fromX, float fromY, float fromZ, float toX, float toY, float toZ);
+
+        /**
+         * Animates a relative translation offset with per-property timing overrides.
+         *
+         * @return This builder for chaining
+         */
+        TransformAnimationBuilder translation(float fromX, float fromY, float fromZ, float toX, float toY, float toZ, int interval, String interpolation, boolean loop);
     }
 
     /**

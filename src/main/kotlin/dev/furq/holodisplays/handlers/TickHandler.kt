@@ -5,6 +5,8 @@ import dev.furq.holodisplays.config.AnimationConfig
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
 import dev.furq.holodisplays.data.HologramData
+import dev.furq.holodisplays.data.display.BlockDisplay
+import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.data.display.TextDisplay
 import eu.pb4.placeholders.api.PlaceholderContext
 import eu.pb4.placeholders.api.Placeholders
@@ -25,9 +27,8 @@ object TickHandler {
     private const val MAX_TEXT_CACHE_SIZE = 512
     private const val MAX_PLACEHOLDER_NODE_CACHE_SIZE = 128
     private val animationCache = object : LinkedHashMap<Pair<String, Int>, String>(MAX_ANIMATION_CACHE_SIZE, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Pair<String, Int>, String>): Boolean {
-            return size > MAX_ANIMATION_CACHE_SIZE
-        }
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Pair<String, Int>, String>): Boolean =
+            size > MAX_ANIMATION_CACHE_SIZE
     }
     private val placeholderParser by lazy {
         //~ if >=26.1 'DEFAULT_PLACEHOLDER_PARSER' -> 'SERVER_PLACEHOLDER_PARSER'
@@ -35,9 +36,8 @@ object TickHandler {
     }
     private val animationRegex = "<animation:([^>]+)>".toRegex()
     private val textCache = object : LinkedHashMap<String, CachedTextInfo>(MAX_TEXT_CACHE_SIZE, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, CachedTextInfo>): Boolean {
-            return size > MAX_TEXT_CACHE_SIZE
-        }
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, CachedTextInfo>): Boolean =
+            size > MAX_TEXT_CACHE_SIZE
     }
     private val placeholderNodeCache = object : LinkedHashMap<String, TextNode>(MAX_PLACEHOLDER_NODE_CACHE_SIZE, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, TextNode>): Boolean {
@@ -70,8 +70,8 @@ object TickHandler {
             processHologramDisplays(name, hologram, players, bundled)
         }
 
-        HoloDisplaysAPIInternal.forEachApiHologramUnchecked { name, hologram ->
-            if (ViewerHandler.getObserverCount(name) == 0) return@forEachApiHologramUnchecked
+        HoloDisplaysAPIInternal.forEachApiHologram { name, hologram ->
+            if (ViewerHandler.getObserverCount(name) == 0) return@forEachApiHologram
             processHologramDisplays(name, hologram, players, bundled)
         }
         bundled.forEach { (player, packets) ->
@@ -83,25 +83,42 @@ object TickHandler {
 
     private fun processHologramDisplays(name: String, hologram: HologramData, players: List<ServerPlayer>, bundled: MutableMap<ServerPlayer, MutableList<Packet<in ClientGamePacketListener>>>) {
         var viewers: List<ServerPlayer>? = null
-        hologram.displays.forEachIndexed { index, displayLine ->
-            val display = DisplayConfig.getDisplayOrAPI(displayLine.name)?.type as? TextDisplay
-                ?: return@forEachIndexed
-
-            val text = display.getText()
-            if (!shouldUpdateDisplay(text, hologram.updateRate)) return@forEachIndexed
-
+        fun resolveViewers(): List<ServerPlayer>? {
             if (viewers == null) {
                 viewers = players.filter { ViewerHandler.isViewing(it, name) }
             }
-            val hologramViewers = viewers
-            if (hologramViewers.isEmpty()) return
+            return viewers
+        }
 
-            val animated = processAnimations(text)
-            hologramViewers.forEach { player ->
-                val processedText = processPlaceholders(animated, player)
-                PacketHandler.buildTextUpdatePacket(player, name, displayLine.name, index, processedText)?.let { packet ->
-                    bundled.getOrPut(player) { mutableListOf() }.add(packet)
+        hologram.displays.forEachIndexed { index, displayLine ->
+            val displayData = DisplayConfig.getDisplayOrAPI(displayLine.name) ?: return@forEachIndexed
+            val display = displayData.type
+
+            if (display is TextDisplay) {
+                val text = display.getText()
+                if (!shouldUpdateDisplay(text, hologram.updateRate)) return@forEachIndexed
+
+                val hologramViewers = resolveViewers() ?: return
+                if (hologramViewers.isEmpty()) return
+
+                val animated = processAnimations(text)
+                hologramViewers.forEach { player ->
+                    val processedText = processPlaceholders(animated, player)
+                    PacketHandler.buildTextUpdatePacket(player, name, displayLine.name, index, processedText)?.let { packet ->
+                        bundled.getOrPut(player) { mutableListOf() }.add(packet)
+                    }
                 }
+            } else {
+                val animationName = when (display) {
+                    is ItemDisplay -> display.animation
+                    is BlockDisplay -> display.animation
+                    else -> null
+                } ?: return@forEachIndexed
+
+                val hologramViewers = resolveViewers() ?: return
+                if (hologramViewers.isEmpty()) return
+
+                AnimationHandler.processTransformDisplay(name, hologram, displayLine, index, displayData, animationName, ticks, hologramViewers, bundled)
             }
         }
     }

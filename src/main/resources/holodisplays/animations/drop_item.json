@@ -1,0 +1,16 @@
+// Vanilla dropped item replica: spin every 6.3s, bob every 3.1s. Raise intervals to slow it down.
+{
+  "rotation": {
+    "from": [0, 0, 0],
+    "to": [0, 360, 0],
+    "interval": 126,
+    "interpolation": "linear",
+    "loop": true
+  },
+  "translation": {
+    "from": [0, -0.1, 0],
+    "to": [0, 0.1, 0],
+    "interval": 31,
+    "interpolation": "sine"
+  }
+}

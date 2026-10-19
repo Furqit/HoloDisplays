@@ -15,6 +15,7 @@ data class ItemDisplay(
     val id: String,
     val itemDisplayType: String = "ground",
     val customModelData: Int? = null,
+    val animation: String? = null,
     override val rotation: Vector3f? = null,
     override val leftRotation: Quaternionf? = null,
     override val rightRotation: Quaternionf? = null,
@@ -22,10 +23,13 @@ data class ItemDisplay(
     override val billboardMode: BillboardConstraints? = null,
     override val conditionalPlaceholder: String? = null
 ) : BaseDisplay() {
+    fun withAnimation(animation: String?): ItemDisplay = copy(animation = animation)
+
     class Builder : BaseDisplay.Builder<ItemDisplay> {
         var id: String = ""
         var itemDisplayType: String = "ground"
         var customModelData: Int? = null
+        var animation: String? = null
         override var rotation: Vector3f? = null
         override var leftRotation: Quaternionf? = null
         override var rightRotation: Quaternionf? = null
@@ -33,6 +37,6 @@ data class ItemDisplay(
         override var billboardMode: BillboardConstraints? = null
         override var conditionalPlaceholder: String? = null
 
-        override fun build() = ItemDisplay(id, itemDisplayType, customModelData, rotation?.let { Vector3f(it) }, leftRotation?.let { Quaternionf(it) }, rightRotation?.let { Quaternionf(it) }, scale?.let { Vector3f(it) }, billboardMode, conditionalPlaceholder)
+        override fun build() = ItemDisplay(id, itemDisplayType, customModelData, animation, rotation?.let { Vector3f(it) }, leftRotation?.let { Quaternionf(it) }, rightRotation?.let { Quaternionf(it) }, scale?.let { Vector3f(it) }, billboardMode, conditionalPlaceholder)
     }
 }

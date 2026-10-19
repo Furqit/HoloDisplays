@@ -33,4 +33,14 @@ public interface DisplayAccessor {
     static EntityDataAccessor<Vector3f> getTranslation() {
         throw new AssertionError();
     }
+
+    @Accessor("DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID")
+    static EntityDataAccessor<Integer> getTransformationInterpolationDuration() {
+        throw new AssertionError();
+    }
+
+    @Accessor("DATA_TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS_ID")
+    static EntityDataAccessor<Integer> getTransformationInterpolationStartDelta() {
+        throw new AssertionError();
+    }
 }

@@ -6,7 +6,7 @@ import dev.furq.holodisplays.data.HologramData;
 import java.util.function.BiConsumer;
 
 /**
- * Internal API access for the HoloDisplays mod.
+ * Internal API access for the HoloDisplays mod. Read methods bypass the caller check for hot paths.
  * This class should NOT be used by external mods - use HoloDisplaysAPI instead.
  */
 public final class HoloDisplaysAPIInternal {
@@ -28,20 +28,10 @@ public final class HoloDisplaysAPIInternal {
     }
 
     public static boolean hasApiHolograms() {
-        validateCaller();
-        return HoloDisplaysAPIImpl.hasApiHolograms();
-    }
-
-    public static boolean hasApiHologramsUnchecked() {
         return HoloDisplaysAPIImpl.hasApiHolograms();
     }
 
     public static void forEachApiHologram(BiConsumer<String, HologramData> consumer) {
-        validateCaller();
-        HoloDisplaysAPIImpl.forEachApiHologram(consumer);
-    }
-
-    public static void forEachApiHologramUnchecked(BiConsumer<String, HologramData> consumer) {
         HoloDisplaysAPIImpl.forEachApiHologram(consumer);
     }
 
@@ -51,20 +41,10 @@ public final class HoloDisplaysAPIInternal {
     }
 
     public static DisplayData getDisplay(String id) {
-        validateCaller();
-        return HoloDisplaysAPIImpl.getDisplayStatic(id);
-    }
-
-    public static DisplayData getDisplayUnchecked(String id) {
         return HoloDisplaysAPIImpl.getDisplayStatic(id);
     }
 
     public static HologramData getHologram(String id) {
-        validateCaller();
-        return HoloDisplaysAPIImpl.getHologramStatic(id);
-    }
-
-    public static HologramData getHologramUnchecked(String id) {
         return HoloDisplaysAPIImpl.getHologramStatic(id);
     }
 }

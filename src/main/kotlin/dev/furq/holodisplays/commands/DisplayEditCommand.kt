@@ -42,7 +42,29 @@ object DisplayEditCommand : EditCommand() {
             .then(buildBlockCommands())
             .then(buildEntityCommands())
             .then(buildConditionCommands())
+            .then(buildAnimationCommands())
         )
+
+    private fun buildAnimationCommands(): ArgumentBuilder<CommandSourceStack, *> =
+        Commands.literal("animation")
+            .then(Commands.argument("animation", StringArgumentType.word())
+                .suggests { _, builder -> CommandUtils.suggestTransformAnimations(builder) }
+                .executes { context -> executeSetAnimation(context) })
+            .then(Commands.literal("reset")
+                .executes { context -> executeResetAnimation(context) })
+
+    private fun executeSetAnimation(context: CommandContext<CommandSourceStack>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        val animation = StringArgumentType.getString(context, "animation")
+        DisplayManager.updateAnimation(name, animation, context.source)
+        return 1
+    }
+
+    private fun executeResetAnimation(context: CommandContext<CommandSourceStack>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        DisplayManager.updateAnimation(name, null, context.source)
+        return 1
+    }
 
     private fun buildTextCommands(): ArgumentBuilder<CommandSourceStack, *> {
         return Commands.literal("text")

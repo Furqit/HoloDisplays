@@ -9,6 +9,7 @@ import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.handlers.PacketHandler
 import dev.furq.holodisplays.handlers.TickHandler
 import dev.furq.holodisplays.handlers.ViewerHandler
+import dev.furq.holodisplays.utils.ConditionEvaluator
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
@@ -22,7 +23,7 @@ import org.slf4j.LoggerFactory
 class HoloDisplays : ModInitializer {
     companion object {
         const val MOD_ID = "HoloDisplays"
-        const val VERSION = "0.4.8"
+        const val VERSION = "0.5.3"
         val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
 
         var SERVER: MinecraftServer? = null
@@ -38,7 +39,7 @@ class HoloDisplays : ModInitializer {
 
     private fun handleServerTick(server: MinecraftServer) {
         val players = server.playerList.players
-        if (players.isNotEmpty() && (HologramConfig.getHolograms().isNotEmpty() || HoloDisplaysAPIInternal.hasApiHologramsUnchecked())) {
+        if (players.isNotEmpty() && (HologramConfig.getHolograms().isNotEmpty() || HoloDisplaysAPIInternal.hasApiHolograms())) {
             TickHandler.tick(players)
             players.forEach { player ->
                 ViewerHandler.updatePlayerVisibility(player)
@@ -63,6 +64,7 @@ class HoloDisplays : ModInitializer {
             HoloDisplaysAPIInternal.clearAll()
             HologramHandler.clearWorldCache()
             TickHandler.init()
+            ConditionEvaluator.resetCaches()
             PacketHandler.resetEntityTracking()
         }
     }

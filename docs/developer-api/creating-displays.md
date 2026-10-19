@@ -31,6 +31,7 @@ DisplayData textDisplay = api.createTextDisplay("my_text", builder -> {
   * `shadow(boolean)`: Shadow.
   * `seeThrough(boolean)`: Transparent BG.
   * `opacity(float 0-1)`: Text alpha.
+* **Notes**: Text animations ride the content: put an `<animation:name>` placeholder in any line (see Managing Displays and Holograms for creating them via the API).
 
 ## Item Display
 
@@ -40,11 +41,13 @@ DisplayData itemDisplay = api.createItemDisplay("my_sword", builder -> {
     builder.scale(2f, 2f, 2f);
     builder.rotation(0f, 90f, 0f);
     builder.billboardMode("fixed");
+    builder.animation("drop_item");
     builder.condition(null);
 });
 ```
 
-* **Methods**: `item(String id)`, plus common (scale, rotation, leftRotation, rightRotation, billboard, condition).
+* **Methods**: `item(String id)`, `animation(String name)`, plus common (scale, rotation, leftRotation, rightRotation, billboard, condition).
+* **Notes**: `animation` assigns a transform animation (see Managing Displays and Holograms for creating and listing them). `null` leaves the display static.
 
 ## Block Display
 
@@ -57,7 +60,7 @@ DisplayData blockDisplay = api.createBlockDisplay("my_stone", builder -> {
 });
 ```
 
-* **Methods**: `block(String id)`, `properties(Map<String, String>)`, plus common.
+* **Methods**: `block(String id)`, `properties(Map<String, String>)`, `animation(String name)`, plus common.
 
 ## Entity Display
 

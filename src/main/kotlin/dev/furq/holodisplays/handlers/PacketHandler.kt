@@ -259,6 +259,57 @@ object PacketHandler {
         }
     } ?: emptyList()
 
+    private fun rotationQuaternion(rotation: Vector3f): Quaternionf {
+        if (rotation.x == 0f && rotation.y == 0f && rotation.z == 0f) return Quaternionf()
+        return Quaternionf()
+            .rotateY(toRadians(rotation.y))
+            .rotateX(toRadians(rotation.x))
+            .rotateZ(toRadians(rotation.z))
+    }
+
+    private const val TRANSFORM_INTERPOLATION_TICKS = 2
+
+    fun buildTransformUpdatePacket(
+        player: ServerPlayer,
+        hologramName: String,
+        displayId: String,
+        lineIndex: Int,
+        displayData: DisplayData,
+        hologram: HologramData,
+        line: HologramData.DisplayLine,
+        scaleMultiplier: Float?,
+        rotationDelta: Vector3f?,
+        translationDelta: Vector3f?,
+    ): ClientboundSetEntityDataPacket? {
+        val displayRef = "$displayId:$lineIndex"
+        val hologramMap = hologramEntities(player.uuid, hologramName) ?: return null
+        val entityId = hologramMap.getInt(displayRef)
+        if (entityId == -1) return null
+
+        val display = displayData.type
+        val baseScale = display.scale ?: hologram.scale
+        val entries = buildList {
+            add(createEntry(DisplayAccessor.getTransformationInterpolationStartDelta(), 0))
+            add(createEntry(DisplayAccessor.getTransformationInterpolationDuration(), TRANSFORM_INTERPOLATION_TICKS))
+            scaleMultiplier?.also {
+                add(createEntry(DisplayAccessor.getScale(), Vector3f(baseScale.x * it, baseScale.y * it, baseScale.z * it)))
+            }
+            rotationDelta?.also { delta ->
+                val rotation = display.rotation ?: hologram.rotation
+                add(createEntry(DisplayAccessor.getLeftRotation(), rotationQuaternion(
+                    Vector3f(rotation.x + delta.x, rotation.y + delta.y, rotation.z + delta.z)
+                )))
+            }
+            translationDelta?.also { delta ->
+                val isFromApi = HoloDisplaysAPIInternal.getDisplay(line.name) != null
+                val translation = calculateTranslation(display, line.offset, baseScale, isFromApi)
+                translation.add(delta.x, delta.y, delta.z)
+                add(createEntry(DisplayAccessor.getTranslation(), translation))
+            }
+        }
+        return if (entries.isEmpty()) null else ClientboundSetEntityDataPacket(entityId, entries)
+    }
+
     private fun commonDisplayProperties(
         displayData: DisplayData,
         hologram: HologramData,
@@ -273,19 +324,7 @@ object PacketHandler {
         add(createEntry(DisplayAccessor.getBillboard(), billboardOrdinal))
 
         val rawLeftRotation = display.leftRotation ?: hologram.leftRotation
-        val leftRotation = if (rawLeftRotation != null) {
-            rawLeftRotation
-        } else {
-            val rotation = display.rotation ?: hologram.rotation
-            if (rotation.x == 0f && rotation.y == 0f && rotation.z == 0f) {
-                Quaternionf()
-            } else {
-                Quaternionf()
-                    .rotateY(toRadians(rotation.y))
-                    .rotateX(toRadians(rotation.x))
-                    .rotateZ(toRadians(rotation.z))
-            }
-        }
+        val leftRotation = rawLeftRotation ?: rotationQuaternion(display.rotation ?: hologram.rotation)
         add(createEntry(DisplayAccessor.getLeftRotation(), leftRotation))
 
         val rightRotation = display.rightRotation ?: hologram.rightRotation
@@ -293,7 +332,7 @@ object PacketHandler {
             add(createEntry(DisplayAccessor.getRightRotation(), rightRotation))
         }
 
-        val isFromApi = HoloDisplaysAPIInternal.getDisplayUnchecked(line.name) != null
+        val isFromApi = HoloDisplaysAPIInternal.getDisplay(line.name) != null
         val translation = calculateTranslation(display, line.offset, scale, isFromApi)
         add(createEntry(DisplayAccessor.getTranslation(), translation))
 

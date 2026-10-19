@@ -14,6 +14,7 @@ import org.joml.Vector3f
 data class BlockDisplay(
     val id: String,
     val properties: Map<String, String> = emptyMap(),
+    val animation: String? = null,
     override val rotation: Vector3f? = null,
     override val leftRotation: Quaternionf? = null,
     override val rightRotation: Quaternionf? = null,
@@ -21,9 +22,12 @@ data class BlockDisplay(
     override val billboardMode: BillboardConstraints? = null,
     override val conditionalPlaceholder: String? = null
 ) : BaseDisplay() {
+    fun withAnimation(animation: String?): BlockDisplay = copy(animation = animation)
+
     class Builder : BaseDisplay.Builder<BlockDisplay> {
         var id: String = ""
         var properties: Map<String, String> = emptyMap()
+        var animation: String? = null
         override var rotation: Vector3f? = null
         override var leftRotation: Quaternionf? = null
         override var rightRotation: Quaternionf? = null
@@ -31,6 +35,6 @@ data class BlockDisplay(
         override var billboardMode: BillboardConstraints? = null
         override var conditionalPlaceholder: String? = null
 
-        override fun build() = BlockDisplay(id, properties.toMap(), rotation?.let { Vector3f(it) }, leftRotation?.let { Quaternionf(it) }, rightRotation?.let { Quaternionf(it) }, scale?.let { Vector3f(it) }, billboardMode, conditionalPlaceholder)
+        override fun build() = BlockDisplay(id, properties.toMap(), animation, rotation?.let { Vector3f(it) }, leftRotation?.let { Quaternionf(it) }, rightRotation?.let { Quaternionf(it) }, scale?.let { Vector3f(it) }, billboardMode, conditionalPlaceholder)
     }
 }

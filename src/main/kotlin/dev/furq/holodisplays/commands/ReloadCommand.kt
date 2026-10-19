@@ -7,6 +7,7 @@ import dev.furq.holodisplays.handlers.PacketHandler
 import dev.furq.holodisplays.handlers.TickHandler
 import dev.furq.holodisplays.handlers.ViewerHandler
 import dev.furq.holodisplays.managers.FeedbackManager
+import dev.furq.holodisplays.utils.ConditionEvaluator
 import dev.furq.holodisplays.utils.FeedbackType
 //? if >=1.21.11
 import net.minecraft.server.permissions.PermissionLevel
@@ -29,6 +30,7 @@ object ReloadCommand {
         ViewerHandler.clearTrackers()
         TickHandler.init()
         HologramHandler.clearWorldCache()
+        ConditionEvaluator.resetCaches()
         ConfigManager.reload()
         HologramHandler.reinitialize()
         FeedbackManager.send(source, FeedbackType.RELOAD_SUCCESS)

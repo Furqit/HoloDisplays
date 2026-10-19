@@ -35,6 +35,8 @@ data class TextDisplay(
     private val cachedText by lazy { lines.joinToString("\n") }
     fun getText(): String = cachedText
 
+    fun withLines(lines: List<String>): TextDisplay = copy(lines = lines)
+
     class Builder : BaseDisplay.Builder<TextDisplay> {
         var lines = mutableListOf<String>()
         var lineWidth: Int? = null

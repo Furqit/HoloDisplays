@@ -167,14 +167,12 @@ object HologramHandler {
         z: Float,
         viewRange: Double,
     ): Boolean {
-        if (player.level() == getWorld(world)) {
-            return player.position().distanceToSqr(
+        return player.level() == getWorld(world) &&
+            player.position().distanceToSqr(
                 x.toDouble(),
                 y.toDouble(),
                 z.toDouble()
             ) <= viewRange * viewRange
-        }
-        return false
     }
 
     private fun getWorld(world: String): Level {

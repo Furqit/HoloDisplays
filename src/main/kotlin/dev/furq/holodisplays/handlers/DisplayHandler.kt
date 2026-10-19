@@ -27,6 +27,7 @@ object DisplayHandler {
         data class ItemId(val value: String) : DisplayProperty()
         data class ItemDisplayType(val value: String) : DisplayProperty()
         data class ItemCustomModelData(val value: Int?) : DisplayProperty()
+        data class Animation(val value: String?) : DisplayProperty()
         data class BlockId(val value: String) : DisplayProperty()
         data class BlockProperties(val value: Map<String, String>) : DisplayProperty()
         data class EntityId(val value: String) : DisplayProperty()
@@ -101,6 +102,7 @@ object DisplayHandler {
         is DisplayProperty.ItemId -> display.copy(id = property.value)
         is DisplayProperty.ItemDisplayType -> display.copy(itemDisplayType = property.value)
         is DisplayProperty.ItemCustomModelData -> display.copy(customModelData = property.value)
+        is DisplayProperty.Animation -> display.copy(animation = property.value)
         is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
         else -> null
     }
@@ -111,6 +113,7 @@ object DisplayHandler {
         is DisplayProperty.Rotation -> display.copy(rotation = property.value)
         is DisplayProperty.BlockId -> display.copy(id = property.value)
         is DisplayProperty.BlockProperties -> display.copy(properties = property.value)
+        is DisplayProperty.Animation -> display.copy(animation = property.value)
         is DisplayProperty.ConditionalPlaceholder -> display.copy(conditionalPlaceholder = property.value)
         else -> null
     }
