@@ -14,11 +14,12 @@ import net.minecraft.network.protocol.game.ClientboundBundlePacket
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.ChunkPos
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 object ViewerHandler {
-    private val observers = mutableMapOf<String, MutableSet<UUID>>()
-    private val hologramChunkMap = mutableMapOf<Long, MutableSet<String>>()
-    private val visibilityCache = mutableMapOf<UUID, VisibilityCacheEntry>()
+    private val observers = ConcurrentHashMap<String, MutableSet<UUID>>()
+    private val hologramChunkMap = ConcurrentHashMap<Long, MutableSet<String>>()
+    private val visibilityCache = ConcurrentHashMap<UUID, VisibilityCacheEntry>()
     private val playerManager get() = HoloDisplays.SERVER?.playerList
 
     private data class VisibilityCacheEntry(
@@ -29,7 +30,7 @@ object ViewerHandler {
 
     private fun getPlayer(uuid: UUID): ServerPlayer? = playerManager?.getPlayer(uuid)
     fun isViewing(player: ServerPlayer, name: String): Boolean = observers[name]?.contains(player.uuid) == true
-    fun createTracker(name: String) = observers.getOrPut(name) { mutableSetOf() }
+    fun createTracker(name: String): MutableSet<UUID> = observers.computeIfAbsent(name) { ConcurrentHashMap.newKeySet() }
     fun removeTracker(name: String) = observers.remove(name)
     fun clearTrackers() {
         observers.clear()
@@ -56,7 +57,7 @@ object ViewerHandler {
             position.x.toInt() shr 4,
             position.z.toInt() shr 4
         )
-        hologramChunkMap.getOrPut(chunkLong) { mutableSetOf() }.add(name)
+        hologramChunkMap.computeIfAbsent(chunkLong) { ConcurrentHashMap.newKeySet() }.add(name)
         visibilityCache.clear()
     }
 
@@ -73,7 +74,7 @@ object ViewerHandler {
 
     fun addViewer(player: ServerPlayer, name: String) = safeCall {
         val hologramData = HologramConfig.getHologramOrAPI(name) ?: return@safeCall
-        val observerSet = observers.getOrPut(name) { mutableSetOf() }
+        val observerSet = createTracker(name)
         if (observerSet.add(player.uuid)) {
             showHologramToPlayer(player, name, hologramData)
         }

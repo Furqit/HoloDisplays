@@ -107,7 +107,7 @@ object PacketHandler {
         val displayRef = "${line.name}:$lineIndex"
 
         entityIds.getOrPut(player.uuid) { mutableMapOf() }
-            .getOrPut(hologramName) { Object2IntOpenHashMap() }
+            .getOrPut(hologramName) { Object2IntOpenHashMap<String>().apply { defaultReturnValue(-1) } }
             .put(displayRef, entityId)
 
         val display = displayData.type
@@ -220,8 +220,8 @@ object PacketHandler {
     ): ClientboundSetEntityDataPacket? {
         val displayRef = "$displayId:$lineIndex"
         val hologramMap = hologramEntities(player.uuid, hologramName) ?: return null
-        if (!hologramMap.containsKey(displayRef)) return null
         val entityId = hologramMap.getInt(displayRef)
+        if (entityId == -1) return null
         val entries = listOf(createEntry(TextDisplayEntityAccessor.getText(), text))
         return ClientboundSetEntityDataPacket(entityId, entries)
     }
@@ -233,8 +233,8 @@ object PacketHandler {
         metadata: List<SynchedEntityData.DataValue<*>>,
     ) = safeCall {
         val hologramMap = hologramEntities(player.uuid, hologramName) ?: return@safeCall
-        if (!hologramMap.containsKey(displayRef)) return@safeCall
         val entityId = hologramMap.getInt(displayRef)
+        if (entityId == -1) return@safeCall
 
         player.connection.send(ClientboundSetEntityDataPacket(entityId, metadata))
     }
