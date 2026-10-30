@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 object Lang : Config {
     private const val DEFAULT_LOCALE = "en_us"
-    private val bundledLocales = listOf(DEFAULT_LOCALE)
+    private val bundledLocales = listOf(DEFAULT_LOCALE, "zh_cn")
     private val registry = ConcurrentHashMap<String, MutableMap<String, String>>()
     private val json = sharedJson
 
