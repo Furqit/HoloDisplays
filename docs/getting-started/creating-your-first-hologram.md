@@ -107,7 +107,7 @@ Or use GUI: In hologram editor, adjust position.
 
 ## Step 5: Advanced Tweaks
 
-* Add condition: `/holodisplays hologram edit welcome_holo condition "%player:group% == default"`
+* Add condition: `/holodisplays hologram edit welcome_holo condition "%player:group% = default"`
 * Add another display: Create an item display (`/hd display create welcome_item item minecraft:grass_block`), add to hologram (`/holo hologram line welcome_holo add welcome_item`), offset \[0, -0.5, 0] for below text.
 * Edit via GUI for visual preview.
 

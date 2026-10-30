@@ -65,7 +65,7 @@ These commands handle holograms: creating, listing, deleting, editing, moving, a
     * `billboard reset`: Center.
     * `rotation <pitch> <yaw> <roll>`: Degrees (-180 to 180).
     * `rotation reset`: \[0,0,0].
-    * `condition <placeholder>`: e.g., "%player:group% == admin".
+    * `condition <placeholder>`: e.g., "%player:group% = admin".
     * `condition remove`: Remove.
     * `updateRate <ticks>`: Any positive integer.
     * `updateRate reset`: 20.

@@ -1,5 +1,6 @@
 package dev.furq.holodisplays.gui
 
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.utils.GuiUtils
 import eu.pb4.sgui.api.gui.AnvilInputGui
 import net.minecraft.network.chat.Component
@@ -19,7 +20,7 @@ object AnvilInput {
                 setSlot(2, GuiUtils.createGuiItem(
                     name = text,
                     item = Items.PAPER,
-                    lore = GuiUtils.createActionLore("Click to confirm")
+                    lore = GuiUtils.createActionLore(Lang.get(player, "gui.common.click_confirm", "Click to confirm"))
                 )) { _, _, _, _ ->
                     text.takeIf { it.isNotEmpty() }?.let {
                         onSubmit(it)
@@ -30,9 +31,9 @@ object AnvilInput {
         }.apply {
             this.title = Component.literal(title)
             setSlot(1, GuiUtils.createGuiItem(
-                name = "Cancel",
+                name = Lang.get(player, "gui.common.cancel", "Cancel"),
                 item = Items.BARRIER,
-                lore = GuiUtils.createActionLore("Click to cancel")
+                lore = GuiUtils.createActionLore(Lang.get(player, "gui.common.click_cancel", "Click to cancel"))
             )) { _, _, _, _ ->
                 close()
                 onCancel()
@@ -41,7 +42,7 @@ object AnvilInput {
             setSlot(0, GuiUtils.createGuiItem(
                 name = defaultText,
                 item = Items.PAPER,
-                lore = GuiUtils.createActionLore("Type in the text field above")
+                lore = GuiUtils.createActionLore(Lang.get(player, "gui.anvil_input.hint", "Type in the text field above"))
             )) { _, _, _, _ -> }
 
             open()

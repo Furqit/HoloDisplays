@@ -431,7 +431,7 @@ public interface HoloDisplaysAPI {
         /**
          * Sets the pose of this entity.
          *
-         * @param pose The pose name (e.g., "standing", "crouching", "sneaking")
+         * @param pose The pose name (e.g., "standing", "crouching")
          */
         void pose(String pose);
     }

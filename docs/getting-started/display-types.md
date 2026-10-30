@@ -8,8 +8,8 @@ All display types share common properties:
 * **leftRotation**: Array \[x, y, z, w] (quaternion).
 * **rightRotation**: Array \[x, y, z, w] (quaternion).
 * **scale**: Array \[x, y, z] (multipliers; default \[1, 1, 1]).
-* **billboardMode**: String (fixed, horizontal, vertical, center; except entity).
-* **conditionalPlaceholder**: String (visibility condition, e.g., "%player:group% == admin").
+* **billboardMode**: String (FIXED, VERTICAL, HORIZONTAL, CENTER; except entity).
+* **conditionalPlaceholder**: String (visibility condition, e.g., "%player:group% = admin").
 
 ## Text Display
 
@@ -23,7 +23,7 @@ Ideal for messages, signs, or dynamic info with placeholders.
 * **textOpacity**: Integer (1-100; default 100).
 * **shadow**: Boolean (text shadow; default false).
 * **seeThrough**: Boolean (transparent background; default false).
-* **alignment**: String (left, right, center; default left).
+* **alignment**: String (LEFT, CENTER, RIGHT; default center).
 
 ### JSON Format
 
@@ -36,10 +36,10 @@ Ideal for messages, signs, or dynamic info with placeholders.
   "textOpacity": 100,
   "shadow": true,
   "seeThrough": false,
-  "alignment": "center",
+  "alignment": "CENTER",
   "rotation": [0, 0, 0],
   "scale": [1, 1, 1],
-  "billboardMode": "center",
+  "billboardMode": "CENTER",
   "conditionalPlaceholder": "%server_tps% > 19"
 }
 ```
@@ -68,7 +68,7 @@ Displays 3D items with customizable render modes (e.g., as held, on ground).
   "customModelData": 1,
   "rotation": [0, 90, 0],
   "scale": [2, 2, 2],
-  "billboardMode": "fixed",
+  "billboardMode": "FIXED",
   "conditionalPlaceholder": null
 }
 ```
@@ -93,7 +93,7 @@ Shows 3D blocks, useful for signs or decorations.
   "id": "minecraft:stone",
   "rotation": [0, 0, 0],
   "scale": [1, 1, 1],
-  "billboardMode": "center",
+  "billboardMode": "CENTER",
   "conditionalPlaceholder": "%player:level% >= 10"
 }
 ```
@@ -110,19 +110,19 @@ Renders mobs or entities with poses and glow.
 
 * **id**: String (entity registry ID, e.g., "minecraft:zombie").
 * **glow**: Boolean (glowing outline).
-* **pose**: String (STANDING, SNEAKING, etc.; uppercase EntityPose).
+* **pose**: String (STANDING, CROUCHING, etc.).
 
 ### JSON Format
 
-```json5
+```json
 {
-  type: "entity",
-  id: "minecraft:zombie",
-  glow: true,
-  pose: "STANDING",
-  rotation: [0, 180, 0],
-  scale: [0.5, 0.5, 0.5],
-  conditionalPlaceholder: "%player:health% < 10",
+  "type": "entity",
+  "id": "minecraft:zombie",
+  "glow": true,
+  "pose": "STANDING",
+  "rotation": [0, 180, 0],
+  "scale": [0.5, 0.5, 0.5],
+  "conditionalPlaceholder": "%player:health% < 10"
 }
 ```
 

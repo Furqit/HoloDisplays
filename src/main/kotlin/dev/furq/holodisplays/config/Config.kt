@@ -11,6 +11,7 @@ import kotlin.io.path.exists
 internal val sharedJson = Json {
     ignoreUnknownKeys = true
     isLenient = true
+    decodeEnumsCaseInsensitive = true
     prettyPrint = true
     allowTrailingComma = true
     allowComments = true

@@ -1,5 +1,6 @@
 package dev.furq.holodisplays.utils
 
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.data.display.EntityDisplay
 import dev.furq.holodisplays.data.display.ItemDisplay
@@ -26,13 +27,13 @@ object GuiUtils {
     fun advanceContentSlot(slot: Int): Int =
         if (slot == 17 || slot == 26 || slot == 35) slot + 2 else slot
 
-    fun createBackItem() = createGuiItem(
+    fun createBackItem(player: ServerPlayer) = createGuiItem(
         item = Items.BARRIER,
-        name = "Back",
+        name = Lang.get(player, "gui.common.back", "Back"),
         lore = listOf(
             Component.empty()
                 .append(Component.literal("→").withStyle(ChatFormatting.YELLOW))
-                .append(Component.literal(" Click to go back").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(" ${Lang.get(player, "gui.common.click_back", "Click to go back")}").withStyle(ChatFormatting.GRAY))
         )
     )
 
@@ -128,25 +129,26 @@ object GuiUtils {
         onPrevious: () -> Unit,
         onNext: () -> Unit
     ) {
+        val player = gui.player
         if (pageInfo.currentPage > 0) {
             gui.setSlot(39, createGuiItem(
                 item = Items.ARROW,
-                name = "Previous Page",
-                lore = createActionLore("Click to go to page ${pageInfo.currentPage}")
+                name = Lang.get(player, "gui.common.previous_page", "Previous Page"),
+                lore = createActionLore(Lang.get(player, "gui.common.go_to_page", "Click to go to page {page}", "page" to pageInfo.currentPage))
             )) { _, _, _, _ -> onPrevious() }
         }
 
         if (pageInfo.currentPage < pageInfo.maxPages) {
             gui.setSlot(41, createGuiItem(
                 item = Items.ARROW,
-                name = "Next Page",
-                lore = createActionLore("Click to go to page ${pageInfo.currentPage + 2}")
+                name = Lang.get(player, "gui.common.next_page", "Next Page"),
+                lore = createActionLore(Lang.get(player, "gui.common.go_to_page", "Click to go to page {page}", "page" to (pageInfo.currentPage + 2)))
             )) { _, _, _, _ -> onNext() }
         }
     }
 
     fun setupBackButton(gui: SimpleGui, slot: Int, onBack: () -> Unit) {
-        gui.setSlot(slot, createBackItem()) { _, _, _, _ -> onBack() }
+        gui.setSlot(slot, createBackItem(gui.player)) { _, _, _, _ -> onBack() }
     }
 
     fun createPagedTitle(baseTitle: String, pageInfo: PageInfo): String =

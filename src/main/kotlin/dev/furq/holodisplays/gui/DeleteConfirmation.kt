@@ -1,5 +1,6 @@
 package dev.furq.holodisplays.gui
 
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiUtils
@@ -13,20 +14,20 @@ object DeleteConfirmation {
         val gui = GuiUtils.createGui(
             type = MenuType.GENERIC_9x3,
             player = player,
-            title = "Confirm Deletion",
+            title = Lang.get(player, "gui.delete_confirmation.title", "Confirm Deletion"),
             size = 27,
             borderSlots = listOf(11, 15)
         )
 
         gui.apply {
             setSlot(11, GuiUtils.createGuiItem(
-                name = "Confirm",
+                name = Lang.get(player, "gui.delete_confirmation.confirm", "Confirm"),
                 //~ if >=26.2 'LIME_CONCRETE' -> 'CONCRETE.lime'
                 item = Items.CONCRETE.lime,
                 lore = buildList {
-                    addAll(GuiUtils.createActionLore("Click to delete"))
-                    addAll(GuiUtils.createCurrentValueLore("Type", type))
-                    addAll(GuiUtils.createCurrentValueLore("Name", name))
+                    addAll(GuiUtils.createActionLore(Lang.get(player, "gui.common.click_delete", "Click to delete")))
+                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.type", "Type"), type))
+                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.delete_confirmation.name_label", "Name"), name))
                 }
             )) { _, _, _, _ ->
                 when (type) {
@@ -37,10 +38,10 @@ object DeleteConfirmation {
             }
 
             setSlot(15, GuiUtils.createGuiItem(
-                name = "Cancel",
+                name = Lang.get(player, "gui.common.cancel", "Cancel"),
                 //~ if >=26.2 'RED_CONCRETE' -> 'CONCRETE.red'
                 item = Items.CONCRETE.red,
-                lore = GuiUtils.createActionLore("Click to cancel")
+                lore = GuiUtils.createActionLore(Lang.get(player, "gui.common.click_cancel", "Click to cancel"))
             )) { _, _, _, _ -> returnGui() }
 
             open()

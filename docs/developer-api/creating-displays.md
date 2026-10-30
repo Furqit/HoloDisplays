@@ -78,7 +78,7 @@ DisplayData entityDisplay = api.createEntityDisplay("my_zombie", builder -> {
 * **Methods**:
   * `entity(String id)`: Entity registry ID (e.g., "minecraft:zombie").
   * `glow(boolean)`: Glowing outline effect.
-  * `pose(String)`: Entity pose (e.g., "standing", "crouching", "sneaking").
+  * `pose(String)`: Entity pose (e.g., "standing", "crouching").
   * Plus common (scale, rotation, leftRotation, rightRotation, condition).
 * **Notes**: Entity displays do not support billboardMode.
 

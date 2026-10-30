@@ -1,6 +1,7 @@
 package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.DisplayConfig
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.data.display.TextDisplay
 import dev.furq.holodisplays.handlers.DisplayHandler
 import dev.furq.holodisplays.managers.FeedbackManager
@@ -21,7 +22,7 @@ object TextLineEditor {
         val gui = GuiUtils.createGui(
             type = MenuType.GENERIC_9x5,
             player = player,
-            title = GuiUtils.createPagedTitle("Edit Component Lines", pageInfo),
+            title = GuiUtils.createPagedTitle(Lang.get(player, "gui.text_line_editor.title", "Edit Component Lines"), pageInfo),
             size = 45,
             borderSlots = GuiUtils.PAGED_BORDER_SLOTS
         )
@@ -45,12 +46,15 @@ object TextLineEditor {
 
                 val line = display.lines[i]
                 val lore = buildList {
-                    addAll(GuiUtils.createCurrentValueLore("Content", line))
-                    addAll(GuiUtils.createActionLore("Left-Click to edit", "Right-Click to delete"))
+                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.text_line_editor.content", "Content"), line))
+                    addAll(GuiUtils.createActionLore(
+                        Lang.get(player, "gui.common.left_click_edit", "Left-Click to edit"),
+                        Lang.get(player, "gui.common.right_click_delete", "Right-Click to delete")
+                    ))
                 }
 
                 setSlot(slot, GuiUtils.createGuiItem(
-                    name = "Line ${i + 1}",
+                    name = Lang.get(player, "gui.text_line_editor.line", "Line {number}", "number" to (i + 1)),
                     item = Items.PAPER,
                     lore = lore
                 )) { _, type, _, _ ->
@@ -63,13 +67,13 @@ object TextLineEditor {
             }
 
             setSlot(43, GuiUtils.createGuiItem(
-                name = "Add Line",
+                name = Lang.get(player, "gui.text_line_editor.add_line", "Add Line"),
                 item = Items.EMERALD,
-                lore = GuiUtils.createActionLore("Click to add new line")
+                lore = GuiUtils.createActionLore(Lang.get(player, "gui.text_line_editor.click_add", "Click to add new line"))
             )) { _, _, _, _ ->
                 AnvilInput.open(
                     player = player,
-                    title = "Enter New Line",
+                    title = Lang.get(player, "gui.common.enter_new_line", "Enter New Line"),
                     defaultText = "",
                     onSubmit = { text ->
                         val lines = display.lines.toMutableList().apply { add(text) }
@@ -88,7 +92,7 @@ object TextLineEditor {
     private fun editLine(player: ServerPlayer, displayName: String, lineIndex: Int, currentText: String, currentPage: Int) {
         AnvilInput.open(
             player = player,
-            title = "Edit Line ${lineIndex + 1}",
+            title = Lang.get(player, "gui.text_line_editor.edit_line", "Edit Line {number}", "number" to (lineIndex + 1)),
             defaultText = currentText,
             onSubmit = { newText ->
                 val display = DisplayConfig.getDisplay(displayName)?.type as? TextDisplay ?: return@open
@@ -105,7 +109,7 @@ object TextLineEditor {
         val display = DisplayConfig.getDisplay(displayName)?.type as? TextDisplay ?: return
         val lines = display.lines.toMutableList().apply { removeAt(lineIndex) }
         DisplayHandler.updateDisplayProperty(displayName, DisplayHandler.DisplayProperty.TextLines(lines))
-        FeedbackManager.send(player.createCommandSourceStack(), FeedbackType.TEXT_UPDATED, "text" to "line removed")
+        FeedbackManager.send(player.createCommandSourceStack(), FeedbackType.LINE_REMOVED)
         open(player, displayName, currentPage)
     }
 }

@@ -1,5 +1,6 @@
 package dev.furq.holodisplays.gui
 
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiUtils
@@ -13,40 +14,40 @@ object CreateDisplay {
         val gui = GuiUtils.createGui(
             type = MenuType.GENERIC_3x3,
             player = player,
-            title = "Create Display",
+            title = Lang.get(player, "gui.create_display.title", "Create Display"),
             size = 9,
             borderSlots = listOf(1, 3, 5, 6, 7)
         )
 
         gui.apply {
             setSlot(1, GuiUtils.createGuiItem(
-                name = "Component Display",
+                name = Lang.get(player, "gui.create_display.text", "Component Display"),
                 item = Items.PAPER,
-                lore = GuiUtils.createActionLore("Click to create a new text display")
+                lore = GuiUtils.createActionLore(Lang.get(player, "gui.create_display.text_lore", "Click to create a new text display"))
             )) { _, _, _, _ ->
                 createDisplay(player, hologramName, "text", "text_display", "Hello World!")
             }
 
             setSlot(3, GuiUtils.createGuiItem(
-                name = "Item Display",
+                name = Lang.get(player, "gui.create_display.item", "Item Display"),
                 item = Items.ITEM_FRAME,
-                lore = GuiUtils.createActionLore("Click to create a new item display")
+                lore = GuiUtils.createActionLore(Lang.get(player, "gui.create_display.item_lore", "Click to create a new item display"))
             )) { _, _, _, _ ->
                 createDisplay(player, hologramName, "item", "item_display", "minecraft:diamond_sword")
             }
 
             setSlot(5, GuiUtils.createGuiItem(
-                name = "Block Display",
+                name = Lang.get(player, "gui.create_display.block", "Block Display"),
                 item = Items.GRASS_BLOCK,
-                lore = GuiUtils.createActionLore("Click to create a new block display")
+                lore = GuiUtils.createActionLore(Lang.get(player, "gui.create_display.block_lore", "Click to create a new block display"))
             )) { _, _, _, _ ->
                 createDisplay(player, hologramName, "block", "block_display", "minecraft:grass_block")
             }
 
             setSlot(7, GuiUtils.createGuiItem(
-                name = "Entity Display",
+                name = Lang.get(player, "gui.create_display.entity", "Entity Display"),
                 item = Items.ARMOR_STAND,
-                lore = GuiUtils.createActionLore("Click to create a new entity display")
+                lore = GuiUtils.createActionLore(Lang.get(player, "gui.create_display.entity_lore", "Click to create a new entity display"))
             )) { _, _, _, _ ->
                 createDisplay(player, hologramName, "entity", "entity_display", "minecraft:zombie")
             }
@@ -65,15 +66,15 @@ object CreateDisplay {
     private fun createDisplay(player: ServerPlayer, hologramName: String?, type: String, defaultName: String, defaultValue: String) {
         AnvilInput.open(
             player = player,
-            title = "Enter Display Name",
+            title = Lang.get(player, "gui.create_display.enter_name", "Enter Display Name"),
             defaultText = defaultName,
             onSubmit = { name ->
                 val (title, default) = when (type) {
-                    "text" -> "Enter Component" to defaultValue
-                    "item" -> "Enter Item ID" to defaultValue
-                    "block" -> "Enter Block ID" to defaultValue
-                    "entity" -> "Enter Entity ID" to defaultValue
-                    else -> "Enter Value" to defaultValue
+                    "text" -> Lang.get(player, "gui.create_display.enter_text", "Enter Component") to defaultValue
+                    "item" -> Lang.get(player, "gui.create_display.enter_item", "Enter Item ID") to defaultValue
+                    "block" -> Lang.get(player, "gui.create_display.enter_block", "Enter Block ID") to defaultValue
+                    "entity" -> Lang.get(player, "gui.create_display.enter_entity", "Enter Entity ID") to defaultValue
+                    else -> Lang.get(player, "gui.create_display.enter_value", "Enter Value") to defaultValue
                 }
 
                 AnvilInput.open(

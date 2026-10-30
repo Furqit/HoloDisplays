@@ -1,6 +1,7 @@
 package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.DisplayConfig
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.data.display.ItemDisplay
 import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.utils.GuiUtils
@@ -26,20 +27,23 @@ object ItemDisplayEditor {
         val gui = GuiUtils.createGui(
             type = MenuType.GENERIC_3x3,
             player = player,
-            title = "Edit Item Display",
+            title = Lang.get(player, "gui.item_display_editor.title", "Edit Item Display"),
             size = 9,
             borderSlots = listOf(1, 3, 5, 6)
         )
 
         gui.apply {
             setSlot(1, GuiUtils.createGuiItem(
-                name = "Item",
+                name = Lang.get(player, "gui.item_display_editor.item", "Item"),
                 item = Items.ITEM_FRAME,
-                lore = GuiUtils.createCombinedLore("Current" to display.id, "Click to change")
+                lore = GuiUtils.createCombinedLore(
+                    Lang.get(player, "gui.common.current", "Current") to display.id,
+                    Lang.get(player, "gui.common.click_change", "Click to change")
+                )
             )) { _, _, _, _ ->
                 AnvilInput.open(
                     player = player,
-                    title = "Enter Item ID",
+                    title = Lang.get(player, "gui.item_display_editor.enter_item_id", "Enter Item ID"),
                     defaultText = display.id,
                     onSubmit = { itemId ->
                         DisplayManager.updateItemId(name, itemId, player.createCommandSourceStack())
@@ -50,11 +54,11 @@ object ItemDisplayEditor {
             }
 
             setSlot(3, GuiUtils.createGuiItem(
-                name = "Display Type",
+                name = Lang.get(player, "gui.item_display_editor.display_type", "Display Type"),
                 item = Items.ARMOR_STAND,
                 lore = buildList {
-                    addAll(GuiUtils.createCurrentValueLore("Current", display.itemDisplayType.uppercase()))
-                    addAll(GuiUtils.createActionLore("Click to cycle through modes"))
+                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), display.itemDisplayType.uppercase()))
+                    addAll(GuiUtils.createActionLore(Lang.get(player, "gui.common.click_cycle", "Click to cycle through modes")))
                     addAll(GuiUtils.createLore(
                         "Available modes:",
                         "NONE, HEAD, GUI, GROUND, FIXED",
@@ -70,17 +74,18 @@ object ItemDisplayEditor {
             }
 
             setSlot(5, GuiUtils.createGuiItem(
-                name = "Custom Model Data",
+                name = Lang.get(player, "gui.item_display_editor.custom_model_data", "Custom Model Data"),
                 item = Items.COMMAND_BLOCK,
                 lore = GuiUtils.createCombinedLore(
-                    "Current" to (display.customModelData?.toString() ?: "none"),
-                    "Click to change", "Right-click to remove"
+                    Lang.get(player, "gui.common.current", "Current") to (display.customModelData?.toString() ?: Lang.get(player, "gui.common.none", "none")),
+                    Lang.get(player, "gui.common.click_change", "Click to change"),
+                    Lang.get(player, "gui.item_display_editor.right_click_remove", "Right-click to remove")
                 )
             )) { _, type, _, _ ->
                 when {
                     type.isLeft -> AnvilInput.open(
                         player = player,
-                        title = "Enter Custom Model Data",
+                        title = Lang.get(player, "gui.item_display_editor.enter_custom_model_data", "Enter Custom Model Data"),
                         defaultText = display.customModelData?.toString() ?: "1",
                         onSubmit = { input ->
                             input.toIntOrNull()?.takeIf { it > 0 }?.let { cmd ->

@@ -29,7 +29,7 @@ Commands and GUI access require operator permissions (level 2+). Use `/op <playe
   * Each display has an offset (x, y, z) from the hologram's position.
   * Hologram-wide properties: Update rate (ticks between refreshes), view range (distance to see it), conditions.
 * **Animations**: Sequences of text frames that cycle at set intervals. Stored separately and applied to text displays. See configuration for format.
-* **Conditions**: Use placeholders like `%player:group% == admin` to show/hide based on player data (requires Placeholder API).
+* **Conditions**: Use placeholders like `%player:group% = admin` to show/hide based on player data (requires Placeholder API).
 
 ## GUI Navigation
 
@@ -37,9 +37,10 @@ The GUI is the primary way to manage content. Access via `/holodisplays`.
 
 ### Main Menu
 
-* **Manage Holograms**: List, create, edit, delete holograms.
-* **Manage Displays**: List, create, edit, delete standalone displays.
-* **Reload**: Refresh configs without restarting.
+* **Create Hologram**: Enter a name, creating a hologram at your position with a default text display.
+* **Manage Holograms**: List, edit, delete holograms.
+* **Manage Displays**: List, edit, delete standalone displays.
+* **Create Display**: Choose a display type (text, item, block, entity), then name and content.
 
 ### Hologram Editor
 

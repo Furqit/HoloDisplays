@@ -5,6 +5,7 @@ import java.nio.file.Path
 
 object ConfigManager {
     private val configs = listOf(
+        Lang,
         HologramConfig,
         DisplayConfig,
         AnimationConfig,

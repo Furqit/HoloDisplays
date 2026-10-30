@@ -1,6 +1,7 @@
 package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.DisplayConfig
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.utils.GuiUtils
 import dev.furq.holodisplays.utils.GuiUtils.isRightClick
 import net.minecraft.server.level.ServerPlayer
@@ -22,7 +23,7 @@ object DisplayList {
         val gui = GuiUtils.createGui(
             type = MenuType.GENERIC_9x5,
             player = player,
-            title = GuiUtils.createPagedTitle("Displays", pageInfo),
+            title = GuiUtils.createPagedTitle(Lang.get(player, "gui.display_list.title", "Displays"), pageInfo),
             size = 45,
             borderSlots = GuiUtils.PAGED_BORDER_SLOTS
         )
@@ -54,13 +55,14 @@ object DisplayList {
 
                 val lore = when {
                     selectionMode -> GuiUtils.createCombinedLore(
-                        "Type" to display.type.javaClass.simpleName,
-                        "Click to select"
+                        Lang.get(player, "gui.common.type", "Type") to display.type.javaClass.simpleName,
+                        Lang.get(player, "gui.common.click_select", "Click to select")
                     )
 
                     else -> GuiUtils.createCombinedLore(
-                        "Type" to display.type.javaClass.simpleName,
-                        "Left-Click to edit", "Right-Click to delete"
+                        Lang.get(player, "gui.common.type", "Type") to display.type.javaClass.simpleName,
+                        Lang.get(player, "gui.common.left_click_edit", "Left-Click to edit"),
+                        Lang.get(player, "gui.common.right_click_delete", "Right-Click to delete")
                     )
                 }
 

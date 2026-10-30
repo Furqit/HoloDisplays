@@ -74,6 +74,7 @@ The API supports:
 * Creating displays (text, item, block, entity) with builders.
 * Building and registering holograms.
 * Managing (update, unregister, query) holograms and displays.
+* Registering and managing text and transform animations.
 
 For details on data structures, see the Kotlin sources: `HologramData.kt`, `DisplayData.kt`.
 
@@ -85,7 +86,6 @@ See subsections for specific topics:
 
 ## Limitations & Notes
 
-* Animations: Not yet API-exposed (planned).
 * Validation: API validates IDs and references; errors print to console.
 * Performance: Limit displays per hologram; use viewRange wisely.
 * Compatibility: Requires Fabric 1.20.5+, Placeholder API optional for conditions.

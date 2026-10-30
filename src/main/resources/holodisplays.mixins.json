@@ -8,6 +8,7 @@
     "DisplayAccessor",
     "EntityAccessor",
     "ItemDisplayEntityAccessor",
+    "ServerPlayerAccessor",
     "TextDisplayEntityAccessor"
   ],
   "injectors": {

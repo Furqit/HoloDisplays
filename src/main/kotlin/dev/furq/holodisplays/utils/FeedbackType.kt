@@ -1,5 +1,8 @@
 package dev.furq.holodisplays.utils
 
+import dev.furq.holodisplays.config.Lang
+import java.util.Locale
+
 enum class FeedbackType(private val template: String, val isError: Boolean = false) {
     // Success Messages
     HOLOGRAM_CREATED("Hologram '{name}' created successfully"),
@@ -15,6 +18,7 @@ enum class FeedbackType(private val template: String, val isError: Boolean = fal
     BILLBOARD_UPDATED("Billboard mode changed to '{mode}'"),
     ROTATION_UPDATED("Rotation updated to (pitch: {pitch}°, yaw: {yaw}°, roll: {roll}°)"),
     TEXT_UPDATED("Text updated to: '{text}'"),
+    LINE_REMOVED("Line removed"),
     BACKGROUND_UPDATED("Background set to #{color} with {opacity}% opacity"),
     OPACITY_UPDATED("Text opacity set to {opacity}%"),
     RELOAD_SUCCESS("All configurations reloaded successfully"),
@@ -49,8 +53,6 @@ enum class FeedbackType(private val template: String, val isError: Boolean = fal
     UPDATE_FAILED("Update failed. Check console for details", true),
     PLAYER_ONLY("This command can only be used by players", true);
 
-    fun format(vararg params: Pair<String, Any>): String =
-        params.fold(template) { message, (key, value) ->
-            message.replace("{$key}", value.toString())
-        }
+    fun format(locale: String?, vararg params: Pair<String, Any>): String =
+        Lang.substitute(Lang.template(name.lowercase(Locale.US), locale) ?: template, params)
 }

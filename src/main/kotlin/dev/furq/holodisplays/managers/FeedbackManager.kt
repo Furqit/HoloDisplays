@@ -1,5 +1,6 @@
 package dev.furq.holodisplays.managers
 
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.utils.FeedbackType
 import net.minecraft.ChatFormatting
 import net.minecraft.commands.CommandSourceStack
@@ -17,8 +18,9 @@ object FeedbackManager {
     private const val PREFIX = "§8[§bHoloDisplays§8]§r "
 
     fun send(source: CommandSourceStack, type: FeedbackType, vararg params: Pair<String, Any>) {
-        val message = type.format(*params)
-        val formattedMessage = formatMessage(type, message)
+        val locale = Lang.localeFor(source.player)
+        val message = type.format(locale, *params)
+        val formattedMessage = formatMessage(type, message, locale)
 
         when {
             type.isError -> {
@@ -33,9 +35,10 @@ object FeedbackManager {
         }
     }
 
-    private fun formatMessage(type: FeedbackType, message: String): Component {
+    private fun formatMessage(type: FeedbackType, message: String, locale: String?): Component {
         val color = if (type.isError) ChatFormatting.RED else ChatFormatting.GREEN
-        return Component.literal(PREFIX + message).withStyle(color)
+        val prefix = Lang.template("prefix", locale) ?: PREFIX
+        return Component.literal(prefix + message).withStyle(color)
     }
 
     fun formatVector3f(vector: Vector3f): Array<Pair<String, Any>> = arrayOf(

@@ -1,5 +1,6 @@
 package dev.furq.holodisplays.gui
 
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiUtils
 import net.minecraft.server.level.ServerPlayer
@@ -19,13 +20,13 @@ object MainMenu {
 
         gui.apply {
             setSlot(1, GuiUtils.createGuiItem(
-                name = "Create Hologram",
+                name = Lang.get(player, "gui.main_menu.create_hologram", "Create Hologram"),
                 item = Items.BOOK,
-                lore = GuiUtils.createActionLore("Click to create a new hologram")
+                lore = GuiUtils.createActionLore(Lang.get(player, "gui.main_menu.create_hologram_lore", "Click to create a new hologram"))
             )) { _, _, _, _ ->
                 AnvilInput.open(
                     player = player,
-                    title = "Enter Hologram Name",
+                    title = Lang.get(player, "gui.main_menu.enter_hologram_name", "Enter Hologram Name"),
                     defaultText = "hologram",
                     onSubmit = { name ->
                         HologramManager.createHologram(name, player)
@@ -36,21 +37,21 @@ object MainMenu {
             }
 
             setSlot(3, GuiUtils.createGuiItem(
-                name = "Manage Holograms",
+                name = Lang.get(player, "gui.main_menu.manage_holograms", "Manage Holograms"),
                 item = Items.BOOKSHELF,
-                lore = GuiUtils.createActionLore("Click to view and manage holograms")
+                lore = GuiUtils.createActionLore(Lang.get(player, "gui.main_menu.manage_holograms_lore", "Click to view and manage holograms"))
             )) { _, _, _, _ -> HologramList.open(player) }
 
             setSlot(5, GuiUtils.createGuiItem(
-                name = "Manage Displays",
+                name = Lang.get(player, "gui.main_menu.manage_displays", "Manage Displays"),
                 item = Items.ITEM_FRAME,
-                lore = GuiUtils.createActionLore("Click to view and manage displays")
+                lore = GuiUtils.createActionLore(Lang.get(player, "gui.main_menu.manage_displays_lore", "Click to view and manage displays"))
             )) { _, _, _, _ -> DisplayList.open(player) }
 
             setSlot(7, GuiUtils.createGuiItem(
-                name = "Create Display",
+                name = Lang.get(player, "gui.main_menu.create_display", "Create Display"),
                 item = Items.ARMOR_STAND,
-                lore = GuiUtils.createActionLore("Click to create a new display")
+                lore = GuiUtils.createActionLore(Lang.get(player, "gui.main_menu.create_display_lore", "Click to create a new display"))
             )) { _, _, _, _ -> CreateDisplay.open(player) }
 
             open()

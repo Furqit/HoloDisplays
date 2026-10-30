@@ -1,58 +1,39 @@
 # Configuration
 
-HoloDisplays uses JSON5 files in `config/holodisplays/` for data persistence. Edit via GUI/commands or manually, then `/holodisplays reload` to apply.
+HoloDisplays stores data in JSON files under `config/holodisplays/` (auto-created). The parser is lenient: `//` and `/* */` comments, trailing commas, and unknown fields are all accepted, so hand-editing is forgiving. Edit via the GUI, commands, or manually, then run `/holodisplays reload` to apply changes without a restart.
 
 ## Structure
-
-* **holograms/**: Hologram files.
-* **displays/**: Display templates.
-* **animations/**: Animation files (text frame sequences and item/block transform animations; the mod ships a `drop_item.json` example).
-
-No global config; properties are per-object. See subsections for details.
-
-HoloDisplays stores data in JSON5 files under `config/holodisplays/` (auto-created). Use GUI/commands for editing, or manual for advanced tweaks. Reload with `/holodisplays reload` to apply changes without restart.
-
-## Directory Structure
 
 * **holograms/**: `.json` files for each hologram (position, displays, properties).
 * **displays/**: `.json` files for display templates (text, item, block, entity).
 * **animations/**: `.json` files for animation sequences (text frame swaps and item/block transform animations; the mod ships a `drop_item.json` example).
+* **lang/**: `<locale>.json` language files for command feedback and GUI text (see [Translations (i18n)](i18n.md)).
 
 ## Global Settings
 
-No single global config file; settings are per-hologram/display. Performance tips:
+No global config file; settings are per-hologram/display. Performance tips:
 
 * **viewRange**: Limit to 16-64 blocks to reduce packet load.
 * **updateRate**: 20 ticks (1s) default; higher for static content.
-* **Scale/Rotation**: Keep reasonable to avoid rendering issues.
-
-## Enabling Features
-
-* **Placeholder API**: Install for %player:name% etc. in conditions/lines.
-* **Persistence**: All data auto-saves; backups recommended.
-* **Reload**: Respawns holograms; use in production carefully.
+* **Scale/Rotation**: Keep reasonable values to avoid rendering issues.
 
 ## API Integrations
 
-* **Placeholder API**: Enable dynamic content (e.g., %player:health%). Install the mod; no config needed.
-* **Custom Conditions**: Use in conditionalPlaceholder for visibility (e.g., "%server\_tps% > 19").
-* **Mod Compatibility**: Works with Fabric mods; for custom displays, extend API builders.
+* **Placeholder API**: Enables dynamic content (e.g., %player:name% or the %server\_tps% > 19 condition) in lines and conditional placeholders. Just install the mod; no config needed.
+* **Mod Compatibility**: Works with Fabric mods; for custom displays, extend the API builders.
 
 ## Custom JSON Schemas
 
-JSON5 files are self-documenting. Validate with tools like JSON5 validator. Custom fields ignored; stick to core for compatibility.
+Config files are self-documenting; unknown fields are ignored, so stick to the core schema for compatibility.
 
 * **Vector Fields**: Use arrays \[x, y, z] for rotation/scale/offset.
 * **Registry IDs**: Use full IDs (e.g., "minecraft:stone"); tab-complete in commands.
-* **Comments**: JSON5 allows // comments for notes.
+* **Comments**: `//` and `/* */` comments are skipped while loading.
 
 ## Validation and Troubleshooting
 
-* Invalid JSON: Server log errors on load.
-* Missing references: Hologram won't load if display ID invalid.
-* Custom schemas: JSON5 supports comments; stick to formats in subs.
-* **Load Errors**: Check server log for JSON parse issues or missing displays (e.g., hologram references non-existent ID).
-* **Hologram Not Visible**: Verify position/world, viewRange, conditions, reload.
+* **Load Errors**: Server log reports JSON parse issues and missing referenced displays.
+* **Hologram Not Visible**: Verify position/world, viewRange, conditions, and reload.
 * **Performance Issues**: Reduce updateRate/viewRange for many holograms; monitor TPS.
-* **Backup**: Copy `config/holodisplays/` before edits.
-* **Reload Side Effects**: May briefly hide holograms; use in low-traffic times.
+* **Backup**: Copy `config/holodisplays/` before big changes; data auto-saves.
+* **Reload Side Effects**: Reloading respawns holograms, so they may briefly hide; use in low-traffic times.

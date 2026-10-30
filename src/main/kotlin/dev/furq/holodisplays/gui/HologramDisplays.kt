@@ -2,6 +2,7 @@ package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.DisplayConfig
 import dev.furq.holodisplays.config.HologramConfig
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.handlers.HologramHandler
 import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiUtils
@@ -21,7 +22,7 @@ object HologramDisplays {
         val gui = GuiUtils.createGui(
             type = MenuType.GENERIC_9x5,
             player = player,
-            title = GuiUtils.createPagedTitle("Manage Lines", pageInfo),
+            title = GuiUtils.createPagedTitle(Lang.get(player, "gui.hologram_displays.title", "Manage Lines"), pageInfo),
             size = 45,
             borderSlots = GuiUtils.PAGED_BORDER_SLOTS
         )
@@ -48,17 +49,17 @@ object HologramDisplays {
                 val icon = GuiUtils.getDisplayIcon(displayConfig?.type)
 
                 val lore = buildList {
-                    addAll(GuiUtils.createCurrentValueLore("Display", display.name))
-                    addAll(GuiUtils.createCurrentValueLore("Offset", "${display.offset.x}, ${display.offset.y}, ${display.offset.z}"))
+                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.hologram_displays.display_label", "Display"), display.name))
+                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.hologram_displays.offset_label", "Offset"), "${display.offset.x}, ${display.offset.y}, ${display.offset.z}"))
                     addAll(GuiUtils.createActionLore(
-                        "Left-Click to edit offset",
-                        "Right-Click to remove",
-                        "Middle-Click to edit display"
+                        Lang.get(player, "gui.hologram_displays.left_click_edit_offset", "Left-Click to edit offset"),
+                        Lang.get(player, "gui.hologram_displays.right_click_remove", "Right-Click to remove"),
+                        Lang.get(player, "gui.hologram_displays.middle_click_edit_display", "Middle-Click to edit display")
                     ))
                 }
 
                 setSlot(slot, GuiUtils.createGuiItem(
-                    name = "Line ${i + 1}",
+                    name = Lang.get(player, "gui.hologram_displays.line", "Line {number}", "number" to (i + 1)),
                     item = icon,
                     lore = lore
                 )) { _, type, _, _ ->
@@ -80,11 +81,11 @@ object HologramDisplays {
             }
 
             setSlot(43, GuiUtils.createGuiItem(
-                name = "Add Line",
+                name = Lang.get(player, "gui.hologram_displays.add_line", "Add Line"),
                 item = Items.EMERALD,
                 lore = GuiUtils.createActionLore(
-                    "Left-Click to create new display",
-                    "Right-Click to use existing display"
+                    Lang.get(player, "gui.hologram_displays.left_click_create_display", "Left-Click to create new display"),
+                    Lang.get(player, "gui.hologram_displays.right_click_existing_display", "Right-Click to use existing display")
                 )
             )) { _, type, _, _ ->
                 when {
@@ -108,11 +109,11 @@ object HologramDisplays {
     }
 
     private fun editOffset(player: ServerPlayer, hologramName: String, lineIndex: Int, currentOffset: Vector3f, currentPage: Int) {
-        AnvilInput.open(player, "Enter X Offset", currentOffset.x.toString(),
+        AnvilInput.open(player, Lang.get(player, "gui.hologram_displays.enter_x_offset", "Enter X Offset"), currentOffset.x.toString(),
             onSubmit = { x ->
-                AnvilInput.open(player, "Enter Y Offset", currentOffset.y.toString(),
+                AnvilInput.open(player, Lang.get(player, "gui.hologram_displays.enter_y_offset", "Enter Y Offset"), currentOffset.y.toString(),
                     onSubmit = { y ->
-                        AnvilInput.open(player, "Enter Z Offset", currentOffset.z.toString(),
+                        AnvilInput.open(player, Lang.get(player, "gui.hologram_displays.enter_z_offset", "Enter Z Offset"), currentOffset.z.toString(),
                             onSubmit = { z ->
                                 HologramHandler.updateHologramProperty(
                                     hologramName,

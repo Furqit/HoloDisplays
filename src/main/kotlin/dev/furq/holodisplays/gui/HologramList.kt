@@ -1,6 +1,7 @@
 package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.HologramConfig
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.utils.GuiUtils
 import dev.furq.holodisplays.utils.GuiUtils.isRightClick
 import net.minecraft.server.level.ServerPlayer
@@ -17,7 +18,7 @@ object HologramList {
         val gui = GuiUtils.createGui(
             type = MenuType.GENERIC_9x5,
             player = player,
-            title = GuiUtils.createPagedTitle("Holograms", pageInfo),
+            title = GuiUtils.createPagedTitle(Lang.get(player, "gui.hologram_list.title", "Holograms"), pageInfo),
             size = 45,
             borderSlots = GuiUtils.PAGED_BORDER_SLOTS
         )
@@ -40,7 +41,10 @@ object HologramList {
                 slot = GuiUtils.advanceContentSlot(slot)
 
                 val (name) = holograms[i]
-                val lore = GuiUtils.createActionLore("Left-Click to edit", "Right-Click to delete")
+                val lore = GuiUtils.createActionLore(
+                    Lang.get(player, "gui.common.left_click_edit", "Left-Click to edit"),
+                    Lang.get(player, "gui.common.right_click_delete", "Right-Click to delete")
+                )
 
                 setSlot(slot, GuiUtils.createGuiItem(item = Items.BOOK, name = name, lore = lore)) { _, type, _, _ ->
                     when {

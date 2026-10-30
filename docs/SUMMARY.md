@@ -11,6 +11,7 @@
   * [Hologram Configurations](configuration/hologram-configurations.md)
   * [Display Configurations](configuration/display-configurations.md)
   * [Animations](configuration/animations.md)
+  * [Translations (i18n)](configuration/i18n.md)
 * [Developer API](developer-api/README.md)
   * [Creating Displays](developer-api/creating-displays.md)
   * [Creating Holograms](developer-api/creating-holograms.md)

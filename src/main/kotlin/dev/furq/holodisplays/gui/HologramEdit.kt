@@ -1,6 +1,7 @@
 package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.HologramConfig
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.managers.HologramManager
 import dev.furq.holodisplays.utils.GuiUtils
 import dev.furq.holodisplays.utils.GuiUtils.isRightClick
@@ -18,18 +19,19 @@ object HologramEdit {
         val gui = GuiUtils.createGui(
             type = MenuType.GENERIC_9x5,
             player = player,
-            title = "Edit Hologram",
+            title = Lang.get(player, "gui.hologram_edit.title", "Edit Hologram"),
             size = 45,
             borderSlots = listOf(10, 12, 14, 16, 28, 30, 32, 34, 36)
         )
 
         gui.apply {
             setSlot(10, GuiUtils.createGuiItem(
-                name = "Position",
+                name = Lang.get(player, "gui.hologram_edit.position", "Position"),
                 item = Items.ENDER_PEARL,
                 lore = GuiUtils.createCombinedLore(
-                    "Current" to "${hologram.position.x}, ${hologram.position.y}, ${hologram.position.z}",
-                    "Left-Click to enter manually", "Right-Click to set to current position"
+                    Lang.get(player, "gui.common.current", "Current") to "${hologram.position.x}, ${hologram.position.y}, ${hologram.position.z}",
+                    Lang.get(player, "gui.hologram_edit.left_click_enter_manually", "Left-Click to enter manually"),
+                    Lang.get(player, "gui.hologram_edit.right_click_current_position", "Right-Click to set to current position")
                 )
             )) { _, type, _, _ ->
                 when {
@@ -39,11 +41,14 @@ object HologramEdit {
             }
 
             setSlot(12, GuiUtils.createGuiItem(
-                name = "View Range",
+                name = Lang.get(player, "gui.hologram_edit.view_range", "View Range"),
                 item = Items.SPYGLASS,
-                lore = GuiUtils.createCombinedLore("Current" to "${hologram.viewRange} blocks", "Click to change")
+                lore = GuiUtils.createCombinedLore(
+                    Lang.get(player, "gui.common.current", "Current") to Lang.get(player, "gui.hologram_edit.blocks", "{value} blocks", "value" to hologram.viewRange),
+                    Lang.get(player, "gui.common.click_change", "Click to change")
+                )
             )) { _, _, _, _ ->
-                AnvilInput.open(player, "Enter View Range", hologram.viewRange.toString(),
+                AnvilInput.open(player, Lang.get(player, "gui.hologram_edit.enter_view_range", "Enter View Range"), hologram.viewRange.toString(),
                     onSubmit = { range ->
                         HologramManager.updateViewRange(name, range.toFloat(), player.createCommandSourceStack())
                         open(player, name)
@@ -53,29 +58,29 @@ object HologramEdit {
             }
 
             setSlot(14, GuiUtils.createGuiItem(
-                name = "Scale",
+                name = Lang.get(player, "gui.hologram_edit.scale", "Scale"),
                 item = Items.SCAFFOLDING,
                 lore = GuiUtils.createCombinedLore(
-                    "Current" to "${hologram.scale.x}, ${hologram.scale.y}, ${hologram.scale.z}",
-                    "Click to change"
+                    Lang.get(player, "gui.common.current", "Current") to "${hologram.scale.x}, ${hologram.scale.y}, ${hologram.scale.z}",
+                    Lang.get(player, "gui.common.click_change", "Click to change")
                 )
             )) { _, _, _, _ -> editScale(player, name, hologram.scale) }
 
             setSlot(16, GuiUtils.createGuiItem(
-                name = "Rotation",
+                name = Lang.get(player, "gui.hologram_edit.rotation", "Rotation"),
                 item = Items.COMPASS,
                 lore = GuiUtils.createCombinedLore(
-                    "Current" to "${hologram.rotation.x}°, ${hologram.rotation.y}°, ${hologram.rotation.z}°",
-                    "Click to change"
+                    Lang.get(player, "gui.common.current", "Current") to "${hologram.rotation.x}°, ${hologram.rotation.y}°, ${hologram.rotation.z}°",
+                    Lang.get(player, "gui.common.click_change", "Click to change")
                 )
             )) { _, _, _, _ -> editRotation(player, name, hologram.rotation) }
 
             setSlot(28, GuiUtils.createGuiItem(
-                name = "Billboard Mode",
+                name = Lang.get(player, "gui.hologram_edit.billboard_mode", "Billboard Mode"),
                 item = Items.COMPASS,
                 lore = buildList {
-                    addAll(GuiUtils.createCurrentValueLore("Current", hologram.billboardMode.name.uppercase()))
-                    addAll(GuiUtils.createActionLore("Click to cycle through modes"))
+                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), hologram.billboardMode.name.uppercase()))
+                    addAll(GuiUtils.createActionLore(Lang.get(player, "gui.common.click_cycle", "Click to cycle through modes")))
                     addAll(GuiUtils.createLore("Available modes: HORIZONTAL, VERTICAL, CENTER, FIXED"))
                 }
             )) { _, _, _, _ ->
@@ -86,11 +91,14 @@ object HologramEdit {
             }
 
             setSlot(30, GuiUtils.createGuiItem(
-                name = "Update Rate",
+                name = Lang.get(player, "gui.hologram_edit.update_rate", "Update Rate"),
                 item = Items.CLOCK,
-                lore = GuiUtils.createCombinedLore("Current" to "${hologram.updateRate} ticks", "Click to change")
+                lore = GuiUtils.createCombinedLore(
+                    Lang.get(player, "gui.common.current", "Current") to Lang.get(player, "gui.hologram_edit.ticks", "{value} ticks", "value" to hologram.updateRate),
+                    Lang.get(player, "gui.common.click_change", "Click to change")
+                )
             )) { _, _, _, _ ->
-                AnvilInput.open(player, "Enter Update Rate (ticks)", hologram.updateRate.toString(),
+                AnvilInput.open(player, Lang.get(player, "gui.hologram_edit.enter_update_rate", "Enter Update Rate (ticks)"), hologram.updateRate.toString(),
                     onSubmit = { ticks ->
                         HologramManager.updateUpdateRate(name, ticks.toInt(), player.createCommandSourceStack())
                         open(player, name)
@@ -100,17 +108,21 @@ object HologramEdit {
             }
 
             setSlot(32, GuiUtils.createGuiItem(
-                name = "Manage Displays",
+                name = Lang.get(player, "gui.hologram_edit.manage_displays", "Manage Displays"),
                 item = Items.BOOK,
-                lore = GuiUtils.createCombinedLore("Current Displays" to hologram.displays.size.toString(), "Click to manage")
+                lore = GuiUtils.createCombinedLore(
+                    Lang.get(player, "gui.hologram_edit.current_displays", "Current Displays") to hologram.displays.size.toString(),
+                    Lang.get(player, "gui.hologram_edit.click_manage", "Click to manage")
+                )
             )) { _, _, _, _ -> HologramDisplays.open(player, name) }
 
             setSlot(34, GuiUtils.createGuiItem(
-                name = "Condition",
+                name = Lang.get(player, "gui.hologram_edit.condition", "Condition"),
                 item = Items.REPEATER,
                 lore = GuiUtils.createCombinedLore(
-                    "Current" to (hologram.conditionalPlaceholder ?: "none"),
-                    "Click to change", "Right-Click to remove"
+                    Lang.get(player, "gui.common.current", "Current") to (hologram.conditionalPlaceholder ?: Lang.get(player, "gui.common.none", "none")),
+                    Lang.get(player, "gui.common.click_change", "Click to change"),
+                    Lang.get(player, "gui.hologram_edit.right_click_remove", "Right-Click to remove")
                 )
             )) { _, type, _, _ ->
                 when {
@@ -128,11 +140,11 @@ object HologramEdit {
     }
 
     private fun editPosition(player: ServerPlayer, name: String, currentPosition: Vector3f) {
-        AnvilInput.open(player, "Enter X Position", currentPosition.x.toString(),
+        AnvilInput.open(player, Lang.get(player, "gui.hologram_edit.enter_x_position", "Enter X Position"), currentPosition.x.toString(),
             onSubmit = { x ->
-                AnvilInput.open(player, "Enter Y Position", currentPosition.y.toString(),
+                AnvilInput.open(player, Lang.get(player, "gui.hologram_edit.enter_y_position", "Enter Y Position"), currentPosition.y.toString(),
                     onSubmit = { y ->
-                        AnvilInput.open(player, "Enter Z Position", currentPosition.z.toString(),
+                        AnvilInput.open(player, Lang.get(player, "gui.hologram_edit.enter_z_position", "Enter Z Position"), currentPosition.z.toString(),
                             onSubmit = { z ->
                                 HologramManager.updatePosition(
                                     name,
@@ -165,11 +177,11 @@ object HologramEdit {
     }
 
     private fun editScale(player: ServerPlayer, name: String, currentScale: Vector3f) {
-        AnvilInput.open(player, "Enter X Scale", currentScale.x.toString(),
+        AnvilInput.open(player, Lang.get(player, "gui.hologram_edit.enter_x_scale", "Enter X Scale"), currentScale.x.toString(),
             onSubmit = { x ->
-                AnvilInput.open(player, "Enter Y Scale", currentScale.y.toString(),
+                AnvilInput.open(player, Lang.get(player, "gui.hologram_edit.enter_y_scale", "Enter Y Scale"), currentScale.y.toString(),
                     onSubmit = { y ->
-                        AnvilInput.open(player, "Enter Z Scale", currentScale.z.toString(),
+                        AnvilInput.open(player, Lang.get(player, "gui.hologram_edit.enter_z_scale", "Enter Z Scale"), currentScale.z.toString(),
                             onSubmit = { z ->
                                 HologramManager.updateScale(
                                     name,
@@ -189,11 +201,11 @@ object HologramEdit {
     }
 
     private fun editRotation(player: ServerPlayer, name: String, currentRotation: Vector3f) {
-        AnvilInput.open(player, "Enter Pitch", currentRotation.x.toString(),
+        AnvilInput.open(player, Lang.get(player, "gui.hologram_edit.enter_pitch", "Enter Pitch"), currentRotation.x.toString(),
             onSubmit = { pitch ->
-                AnvilInput.open(player, "Enter Yaw", currentRotation.y.toString(),
+                AnvilInput.open(player, Lang.get(player, "gui.hologram_edit.enter_yaw", "Enter Yaw"), currentRotation.y.toString(),
                     onSubmit = { yaw ->
-                        AnvilInput.open(player, "Enter Roll", currentRotation.z.toString(),
+                        AnvilInput.open(player, Lang.get(player, "gui.hologram_edit.enter_roll", "Enter Roll"), currentRotation.z.toString(),
                             onSubmit = { roll ->
                                 HologramManager.updateRotation(
                                     name,
@@ -217,17 +229,17 @@ object HologramEdit {
     private fun editCondition(player: ServerPlayer, name: String) {
         AnvilInput.open(
             player = player,
-            title = "Enter Value 1",
+            title = Lang.get(player, "gui.hologram_edit.enter_value_1", "Enter Value 1"),
             defaultText = "%player:name%",
             onSubmit = { placeholder ->
                 AnvilInput.open(
                     player = player,
-                    title = "Enter Operator",
+                    title = Lang.get(player, "gui.hologram_edit.enter_operator", "Enter Operator"),
                     defaultText = "=",
                     onSubmit = { operator ->
                         AnvilInput.open(
                             player = player,
-                            title = "Enter Value 2",
+                            title = Lang.get(player, "gui.hologram_edit.enter_value_2", "Enter Value 2"),
                             defaultText = "Furq_",
                             onSubmit = { target ->
                                 val condition = "$placeholder $operator $target"

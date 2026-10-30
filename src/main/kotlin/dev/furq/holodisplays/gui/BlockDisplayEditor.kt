@@ -1,6 +1,7 @@
 package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.DisplayConfig
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.data.display.BlockDisplay
 import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.utils.GuiUtils
@@ -19,20 +20,23 @@ object BlockDisplayEditor {
         val gui = GuiUtils.createGui(
             type = MenuType.GENERIC_3x3,
             player = player,
-            title = "Edit Block Display",
+            title = Lang.get(player, "gui.block_display_editor.title", "Edit Block Display"),
             size = 9,
             borderSlots = listOf(3, 5, 7)
         )
 
         gui.apply {
             setSlot(3, GuiUtils.createGuiItem(
-                name = "Block",
+                name = Lang.get(player, "gui.block_display_editor.block", "Block"),
                 item = Items.GRASS_BLOCK,
-                lore = GuiUtils.createCombinedLore("Current" to display.id, "Click to change")
+                lore = GuiUtils.createCombinedLore(
+                    Lang.get(player, "gui.common.current", "Current") to display.id,
+                    Lang.get(player, "gui.common.click_change", "Click to change")
+                )
             )) { _, _, _, _ ->
                 AnvilInput.open(
                     player = player,
-                    title = "Enter Block ID",
+                    title = Lang.get(player, "gui.block_display_editor.enter_block_id", "Enter Block ID"),
                     defaultText = display.id,
                     onSubmit = { blockId ->
                         DisplayManager.updateBlockId(name, blockId, player.createCommandSourceStack())
@@ -43,13 +47,17 @@ object BlockDisplayEditor {
             }
 
             setSlot(5, GuiUtils.createGuiItem(
-                name = "Properties",
+                name = Lang.get(player, "gui.block_display_editor.properties", "Properties"),
                 item = Items.COMPARATOR,
-                lore = GuiUtils.createCombinedLore("Current" to display.properties.toString(), "Click to change", "Format: key=value,key2=value2")
+                lore = GuiUtils.createCombinedLore(
+                    Lang.get(player, "gui.common.current", "Current") to display.properties.toString(),
+                    Lang.get(player, "gui.common.click_change", "Click to change"),
+                    Lang.get(player, "gui.block_display_editor.format_hint", "Format: key=value,key2=value2")
+                )
             )) { _, _, _, _ ->
                 AnvilInput.open(
                     player = player,
-                    title = "Enter Properties",
+                    title = Lang.get(player, "gui.block_display_editor.enter_properties", "Enter Properties"),
                     defaultText = display.properties.entries.joinToString(",") { "${it.key}=${it.value}" },
                     onSubmit = { input ->
                         val properties = input.split(",")

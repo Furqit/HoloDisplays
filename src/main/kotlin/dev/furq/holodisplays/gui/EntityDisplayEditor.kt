@@ -1,6 +1,7 @@
 package dev.furq.holodisplays.gui
 
 import dev.furq.holodisplays.config.DisplayConfig
+import dev.furq.holodisplays.config.Lang
 import dev.furq.holodisplays.data.display.EntityDisplay
 import dev.furq.holodisplays.managers.DisplayManager
 import dev.furq.holodisplays.utils.GuiUtils
@@ -21,20 +22,23 @@ object EntityDisplayEditor {
         val gui = GuiUtils.createGui(
             type = MenuType.GENERIC_9x3,
             player = player,
-            title = "Edit Entity Display",
+            title = Lang.get(player, "gui.entity_display_editor.title", "Edit Entity Display"),
             size = 27,
             borderSlots = listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26)
         )
 
         gui.apply {
             setSlot(11, GuiUtils.createGuiItem(
-                name = "Entity",
+                name = Lang.get(player, "gui.entity_display_editor.entity", "Entity"),
                 item = Items.ARMOR_STAND,
-                lore = GuiUtils.createCombinedLore("Current" to display.id, "Click to change")
+                lore = GuiUtils.createCombinedLore(
+                    Lang.get(player, "gui.common.current", "Current") to display.id,
+                    Lang.get(player, "gui.common.click_change", "Click to change")
+                )
             )) { _, _, _, _ ->
                 AnvilInput.open(
                     player = player,
-                    title = "Enter Entity ID",
+                    title = Lang.get(player, "gui.entity_display_editor.enter_entity_id", "Enter Entity ID"),
                     defaultText = display.id,
                     onSubmit = { entityId ->
                         DisplayManager.updateEntityId(name, entityId, player.createCommandSourceStack())
@@ -45,11 +49,11 @@ object EntityDisplayEditor {
             }
 
             setSlot(13, GuiUtils.createGuiItem(
-                name = "Glow",
+                name = Lang.get(player, "gui.entity_display_editor.glow", "Glow"),
                 item = if (display.glow == true) Items.GLOWSTONE_DUST else Items.GUNPOWDER,
                 lore = GuiUtils.createCombinedLore(
-                    "Current" to (display.glow?.toString() ?: "false"),
-                    "Click to toggle"
+                    Lang.get(player, "gui.common.current", "Current") to (display.glow?.toString() ?: "false"),
+                    Lang.get(player, "gui.common.click_toggle", "Click to toggle")
                 )
             )) { _, _, _, _ ->
                 val newGlow = !(display.glow ?: false)
@@ -58,11 +62,11 @@ object EntityDisplayEditor {
             }
 
             setSlot(15, GuiUtils.createGuiItem(
-                name = "Pose",
+                name = Lang.get(player, "gui.entity_display_editor.pose", "Pose"),
                 item = Items.ARMOR_STAND,
                 lore = buildList {
-                    addAll(GuiUtils.createCurrentValueLore("Current", display.pose?.name?.uppercase() ?: "STANDING"))
-                    addAll(GuiUtils.createActionLore("Click to cycle through modes"))
+                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), display.pose?.name?.uppercase() ?: "STANDING"))
+                    addAll(GuiUtils.createActionLore(Lang.get(player, "gui.common.click_cycle", "Click to cycle through modes")))
                     addAll(GuiUtils.createLore(
                         "Available poses:",
                         "STANDING, FALL_FLYING, SLEEPING, SWIMMING, SPIN_ATTACK",
