@@ -135,7 +135,7 @@ object TextDisplayEditor {
                 name = Lang.get(player, "gui.text_display_editor.alignment", "Component Alignment"),
                 item = Items.LECTERN,
                 lore = buildList {
-                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), display.alignment?.name?.uppercase() ?: "CENTER"))
+                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), Lang.enumHint(player, "alignment", display.alignment?.name?.uppercase() ?: "CENTER")))
                     addAll(GuiUtils.createActionLore(Lang.get(player, "gui.common.click_cycle", "Click to cycle through modes")))
                     addAll(GuiUtils.createLore("Available modes: LEFT, CENTER, RIGHT"))
                 }

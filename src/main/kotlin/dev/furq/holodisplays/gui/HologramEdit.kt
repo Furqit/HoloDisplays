@@ -79,7 +79,7 @@ object HologramEdit {
                 name = Lang.get(player, "gui.hologram_edit.billboard_mode", "Billboard Mode"),
                 item = Items.COMPASS,
                 lore = buildList {
-                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), hologram.billboardMode.name.uppercase()))
+                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), Lang.enumHint(player, "billboard", hologram.billboardMode.name.uppercase())))
                     addAll(GuiUtils.createActionLore(Lang.get(player, "gui.common.click_cycle", "Click to cycle through modes")))
                     addAll(GuiUtils.createLore("Available modes: HORIZONTAL, VERTICAL, CENTER, FIXED"))
                 }

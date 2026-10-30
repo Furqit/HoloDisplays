@@ -57,7 +57,7 @@ object ItemDisplayEditor {
                 name = Lang.get(player, "gui.item_display_editor.display_type", "Display Type"),
                 item = Items.ARMOR_STAND,
                 lore = buildList {
-                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), display.itemDisplayType.uppercase()))
+                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), Lang.enumHint(player, "item_display_type", display.itemDisplayType.uppercase())))
                     addAll(GuiUtils.createActionLore(Lang.get(player, "gui.common.click_cycle", "Click to cycle through modes")))
                     addAll(GuiUtils.createLore(
                         "Available modes:",

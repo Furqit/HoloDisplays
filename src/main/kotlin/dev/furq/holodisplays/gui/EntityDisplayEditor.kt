@@ -65,7 +65,7 @@ object EntityDisplayEditor {
                 name = Lang.get(player, "gui.entity_display_editor.pose", "Pose"),
                 item = Items.ARMOR_STAND,
                 lore = buildList {
-                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), display.pose?.name?.uppercase() ?: "STANDING"))
+                    addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), Lang.enumHint(player, "pose", display.pose?.name?.uppercase() ?: "STANDING")))
                     addAll(GuiUtils.createActionLore(Lang.get(player, "gui.common.click_cycle", "Click to cycle through modes")))
                     addAll(GuiUtils.createLore(
                         "Available poses:",

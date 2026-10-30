@@ -70,6 +70,9 @@ object Lang : Config {
     fun get(player: ServerPlayer?, key: String, default: String, vararg args: Pair<String, Any>): String =
         substitute(template(key, localeFor(player)) ?: default, args)
 
+    fun enumHint(player: ServerPlayer?, group: String, token: String): String =
+        template("gui.enum.$group.${token.lowercase(Locale.US)}", localeFor(player)) ?: token
+
     internal fun substitute(text: String, args: Array<out Pair<String, Any>>): String =
         args.fold(text) { message, (argKey, value) ->
             message.replace("{$argKey}", value.toString())

@@ -58,8 +58,8 @@ object DisplayEdit {
                     name = Lang.get(player, "gui.display_edit.billboard_mode", "Billboard Mode"),
                     item = Items.COMPASS,
                     lore = buildList {
-                        addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), display.type.billboardMode?.name?.uppercase()
-                            ?: "NONE"))
+                        addAll(GuiUtils.createCurrentValueLore(Lang.get(player, "gui.common.current", "Current"), Lang.enumHint(player, "billboard", display.type.billboardMode?.name?.uppercase()
+                            ?: "NONE")))
                         addAll(GuiUtils.createActionLore(
                             Lang.get(player, "gui.common.click_cycle", "Click to cycle through modes"),
                             Lang.get(player, "gui.display_edit.right_click_reset", "Right click to reset")
